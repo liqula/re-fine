@@ -19,27 +19,27 @@ function groupDetailsProcessesDocument() {
 				<div class="groupDetailsProcessesDocument_column4">
 					<div class="groupDetailsProcessesDocument_column4-item">
 						<div class="groupDetailsProcessesDocument_column4-item-icon">
-							<?= icon('ibutton_xxlarge', 'svgDanielUser', ['c_fill_interaction_yellow_neon', ' c_fill_note_bubble'], []) ?>
+							<?= icon('ibutton_xxlarge', 'svgDanielUser', ['c_fill_interaction_yellow', ' c_fill_note_bubble'], []) ?>
 						</div>
 						<div class="groupDetailsProcessesDocument_column4-item-text">
 						3
 						</div>
 						<div class="groupDetailsProcessesDocument_column4-item-icon">
-							<?= icon('ibutton_xxlarge', 'svgDanielUser', ['c_fill_interaction_yellow_neon', ' c_fill_note_bubble'], []) ?>
+							<?= icon('ibutton_xxlarge', 'svgDanielUser', ['c_fill_interaction_yellow', ' c_fill_note_bubble'], []) ?>
 						</div>
 						<div class="groupDetailsProcessesDocument_column4-item-text">
 						9
 						</div>
 					</div>
 					<div class="groupDetailsProcessesDocument_column4-item">
-						<?= icon('ibutton_xxlarge', 'svgDanielUser', ['c_fill_interaction_yellow_neon', ' c_fill_note_bubble'], []) ?>
+						<?= icon('ibutton_xxlarge', 'svgDanielUser', ['c_fill_interaction_yellow', ' c_fill_note_bubble'], []) ?>
 						<div class="groupDetailsProcessesDocument_column4-item-text">
 						3
 						</div>
 						
 					</div>
 					<div class="groupDetailsProcessesDocument_column4-item">
-						<?= icon('ibutton_xxlarge', 'svgDanielUser', ['c_fill_interaction_yellow_neon', ' c_fill_note_bubble'], []) ?>
+						<?= icon('ibutton_xxlarge', 'svgDanielUser', ['c_fill_interaction_yellow', ' c_fill_note_bubble'], []) ?>
 						<div class="groupDetailsProcessesDocument_column4-item-text">
 						3
 						</div>

@@ -8,6 +8,9 @@ once: .phony
 loop: .phony
 	sass --watch main.scss:main.css
 
+canonicalize-layout:
+	for i in `ls {10,20,40}-*.scss`; do sass-convert -i --unix-newlines $$i; done
+
 generate-main: .phony
 	for i in `ls *-*.scss`; do echo "@import '$$i';"; done > main.scss
 

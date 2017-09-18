@@ -54,7 +54,7 @@ function example_mainMenuGroupsSmall($backgroundColor, $imageOrSVGFunc, $svgArgs
 
 /*
 $mainMenuGroupsSmall_example1 = [
-	'background-color' => 'c_bg_main_menu_blue',
+	'background-color' => 'c_bg_blue_dawn',
 	'image' => 'testbild.png',
 	'groupname' => 'Initiative für eine grüne Stadt',
 	'icons' => [
@@ -76,7 +76,7 @@ $mainMenuGroupsSmall_example1 = [
 ];
 
 $mainMenuGroupsSmall_example2 = [
-	'background-color' => 'c_bg_main_menu_blue',
+	'background-color' => 'c_bg_blue_dawn',
 	'image' => '../images/daniel_test1.svg',
 	'groupname' => 'Initiative für eine grüne Stadt',
 	'icons' => [
@@ -98,7 +98,7 @@ $mainMenuGroupsSmall_example2 = [
 ];
 
 $mainMenuGroupsSmall_example3 = [
-	'background-color' => 'c_bg_form_orange_light',
+	'background-color' => 'c_bg_interaction_orange_light',
 	'image' => '../images/daniel_test1.svg',
 	'groupname' => 'Initiative für eine grüne Stadt',
 	'icons' => [

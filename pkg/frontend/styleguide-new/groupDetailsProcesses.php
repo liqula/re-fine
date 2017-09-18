@@ -23,9 +23,9 @@ include "includes/svgs/svgs1.php";
 			</div>
 			<div class="hr-2-div"></div>
 			<div class="groupDetailsProcesses_iconlist">
-				<?= iconWithNumber('ibutton_xxxlarge', 'svgDanielUser', ['c_fill_interaction_yellow_neon', ' c_fill_note_bubble'], '12', ['margin1',"float-left"]) ?>
-				<?= iconWithNumber('ibutton_xxxlarge', 'svgDanielUser', ['c_fill_interaction_yellow_neon', ' c_fill_note_bubble'], '12', ['margin1',"float-left"]) ?>
-				<?= iconWithNumber('ibutton_xxxlarge', 'svgDanielUser', ['c_fill_interaction_yellow_neon', ' c_fill_note_bubble'], '12', ['margin1',"float-left"]) ?>
+				<?= iconWithNumber('ibutton_xxxlarge', 'svgDanielUser', ['c_fill_interaction_yellow', ' c_fill_note_bubble'], '12', ['margin1',"float-left"]) ?>
+				<?= iconWithNumber('ibutton_xxxlarge', 'svgDanielUser', ['c_fill_interaction_yellow', ' c_fill_note_bubble'], '12', ['margin1',"float-left"]) ?>
+				<?= iconWithNumber('ibutton_xxxlarge', 'svgDanielUser', ['c_fill_interaction_yellow', ' c_fill_note_bubble'], '12', ['margin1',"float-left"]) ?>
 				<div class="clearboth"></div>
 			</div>
 

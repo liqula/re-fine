@@ -1,14 +1,6 @@
 /*
-build: sass scss/style.scss style.css
-sanitize: sass-convert -i --unix-newlines style.scss
-    # TODO: make a build rule for the ci that runs sass-convert like
-    # this and makes sure it won't dirty the working copy.
 
-TODO: move this to 30-core.scss (or 40-whatever, and so on).  use
-main.css instead of style.css in the html/php, and build the main.css
-as explained in ./README.md.
-
-TODO: can we make better use of scss/sass features here?
+FUTUREWORK: can we make better use of scss/sass features here?
 
 http://sass-lang.com/documentation/
 http://sass-lang.com/documentation/file.SASS_REFERENCE.html
@@ -24,7 +16,7 @@ nesting may also be useful.
 @import "30-core.scss";
 
 .main-content {
-  background-color: $c_main_menu_background;
+  background-color: $c_blue_morning;
   border-radius: $dunit;
   margin-left: auto;
   margin-right: auto;
@@ -56,7 +48,7 @@ nesting may also be useful.
   height: 54 * $dunit;
   min-height: 54 * $dunit;
 
-  /*background-color: $c_main_menu_blue;*/
+  /*background-color: $c_blue_dawn;*/
   border: 0px solid black;
   border-radius: $dunit;
   z-index: 0;
@@ -120,7 +112,7 @@ nesting may also be useful.
   width: 150 * $dunit;
   margin: $dunit;
   margin-top: $dunit * 3;
-  background-color: $c_toolbar_icon;
+  background-color: $c_blue_night;
   border-radius: $dunit;
   padding-bottom: $dunit;
 
@@ -163,10 +155,7 @@ nesting may also be useful.
       padding-bottom: 2 * $dunit;
     }
 
-    &-text {
-
-    }
-
+    &-text {}
   }
 
   &_iconlist {
@@ -193,7 +182,7 @@ $groupDetailsProcessesDocumentHeight: 30 * $dunit;
   display: flex;
   width: 146 * $dunit;
   height: $groupDetailsProcessesDocumentHeight;
-  background-color: $c_main_menu_background;
+  background-color: $c_blue_morning;
   border-radius: $dunit;
   margin-left: $dunit * 2;
   margin-right: $dunit * 2;
@@ -205,7 +194,7 @@ $groupDetailsProcessesDocumentHeight: 30 * $dunit;
     height: $groupDetailsProcessesDocumentHeight;
     border-top-left-radius: $dunit;
     border-bottom-left-radius: $dunit;
-    
+
     &-image {
       position: relative;
       width: 24 * $dunit;
@@ -223,14 +212,15 @@ $groupDetailsProcessesDocumentHeight: 30 * $dunit;
     &-headline {
       padding: $dunit;
       position: relative;
-      font-size: 5*$dunit;
-      height: 5.5*$dunit;
+      font-size: 5 * $dunit;
+      height: 5.5 * $dunit;
       overflow: hidden;
     }
+
     &-body {
       padding: $dunit;
       position: relative;
-      height: $groupDetailsProcessesDocumentHeight - (12*$dunit);
+      height: $groupDetailsProcessesDocumentHeight - 12 * $dunit;
       overflow: hidden;
     }
   }
@@ -243,8 +233,8 @@ $groupDetailsProcessesDocumentHeight: 30 * $dunit;
     &-vertical_line {
       position: relative;
       border-left: 1px solid black;
-      height: $groupDetailsProcessesDocumentHeight - (6 * $dunit);
-      margin-top: 3*$dunit;
+      height: $groupDetailsProcessesDocumentHeight - 6 * $dunit;
+      margin-top: 3 * $dunit;
     }
   }
 
@@ -255,16 +245,19 @@ $groupDetailsProcessesDocumentHeight: 30 * $dunit;
     border-top-right-radius: $dunit;
     border-bottom-right-radius: $dunit;
     margin-top: $dunit;
+
     &-item {
       height: $dunit * 9;
       display: flex;
       width: 30 * $dunit;
       margin: $dunit;
+
       &-text {
         width: 6 * $dunit;
         text-align: center;
-        line-height: $dunit * 5; 
+        line-height: $dunit * 5;
       }
+
       &-icon {
         position: relative;
         width: $icon-size-xxlarge;
@@ -310,13 +303,13 @@ body {
 .hr-div {
   margin-left: $dunit;
   margin-right: $dunit;
-  border-top: 1px solid $c_main_menu_blue;
+  border-top: 1px solid $c_blue_dawn;
 }
 
 .hr-2-div {
   margin-left: $dunit * 2;
   margin-right: $dunit * 2;
-  border-top: 1px solid $c_main_menu_background;
+  border-top: 1px solid $c_blue_morning;
 }
 
 .on_top {
@@ -332,14 +325,14 @@ body {
   width: $dunit * 24;
   height: $dunit * 4;
   border-radius: $dunit;
-  border: 1px solid $c_main_menu_blue;
-  background-color: $c_main_menu_background;
+  border: 1px solid $c_blue_dawn;
+  background-color: $c_blue_morning;
   margin: $dunit;
   margin-top: $dunit * 2;
 }
 
 .platform-title {
-  color: $c_main_menu_background;
+  color: $c_blue_morning;
   font-size: $dunit * 6;
   height: $dunit * 10;
   margin-left: auto;
@@ -366,7 +359,7 @@ body {
   position: relative;
   width: 100%;
   min-width: 156 * $dunit;
-  background-color: $c_main_menu_dark_blue;
+  background-color: $c_blue_dark;
   min-height: 100%;
   height: 100%;
   padding-bottom: $dunit * 4;
@@ -376,16 +369,16 @@ body {
 
 .ibutton_absolute-topleft {
   position: absolute;
-  left: $dunit*2;
-  top: $dunit*2;
+  left: $dunit * 2;
+  top: $dunit * 2;
   height: $icon-size-xxlarge;
   width: $icon-size-xxlarge;
 }
 
 .ibutton_absolute-topright {
   position: absolute;
-  right: $dunit*2;
-  top: $dunit*2;
+  right: $dunit * 2;
+  top: $dunit * 2;
   height: $icon-size-xxlarge;
   width: $icon-size-xxlarge;
 }
@@ -418,7 +411,7 @@ body {
 
 .svg-button-myself {
   background: url(../images/testuser.svg) $dunit $dunit/#{$dunit * 4} ($dunit * 4) no-repeat;
-  background-color: $c_main_menu_background;
+  background-color: $c_blue_morning;
   border-radius: $icon-size-xxlarge * 0.5;
   cursor: pointer;
 }

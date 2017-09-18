@@ -327,368 +327,368 @@
 
 <?php function svgTestPage() { ?>
 <hr><div>
-<p>svg_arrow_down("c_fill_main_menu_dark_blue");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_arrow_down("c_fill_main_menu_dark_blue"); ?></div>
-<p>svg_arrow_down("c_fill_interaction_orange_neon");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_arrow_down("c_fill_interaction_orange_neon"); ?></div>
+<p>svg_arrow_down("c_fill_blue_dark");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_arrow_down("c_fill_blue_dark"); ?></div>
+<p>svg_arrow_down("c_fill_interaction_orange");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_arrow_down("c_fill_interaction_orange"); ?></div>
 </div>
 
 <hr><div>
-<p>svg_arrow_left("c_fill_main_menu_dark_blue");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_arrow_left("c_fill_main_menu_dark_blue"); ?></div>
-<p>svg_arrow_left("c_fill_interaction_orange_neon");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_arrow_left("c_fill_interaction_orange_neon"); ?></div>
+<p>svg_arrow_left("c_fill_blue_dark");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_arrow_left("c_fill_blue_dark"); ?></div>
+<p>svg_arrow_left("c_fill_interaction_orange");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_arrow_left("c_fill_interaction_orange"); ?></div>
 </div>
 
 <hr><div>
-<p>svg_arrow_right("c_fill_main_menu_dark_blue");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_arrow_right("c_fill_main_menu_dark_blue"); ?></div>
-<p>svg_arrow_right("c_fill_interaction_orange_neon");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_arrow_right("c_fill_interaction_orange_neon"); ?></div>
+<p>svg_arrow_right("c_fill_blue_dark");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_arrow_right("c_fill_blue_dark"); ?></div>
+<p>svg_arrow_right("c_fill_interaction_orange");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_arrow_right("c_fill_interaction_orange"); ?></div>
 </div>
 
 <hr><div>
-<p>svg_arrow_up("c_fill_main_menu_dark_blue");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_arrow_up("c_fill_main_menu_dark_blue"); ?></div>
-<p>svg_arrow_up("c_fill_interaction_orange_neon");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_arrow_up("c_fill_interaction_orange_neon"); ?></div>
+<p>svg_arrow_up("c_fill_blue_dark");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_arrow_up("c_fill_blue_dark"); ?></div>
+<p>svg_arrow_up("c_fill_interaction_orange");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_arrow_up("c_fill_interaction_orange"); ?></div>
 </div>
 
 <hr><div>
-<p>svg_cat_art("c_fill_main_menu_dark_blue");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_cat_art("c_fill_main_menu_dark_blue"); ?></div>
-<p>svg_cat_art("c_fill_interaction_orange_neon");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_cat_art("c_fill_interaction_orange_neon"); ?></div>
+<p>svg_cat_art("c_fill_blue_dark");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_cat_art("c_fill_blue_dark"); ?></div>
+<p>svg_cat_art("c_fill_interaction_orange");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_cat_art("c_fill_interaction_orange"); ?></div>
 </div>
 
 <hr><div>
-<p>svg_cat_business("c_fill_main_menu_dark_blue");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_cat_business("c_fill_main_menu_dark_blue"); ?></div>
-<p>svg_cat_business("c_fill_interaction_orange_neon");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_cat_business("c_fill_interaction_orange_neon"); ?></div>
+<p>svg_cat_business("c_fill_blue_dark");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_cat_business("c_fill_blue_dark"); ?></div>
+<p>svg_cat_business("c_fill_interaction_orange");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_cat_business("c_fill_interaction_orange"); ?></div>
 </div>
 
 <hr><div>
-<p>svg_cat_fitness("c_fill_main_menu_dark_blue");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_cat_fitness("c_fill_main_menu_dark_blue"); ?></div>
-<p>svg_cat_fitness("c_fill_interaction_orange_neon");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_cat_fitness("c_fill_interaction_orange_neon"); ?></div>
+<p>svg_cat_fitness("c_fill_blue_dark");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_cat_fitness("c_fill_blue_dark"); ?></div>
+<p>svg_cat_fitness("c_fill_interaction_orange");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_cat_fitness("c_fill_interaction_orange"); ?></div>
 </div>
 
 <hr><div>
-<p>svg_cat_flowers("c_fill_main_menu_dark_blue");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_cat_flowers("c_fill_main_menu_dark_blue"); ?></div>
-<p>svg_cat_flowers("c_fill_interaction_orange_neon");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_cat_flowers("c_fill_interaction_orange_neon"); ?></div>
+<p>svg_cat_flowers("c_fill_blue_dark");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_cat_flowers("c_fill_blue_dark"); ?></div>
+<p>svg_cat_flowers("c_fill_interaction_orange");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_cat_flowers("c_fill_interaction_orange"); ?></div>
 </div>
 
 <hr><div>
-<p>svg_cat_party("c_fill_main_menu_dark_blue");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_cat_party("c_fill_main_menu_dark_blue"); ?></div>
-<p>svg_cat_party("c_fill_interaction_orange_neon");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_cat_party("c_fill_interaction_orange_neon"); ?></div>
+<p>svg_cat_party("c_fill_blue_dark");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_cat_party("c_fill_blue_dark"); ?></div>
+<p>svg_cat_party("c_fill_interaction_orange");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_cat_party("c_fill_interaction_orange"); ?></div>
 </div>
 
 <hr><div>
-<p>svg_cat_photo("c_fill_main_menu_dark_blue");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_cat_photo("c_fill_main_menu_dark_blue"); ?></div>
-<p>svg_cat_photo("c_fill_interaction_orange_neon");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_cat_photo("c_fill_interaction_orange_neon"); ?></div>
+<p>svg_cat_photo("c_fill_blue_dark");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_cat_photo("c_fill_blue_dark"); ?></div>
+<p>svg_cat_photo("c_fill_interaction_orange");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_cat_photo("c_fill_interaction_orange"); ?></div>
 </div>
 
 <hr><div>
-<p>svg_cat_rollerdisco("c_fill_main_menu_dark_blue");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_cat_rollerdisco("c_fill_main_menu_dark_blue"); ?></div>
-<p>svg_cat_rollerdisco("c_fill_interaction_orange_neon");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_cat_rollerdisco("c_fill_interaction_orange_neon"); ?></div>
+<p>svg_cat_rollerdisco("c_fill_blue_dark");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_cat_rollerdisco("c_fill_blue_dark"); ?></div>
+<p>svg_cat_rollerdisco("c_fill_interaction_orange");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_cat_rollerdisco("c_fill_interaction_orange"); ?></div>
 </div>
 
 <hr><div>
-<p>svg_cat_romantic("c_fill_main_menu_dark_blue");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_cat_romantic("c_fill_main_menu_dark_blue"); ?></div>
-<p>svg_cat_romantic("c_fill_interaction_orange_neon");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_cat_romantic("c_fill_interaction_orange_neon"); ?></div>
+<p>svg_cat_romantic("c_fill_blue_dark");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_cat_romantic("c_fill_blue_dark"); ?></div>
+<p>svg_cat_romantic("c_fill_interaction_orange");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_cat_romantic("c_fill_interaction_orange"); ?></div>
 </div>
 
 <hr><div>
-<p>svg_cat_sailing("c_fill_main_menu_dark_blue");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_cat_sailing("c_fill_main_menu_dark_blue"); ?></div>
-<p>svg_cat_sailing("c_fill_interaction_orange_neon");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_cat_sailing("c_fill_interaction_orange_neon"); ?></div>
+<p>svg_cat_sailing("c_fill_blue_dark");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_cat_sailing("c_fill_blue_dark"); ?></div>
+<p>svg_cat_sailing("c_fill_interaction_orange");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_cat_sailing("c_fill_interaction_orange"); ?></div>
 </div>
 
 <hr><div>
-<p>svg_cat_work("c_fill_main_menu_dark_blue");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_cat_work("c_fill_main_menu_dark_blue"); ?></div>
-<p>svg_cat_work("c_fill_interaction_orange_neon");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_cat_work("c_fill_interaction_orange_neon"); ?></div>
+<p>svg_cat_work("c_fill_blue_dark");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_cat_work("c_fill_blue_dark"); ?></div>
+<p>svg_cat_work("c_fill_interaction_orange");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_cat_work("c_fill_interaction_orange"); ?></div>
 </div>
 
 <hr><div>
-<p>svg_close("c_fill_main_menu_dark_blue");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_close("c_fill_main_menu_dark_blue"); ?></div>
-<p>svg_close("c_fill_interaction_orange_neon");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_close("c_fill_interaction_orange_neon"); ?></div>
+<p>svg_close("c_fill_blue_dark");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_close("c_fill_blue_dark"); ?></div>
+<p>svg_close("c_fill_interaction_orange");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_close("c_fill_interaction_orange"); ?></div>
 </div>
 
 <hr><div>
-<p>svg_comment("c_fill_main_menu_dark_blue");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_comment("c_fill_main_menu_dark_blue"); ?></div>
-<p>svg_comment("c_fill_interaction_orange_neon");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_comment("c_fill_interaction_orange_neon"); ?></div>
+<p>svg_comment("c_fill_blue_dark");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_comment("c_fill_blue_dark"); ?></div>
+<p>svg_comment("c_fill_interaction_orange");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_comment("c_fill_interaction_orange"); ?></div>
 </div>
 
 <hr><div>
-<p>svg_comment_new("c_fill_main_menu_dark_blue", "c_fill_interaction_orange_neon");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_comment_new("c_fill_main_menu_dark_blue", "c_fill_interaction_orange_neon"); ?></div>
-<p>svg_comment_new("c_fill_interaction_orange_neon", "c_fill_interaction_red");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_comment_new("c_fill_interaction_orange_neon", "c_fill_interaction_red"); ?></div>
+<p>svg_comment_new("c_fill_blue_dark", "c_fill_interaction_orange");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_comment_new("c_fill_blue_dark", "c_fill_interaction_orange"); ?></div>
+<p>svg_comment_new("c_fill_interaction_orange", "c_fill_no_color");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_comment_new("c_fill_interaction_orange", "c_fill_no_color"); ?></div>
 </div>
 
 <hr><div>
-<p>svg_diff_collapse("c_fill_main_menu_dark_blue");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_diff_collapse("c_fill_main_menu_dark_blue"); ?></div>
-<p>svg_diff_collapse("c_fill_interaction_orange_neon");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_diff_collapse("c_fill_interaction_orange_neon"); ?></div>
+<p>svg_diff_collapse("c_fill_blue_dark");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_diff_collapse("c_fill_blue_dark"); ?></div>
+<p>svg_diff_collapse("c_fill_interaction_orange");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_diff_collapse("c_fill_interaction_orange"); ?></div>
 </div>
 
 <hr><div>
-<p>svg_diff_details("c_fill_main_menu_dark_blue");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_diff_details("c_fill_main_menu_dark_blue"); ?></div>
-<p>svg_diff_details("c_fill_interaction_orange_neon");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_diff_details("c_fill_interaction_orange_neon"); ?></div>
+<p>svg_diff_details("c_fill_blue_dark");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_diff_details("c_fill_blue_dark"); ?></div>
+<p>svg_diff_details("c_fill_interaction_orange");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_diff_details("c_fill_interaction_orange"); ?></div>
 </div>
 
 <hr><div>
-<p>svg_diff_expand("c_fill_main_menu_dark_blue");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_diff_expand("c_fill_main_menu_dark_blue"); ?></div>
-<p>svg_diff_expand("c_fill_interaction_orange_neon");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_diff_expand("c_fill_interaction_orange_neon"); ?></div>
+<p>svg_diff_expand("c_fill_blue_dark");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_diff_expand("c_fill_blue_dark"); ?></div>
+<p>svg_diff_expand("c_fill_interaction_orange");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_diff_expand("c_fill_interaction_orange"); ?></div>
 </div>
 
 <hr><div>
-<p>svg_discussion("c_fill_main_menu_dark_blue", "c_fill_interaction_orange_neon");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_discussion("c_fill_main_menu_dark_blue", "c_fill_interaction_orange_neon"); ?></div>
-<p>svg_discussion("c_fill_interaction_orange_neon", "c_fill_interaction_red");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_discussion("c_fill_interaction_orange_neon", "c_fill_interaction_red"); ?></div>
+<p>svg_discussion("c_fill_blue_dark", "c_fill_interaction_orange");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_discussion("c_fill_blue_dark", "c_fill_interaction_orange"); ?></div>
+<p>svg_discussion("c_fill_interaction_orange", "c_fill_no_color");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_discussion("c_fill_interaction_orange", "c_fill_no_color"); ?></div>
 </div>
 
 <hr><div>
-<p>svg_discussion_flat("c_fill_main_menu_dark_blue");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_discussion_flat("c_fill_main_menu_dark_blue"); ?></div>
-<p>svg_discussion_flat("c_fill_interaction_orange_neon");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_discussion_flat("c_fill_interaction_orange_neon"); ?></div>
+<p>svg_discussion_flat("c_fill_blue_dark");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_discussion_flat("c_fill_blue_dark"); ?></div>
+<p>svg_discussion_flat("c_fill_interaction_orange");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_discussion_flat("c_fill_interaction_orange"); ?></div>
 </div>
 
 <hr><div>
-<p>svg_discussion_tree("c_fill_main_menu_dark_blue");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_discussion_tree("c_fill_main_menu_dark_blue"); ?></div>
-<p>svg_discussion_tree("c_fill_interaction_orange_neon");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_discussion_tree("c_fill_interaction_orange_neon"); ?></div>
+<p>svg_discussion_tree("c_fill_blue_dark");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_discussion_tree("c_fill_blue_dark"); ?></div>
+<p>svg_discussion_tree("c_fill_interaction_orange");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_discussion_tree("c_fill_interaction_orange"); ?></div>
 </div>
 
 <hr><div>
-<p>svg_edit("c_fill_main_menu_dark_blue", "c_fill_interaction_orange_neon");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_edit("c_fill_main_menu_dark_blue", "c_fill_interaction_orange_neon"); ?></div>
-<p>svg_edit("c_fill_interaction_orange_neon", "c_fill_interaction_red");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_edit("c_fill_interaction_orange_neon", "c_fill_interaction_red"); ?></div>
+<p>svg_edit("c_fill_blue_dark", "c_fill_interaction_orange");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_edit("c_fill_blue_dark", "c_fill_interaction_orange"); ?></div>
+<p>svg_edit("c_fill_interaction_orange", "c_fill_no_color");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_edit("c_fill_interaction_orange", "c_fill_no_color"); ?></div>
 </div>
 
 <hr><div>
-<p>svg_edit_kind_grammar("c_fill_main_menu_dark_blue");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_edit_kind_grammar("c_fill_main_menu_dark_blue"); ?></div>
-<p>svg_edit_kind_grammar("c_fill_interaction_orange_neon");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_edit_kind_grammar("c_fill_interaction_orange_neon"); ?></div>
+<p>svg_edit_kind_grammar("c_fill_blue_dark");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_edit_kind_grammar("c_fill_blue_dark"); ?></div>
+<p>svg_edit_kind_grammar("c_fill_interaction_orange");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_edit_kind_grammar("c_fill_interaction_orange"); ?></div>
 </div>
 
 <hr><div>
-<p>svg_edit_kind_meaning("c_fill_main_menu_dark_blue");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_edit_kind_meaning("c_fill_main_menu_dark_blue"); ?></div>
-<p>svg_edit_kind_meaning("c_fill_interaction_orange_neon");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_edit_kind_meaning("c_fill_interaction_orange_neon"); ?></div>
+<p>svg_edit_kind_meaning("c_fill_blue_dark");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_edit_kind_meaning("c_fill_blue_dark"); ?></div>
+<p>svg_edit_kind_meaning("c_fill_interaction_orange");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_edit_kind_meaning("c_fill_interaction_orange"); ?></div>
 </div>
 
 <hr><div>
-<p>svg_edit_kind_phrasing("c_fill_main_menu_dark_blue");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_edit_kind_phrasing("c_fill_main_menu_dark_blue"); ?></div>
-<p>svg_edit_kind_phrasing("c_fill_interaction_orange_neon");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_edit_kind_phrasing("c_fill_interaction_orange_neon"); ?></div>
+<p>svg_edit_kind_phrasing("c_fill_blue_dark");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_edit_kind_phrasing("c_fill_blue_dark"); ?></div>
+<p>svg_edit_kind_phrasing("c_fill_interaction_orange");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_edit_kind_phrasing("c_fill_interaction_orange"); ?></div>
 </div>
 
 <hr><div>
-<p>svg_edit_new("c_fill_main_menu_dark_blue", "c_fill_interaction_orange_neon", "c_fill_interaction_red");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_edit_new("c_fill_main_menu_dark_blue", "c_fill_interaction_orange_neon", "c_fill_interaction_red"); ?></div>
-<p>svg_edit_new("c_fill_interaction_orange_neon", "c_fill_interaction_red", "c_fill_form_green");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_edit_new("c_fill_interaction_orange_neon", "c_fill_interaction_red", "c_fill_form_green"); ?></div>
+<p>svg_edit_new("c_fill_blue_dark", "c_fill_interaction_orange", "c_fill_no_color");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_edit_new("c_fill_blue_dark", "c_fill_interaction_orange", "c_fill_no_color"); ?></div>
+<p>svg_edit_new("c_fill_interaction_orange", "c_fill_no_color", "c_fill_yes_color");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_edit_new("c_fill_interaction_orange", "c_fill_no_color", "c_fill_yes_color"); ?></div>
 </div>
 
 <hr><div>
-<p>svg_edit_reason("c_fill_main_menu_dark_blue");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_edit_reason("c_fill_main_menu_dark_blue"); ?></div>
-<p>svg_edit_reason("c_fill_interaction_orange_neon");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_edit_reason("c_fill_interaction_orange_neon"); ?></div>
+<p>svg_edit_reason("c_fill_blue_dark");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_edit_reason("c_fill_blue_dark"); ?></div>
+<p>svg_edit_reason("c_fill_interaction_orange");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_edit_reason("c_fill_interaction_orange"); ?></div>
 </div>
 
 <hr><div>
-<p>svg_edit_toolbar_bold("c_fill_main_menu_dark_blue");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_edit_toolbar_bold("c_fill_main_menu_dark_blue"); ?></div>
-<p>svg_edit_toolbar_bold("c_fill_interaction_orange_neon");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_edit_toolbar_bold("c_fill_interaction_orange_neon"); ?></div>
+<p>svg_edit_toolbar_bold("c_fill_blue_dark");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_edit_toolbar_bold("c_fill_blue_dark"); ?></div>
+<p>svg_edit_toolbar_bold("c_fill_interaction_orange");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_edit_toolbar_bold("c_fill_interaction_orange"); ?></div>
 </div>
 
 <hr><div>
-<p>svg_edit_toolbar_bullets("c_fill_main_menu_dark_blue");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_edit_toolbar_bullets("c_fill_main_menu_dark_blue"); ?></div>
-<p>svg_edit_toolbar_bullets("c_fill_interaction_orange_neon");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_edit_toolbar_bullets("c_fill_interaction_orange_neon"); ?></div>
+<p>svg_edit_toolbar_bullets("c_fill_blue_dark");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_edit_toolbar_bullets("c_fill_blue_dark"); ?></div>
+<p>svg_edit_toolbar_bullets("c_fill_interaction_orange");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_edit_toolbar_bullets("c_fill_interaction_orange"); ?></div>
 </div>
 
 <hr><div>
-<p>svg_edit_toolbar_h1("c_fill_main_menu_dark_blue");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_edit_toolbar_h1("c_fill_main_menu_dark_blue"); ?></div>
-<p>svg_edit_toolbar_h1("c_fill_interaction_orange_neon");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_edit_toolbar_h1("c_fill_interaction_orange_neon"); ?></div>
+<p>svg_edit_toolbar_h1("c_fill_blue_dark");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_edit_toolbar_h1("c_fill_blue_dark"); ?></div>
+<p>svg_edit_toolbar_h1("c_fill_interaction_orange");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_edit_toolbar_h1("c_fill_interaction_orange"); ?></div>
 </div>
 
 <hr><div>
-<p>svg_edit_toolbar_h2("c_fill_main_menu_dark_blue");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_edit_toolbar_h2("c_fill_main_menu_dark_blue"); ?></div>
-<p>svg_edit_toolbar_h2("c_fill_interaction_orange_neon");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_edit_toolbar_h2("c_fill_interaction_orange_neon"); ?></div>
+<p>svg_edit_toolbar_h2("c_fill_blue_dark");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_edit_toolbar_h2("c_fill_blue_dark"); ?></div>
+<p>svg_edit_toolbar_h2("c_fill_interaction_orange");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_edit_toolbar_h2("c_fill_interaction_orange"); ?></div>
 </div>
 
 <hr><div>
-<p>svg_edit_toolbar_h3("c_fill_main_menu_dark_blue");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_edit_toolbar_h3("c_fill_main_menu_dark_blue"); ?></div>
-<p>svg_edit_toolbar_h3("c_fill_interaction_orange_neon");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_edit_toolbar_h3("c_fill_interaction_orange_neon"); ?></div>
+<p>svg_edit_toolbar_h3("c_fill_blue_dark");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_edit_toolbar_h3("c_fill_blue_dark"); ?></div>
+<p>svg_edit_toolbar_h3("c_fill_interaction_orange");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_edit_toolbar_h3("c_fill_interaction_orange"); ?></div>
 </div>
 
 <hr><div>
-<p>svg_edit_toolbar_italic("c_fill_main_menu_dark_blue");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_edit_toolbar_italic("c_fill_main_menu_dark_blue"); ?></div>
-<p>svg_edit_toolbar_italic("c_fill_interaction_orange_neon");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_edit_toolbar_italic("c_fill_interaction_orange_neon"); ?></div>
+<p>svg_edit_toolbar_italic("c_fill_blue_dark");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_edit_toolbar_italic("c_fill_blue_dark"); ?></div>
+<p>svg_edit_toolbar_italic("c_fill_interaction_orange");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_edit_toolbar_italic("c_fill_interaction_orange"); ?></div>
 </div>
 
 <hr><div>
-<p>svg_edit_toolbar_link("c_fill_main_menu_dark_blue");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_edit_toolbar_link("c_fill_main_menu_dark_blue"); ?></div>
-<p>svg_edit_toolbar_link("c_fill_interaction_orange_neon");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_edit_toolbar_link("c_fill_interaction_orange_neon"); ?></div>
+<p>svg_edit_toolbar_link("c_fill_blue_dark");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_edit_toolbar_link("c_fill_blue_dark"); ?></div>
+<p>svg_edit_toolbar_link("c_fill_interaction_orange");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_edit_toolbar_link("c_fill_interaction_orange"); ?></div>
 </div>
 
 <hr><div>
-<p>svg_edit_toolbar_numbers("c_fill_main_menu_dark_blue");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_edit_toolbar_numbers("c_fill_main_menu_dark_blue"); ?></div>
-<p>svg_edit_toolbar_numbers("c_fill_interaction_orange_neon");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_edit_toolbar_numbers("c_fill_interaction_orange_neon"); ?></div>
+<p>svg_edit_toolbar_numbers("c_fill_blue_dark");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_edit_toolbar_numbers("c_fill_blue_dark"); ?></div>
+<p>svg_edit_toolbar_numbers("c_fill_interaction_orange");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_edit_toolbar_numbers("c_fill_interaction_orange"); ?></div>
 </div>
 
 <hr><div>
-<p>svg_edit_toolbar_redo("c_fill_main_menu_dark_blue");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_edit_toolbar_redo("c_fill_main_menu_dark_blue"); ?></div>
-<p>svg_edit_toolbar_redo("c_fill_interaction_orange_neon");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_edit_toolbar_redo("c_fill_interaction_orange_neon"); ?></div>
+<p>svg_edit_toolbar_redo("c_fill_blue_dark");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_edit_toolbar_redo("c_fill_blue_dark"); ?></div>
+<p>svg_edit_toolbar_redo("c_fill_interaction_orange");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_edit_toolbar_redo("c_fill_interaction_orange"); ?></div>
 </div>
 
 <hr><div>
-<p>svg_edit_toolbar_save("c_fill_main_menu_dark_blue");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_edit_toolbar_save("c_fill_main_menu_dark_blue"); ?></div>
-<p>svg_edit_toolbar_save("c_fill_interaction_orange_neon");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_edit_toolbar_save("c_fill_interaction_orange_neon"); ?></div>
+<p>svg_edit_toolbar_save("c_fill_blue_dark");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_edit_toolbar_save("c_fill_blue_dark"); ?></div>
+<p>svg_edit_toolbar_save("c_fill_interaction_orange");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_edit_toolbar_save("c_fill_interaction_orange"); ?></div>
 </div>
 
 <hr><div>
-<p>svg_edit_toolbar_undo("c_fill_main_menu_dark_blue");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_edit_toolbar_undo("c_fill_main_menu_dark_blue"); ?></div>
-<p>svg_edit_toolbar_undo("c_fill_interaction_orange_neon");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_edit_toolbar_undo("c_fill_interaction_orange_neon"); ?></div>
+<p>svg_edit_toolbar_undo("c_fill_blue_dark");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_edit_toolbar_undo("c_fill_blue_dark"); ?></div>
+<p>svg_edit_toolbar_undo("c_fill_interaction_orange");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_edit_toolbar_undo("c_fill_interaction_orange"); ?></div>
 </div>
 
 <hr><div>
-<p>svg_edit_view("c_fill_main_menu_dark_blue", "c_fill_interaction_orange_neon", "c_fill_interaction_red");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_edit_view("c_fill_main_menu_dark_blue", "c_fill_interaction_orange_neon", "c_fill_interaction_red"); ?></div>
-<p>svg_edit_view("c_fill_interaction_orange_neon", "c_fill_interaction_red", "c_fill_form_green");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_edit_view("c_fill_interaction_orange_neon", "c_fill_interaction_red", "c_fill_form_green"); ?></div>
+<p>svg_edit_view("c_fill_blue_dark", "c_fill_interaction_orange", "c_fill_no_color");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_edit_view("c_fill_blue_dark", "c_fill_interaction_orange", "c_fill_no_color"); ?></div>
+<p>svg_edit_view("c_fill_interaction_orange", "c_fill_no_color", "c_fill_yes_color");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_edit_view("c_fill_interaction_orange", "c_fill_no_color", "c_fill_yes_color"); ?></div>
 </div>
 
 <hr><div>
-<p>svg_faq("c_fill_main_menu_dark_blue");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_faq("c_fill_main_menu_dark_blue"); ?></div>
-<p>svg_faq("c_fill_interaction_orange_neon");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_faq("c_fill_interaction_orange_neon"); ?></div>
+<p>svg_faq("c_fill_blue_dark");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_faq("c_fill_blue_dark"); ?></div>
+<p>svg_faq("c_fill_interaction_orange");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_faq("c_fill_interaction_orange"); ?></div>
 </div>
 
 <hr><div>
-<p>svg_filter("c_fill_main_menu_dark_blue");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_filter("c_fill_main_menu_dark_blue"); ?></div>
-<p>svg_filter("c_fill_interaction_orange_neon");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_filter("c_fill_interaction_orange_neon"); ?></div>
+<p>svg_filter("c_fill_blue_dark");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_filter("c_fill_blue_dark"); ?></div>
+<p>svg_filter("c_fill_interaction_orange");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_filter("c_fill_interaction_orange"); ?></div>
 </div>
 
 <hr><div>
-<p>svg_group("c_fill_main_menu_dark_blue");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_group("c_fill_main_menu_dark_blue"); ?></div>
-<p>svg_group("c_fill_interaction_orange_neon");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_group("c_fill_interaction_orange_neon"); ?></div>
+<p>svg_group("c_fill_blue_dark");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_group("c_fill_blue_dark"); ?></div>
+<p>svg_group("c_fill_interaction_orange");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_group("c_fill_interaction_orange"); ?></div>
 </div>
 
 <hr><div>
-<p>svg_group_new("c_fill_main_menu_dark_blue");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_group_new("c_fill_main_menu_dark_blue"); ?></div>
-<p>svg_group_new("c_fill_interaction_orange_neon");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_group_new("c_fill_interaction_orange_neon"); ?></div>
+<p>svg_group_new("c_fill_blue_dark");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_group_new("c_fill_blue_dark"); ?></div>
+<p>svg_group_new("c_fill_interaction_orange");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_group_new("c_fill_interaction_orange"); ?></div>
 </div>
 
 <hr><div>
-<p>svg_group_update("c_fill_main_menu_dark_blue");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_group_update("c_fill_main_menu_dark_blue"); ?></div>
-<p>svg_group_update("c_fill_interaction_orange_neon");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_group_update("c_fill_interaction_orange_neon"); ?></div>
+<p>svg_group_update("c_fill_blue_dark");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_group_update("c_fill_blue_dark"); ?></div>
+<p>svg_group_update("c_fill_interaction_orange");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_group_update("c_fill_interaction_orange"); ?></div>
 </div>
 
 <hr><div>
-<p>svg_help("c_fill_main_menu_dark_blue");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_help("c_fill_main_menu_dark_blue"); ?></div>
-<p>svg_help("c_fill_interaction_orange_neon");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_help("c_fill_interaction_orange_neon"); ?></div>
+<p>svg_help("c_fill_blue_dark");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_help("c_fill_blue_dark"); ?></div>
+<p>svg_help("c_fill_interaction_orange");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_help("c_fill_interaction_orange"); ?></div>
 </div>
 
 <hr><div>
-<p>svg_idea("c_fill_main_menu_dark_blue");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_idea("c_fill_main_menu_dark_blue"); ?></div>
-<p>svg_idea("c_fill_interaction_orange_neon");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_idea("c_fill_interaction_orange_neon"); ?></div>
+<p>svg_idea("c_fill_blue_dark");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_idea("c_fill_blue_dark"); ?></div>
+<p>svg_idea("c_fill_interaction_orange");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_idea("c_fill_interaction_orange"); ?></div>
 </div>
 
 <hr><div>
-<p>svg_index_desktop("c_fill_main_menu_dark_blue");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_index_desktop("c_fill_main_menu_dark_blue"); ?></div>
-<p>svg_index_desktop("c_fill_interaction_orange_neon");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_index_desktop("c_fill_interaction_orange_neon"); ?></div>
+<p>svg_index_desktop("c_fill_blue_dark");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_index_desktop("c_fill_blue_dark"); ?></div>
+<p>svg_index_desktop("c_fill_interaction_orange");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_index_desktop("c_fill_interaction_orange"); ?></div>
 </div>
 
 <hr><div>
-<p>svg_index_mobile("c_fill_main_menu_dark_blue");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_index_mobile("c_fill_main_menu_dark_blue"); ?></div>
-<p>svg_index_mobile("c_fill_interaction_orange_neon");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_index_mobile("c_fill_interaction_orange_neon"); ?></div>
+<p>svg_index_mobile("c_fill_blue_dark");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_index_mobile("c_fill_blue_dark"); ?></div>
+<p>svg_index_mobile("c_fill_interaction_orange");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_index_mobile("c_fill_interaction_orange"); ?></div>
 </div>
 
 <hr><div>
-<p>svg_info("c_fill_main_menu_dark_blue", "c_fill_interaction_orange_neon");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_info("c_fill_main_menu_dark_blue", "c_fill_interaction_orange_neon"); ?></div>
-<p>svg_info("c_fill_interaction_orange_neon", "c_fill_interaction_red");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_info("c_fill_interaction_orange_neon", "c_fill_interaction_red"); ?></div>
+<p>svg_info("c_fill_blue_dark", "c_fill_interaction_orange");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_info("c_fill_blue_dark", "c_fill_interaction_orange"); ?></div>
+<p>svg_info("c_fill_interaction_orange", "c_fill_no_color");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_info("c_fill_interaction_orange", "c_fill_no_color"); ?></div>
 </div>
 
 <hr><div>
-<p>svg_lock("c_fill_main_menu_dark_blue", "c_fill_interaction_orange_neon");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_lock("c_fill_main_menu_dark_blue", "c_fill_interaction_orange_neon"); ?></div>
-<p>svg_lock("c_fill_interaction_orange_neon", "c_fill_interaction_red");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_lock("c_fill_interaction_orange_neon", "c_fill_interaction_red"); ?></div>
+<p>svg_lock("c_fill_blue_dark", "c_fill_interaction_orange");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_lock("c_fill_blue_dark", "c_fill_interaction_orange"); ?></div>
+<p>svg_lock("c_fill_interaction_orange", "c_fill_no_color");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_lock("c_fill_interaction_orange", "c_fill_no_color"); ?></div>
 </div>
 
 <hr><div>
-<p>svg_login("c_fill_main_menu_dark_blue", "c_fill_interaction_orange_neon");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_login("c_fill_main_menu_dark_blue", "c_fill_interaction_orange_neon"); ?></div>
-<p>svg_login("c_fill_interaction_orange_neon", "c_fill_interaction_red");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_login("c_fill_interaction_orange_neon", "c_fill_interaction_red"); ?></div>
+<p>svg_login("c_fill_blue_dark", "c_fill_interaction_orange");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_login("c_fill_blue_dark", "c_fill_interaction_orange"); ?></div>
+<p>svg_login("c_fill_interaction_orange", "c_fill_no_color");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_login("c_fill_interaction_orange", "c_fill_no_color"); ?></div>
 </div>
 
 <hr><div>
-<p>svg_note("c_fill_main_menu_dark_blue");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_note("c_fill_main_menu_dark_blue"); ?></div>
-<p>svg_note("c_fill_interaction_orange_neon");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_note("c_fill_interaction_orange_neon"); ?></div>
+<p>svg_note("c_fill_blue_dark");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_note("c_fill_blue_dark"); ?></div>
+<p>svg_note("c_fill_interaction_orange");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_note("c_fill_interaction_orange"); ?></div>
 </div>
 
 <hr><div>
-<p>svg_note_private("c_fill_main_menu_dark_blue", "c_fill_interaction_orange_neon", "c_fill_interaction_red");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_note_private("c_fill_main_menu_dark_blue", "c_fill_interaction_orange_neon", "c_fill_interaction_red"); ?></div>
-<p>svg_note_private("c_fill_interaction_orange_neon", "c_fill_interaction_red", "c_fill_form_green");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_note_private("c_fill_interaction_orange_neon", "c_fill_interaction_red", "c_fill_form_green"); ?></div>
+<p>svg_note_private("c_fill_blue_dark", "c_fill_interaction_orange", "c_fill_no_color");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_note_private("c_fill_blue_dark", "c_fill_interaction_orange", "c_fill_no_color"); ?></div>
+<p>svg_note_private("c_fill_interaction_orange", "c_fill_no_color", "c_fill_yes_color");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_note_private("c_fill_interaction_orange", "c_fill_no_color", "c_fill_yes_color"); ?></div>
 </div>
 
 <hr><div>
-<p>svg_phase_next("c_fill_main_menu_dark_blue");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_phase_next("c_fill_main_menu_dark_blue"); ?></div>
-<p>svg_phase_next("c_fill_interaction_orange_neon");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_phase_next("c_fill_interaction_orange_neon"); ?></div>
+<p>svg_phase_next("c_fill_blue_dark");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_phase_next("c_fill_blue_dark"); ?></div>
+<p>svg_phase_next("c_fill_interaction_orange");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_phase_next("c_fill_interaction_orange"); ?></div>
 </div>
 
 <hr><div>
-<p>svg_play("c_fill_main_menu_dark_blue");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_play("c_fill_main_menu_dark_blue"); ?></div>
-<p>svg_play("c_fill_interaction_orange_neon");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_play("c_fill_interaction_orange_neon"); ?></div>
+<p>svg_play("c_fill_blue_dark");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_play("c_fill_blue_dark"); ?></div>
+<p>svg_play("c_fill_interaction_orange");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_play("c_fill_interaction_orange"); ?></div>
 </div>
 
 <hr><div>
-<p>svg_plus("c_fill_main_menu_dark_blue");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_plus("c_fill_main_menu_dark_blue"); ?></div>
-<p>svg_plus("c_fill_interaction_orange_neon");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_plus("c_fill_interaction_orange_neon"); ?></div>
+<p>svg_plus("c_fill_blue_dark");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_plus("c_fill_blue_dark"); ?></div>
+<p>svg_plus("c_fill_interaction_orange");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_plus("c_fill_interaction_orange"); ?></div>
 </div>
 
 <hr><div>
-<p>svg_process("c_fill_main_menu_dark_blue");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_process("c_fill_main_menu_dark_blue"); ?></div>
-<p>svg_process("c_fill_interaction_orange_neon");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_process("c_fill_interaction_orange_neon"); ?></div>
+<p>svg_process("c_fill_blue_dark");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_process("c_fill_blue_dark"); ?></div>
+<p>svg_process("c_fill_interaction_orange");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_process("c_fill_interaction_orange"); ?></div>
 </div>
 
 <hr><div>
-<p>svg_process_new("c_fill_main_menu_dark_blue");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_process_new("c_fill_main_menu_dark_blue"); ?></div>
-<p>svg_process_new("c_fill_interaction_orange_neon");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_process_new("c_fill_interaction_orange_neon"); ?></div>
+<p>svg_process_new("c_fill_blue_dark");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_process_new("c_fill_blue_dark"); ?></div>
+<p>svg_process_new("c_fill_interaction_orange");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_process_new("c_fill_interaction_orange"); ?></div>
 </div>
 
 <hr><div>
-<p>svg_process_update("c_fill_main_menu_dark_blue");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_process_update("c_fill_main_menu_dark_blue"); ?></div>
-<p>svg_process_update("c_fill_interaction_orange_neon");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_process_update("c_fill_interaction_orange_neon"); ?></div>
+<p>svg_process_update("c_fill_blue_dark");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_process_update("c_fill_blue_dark"); ?></div>
+<p>svg_process_update("c_fill_interaction_orange");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_process_update("c_fill_interaction_orange"); ?></div>
 </div>
 
 <hr><div>
-<p>svg_question("c_fill_main_menu_dark_blue");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_question("c_fill_main_menu_dark_blue"); ?></div>
-<p>svg_question("c_fill_interaction_orange_neon");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_question("c_fill_interaction_orange_neon"); ?></div>
+<p>svg_question("c_fill_blue_dark");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_question("c_fill_blue_dark"); ?></div>
+<p>svg_question("c_fill_interaction_orange");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_question("c_fill_interaction_orange"); ?></div>
 </div>
 
 <hr><div>
-<p>svg_reader("c_fill_main_menu_dark_blue");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_reader("c_fill_main_menu_dark_blue"); ?></div>
-<p>svg_reader("c_fill_interaction_orange_neon");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_reader("c_fill_interaction_orange_neon"); ?></div>
+<p>svg_reader("c_fill_blue_dark");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_reader("c_fill_blue_dark"); ?></div>
+<p>svg_reader("c_fill_interaction_orange");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_reader("c_fill_interaction_orange"); ?></div>
 </div>
 
 <hr><div>
-<p>svg_reply("c_fill_main_menu_dark_blue");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_reply("c_fill_main_menu_dark_blue"); ?></div>
-<p>svg_reply("c_fill_interaction_orange_neon");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_reply("c_fill_interaction_orange_neon"); ?></div>
+<p>svg_reply("c_fill_blue_dark");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_reply("c_fill_blue_dark"); ?></div>
+<p>svg_reply("c_fill_interaction_orange");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_reply("c_fill_interaction_orange"); ?></div>
 </div>
 
 <hr><div>
-<p>svg_save("c_fill_main_menu_dark_blue");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_save("c_fill_main_menu_dark_blue"); ?></div>
-<p>svg_save("c_fill_interaction_orange_neon");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_save("c_fill_interaction_orange_neon"); ?></div>
+<p>svg_save("c_fill_blue_dark");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_save("c_fill_blue_dark"); ?></div>
+<p>svg_save("c_fill_interaction_orange");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_save("c_fill_interaction_orange"); ?></div>
 </div>
 
 <hr><div>
-<p>svg_search("c_fill_main_menu_dark_blue");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_search("c_fill_main_menu_dark_blue"); ?></div>
-<p>svg_search("c_fill_interaction_orange_neon");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_search("c_fill_interaction_orange_neon"); ?></div>
+<p>svg_search("c_fill_blue_dark");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_search("c_fill_blue_dark"); ?></div>
+<p>svg_search("c_fill_interaction_orange");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_search("c_fill_interaction_orange"); ?></div>
 </div>
 
 <hr><div>
-<p>svg_share("c_fill_main_menu_dark_blue", "c_fill_interaction_orange_neon");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_share("c_fill_main_menu_dark_blue", "c_fill_interaction_orange_neon"); ?></div>
-<p>svg_share("c_fill_interaction_orange_neon", "c_fill_interaction_red");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_share("c_fill_interaction_orange_neon", "c_fill_interaction_red"); ?></div>
+<p>svg_share("c_fill_blue_dark", "c_fill_interaction_orange");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_share("c_fill_blue_dark", "c_fill_interaction_orange"); ?></div>
+<p>svg_share("c_fill_interaction_orange", "c_fill_no_color");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_share("c_fill_interaction_orange", "c_fill_no_color"); ?></div>
 </div>
 
 <hr><div>
-<p>svg_sort("c_fill_main_menu_dark_blue");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_sort("c_fill_main_menu_dark_blue"); ?></div>
-<p>svg_sort("c_fill_interaction_orange_neon");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_sort("c_fill_interaction_orange_neon"); ?></div>
+<p>svg_sort("c_fill_blue_dark");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_sort("c_fill_blue_dark"); ?></div>
+<p>svg_sort("c_fill_interaction_orange");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_sort("c_fill_interaction_orange"); ?></div>
 </div>
 
 <hr><div>
-<p>svg_user("c_fill_main_menu_dark_blue");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_user("c_fill_main_menu_dark_blue"); ?></div>
-<p>svg_user("c_fill_interaction_orange_neon");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_user("c_fill_interaction_orange_neon"); ?></div>
+<p>svg_user("c_fill_blue_dark");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_user("c_fill_blue_dark"); ?></div>
+<p>svg_user("c_fill_interaction_orange");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_user("c_fill_interaction_orange"); ?></div>
 </div>
 
 <hr><div>
-<p>svg_user_profile("c_fill_main_menu_dark_blue");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_user_profile("c_fill_main_menu_dark_blue"); ?></div>
-<p>svg_user_profile("c_fill_interaction_orange_neon");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_user_profile("c_fill_interaction_orange_neon"); ?></div>
+<p>svg_user_profile("c_fill_blue_dark");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_user_profile("c_fill_blue_dark"); ?></div>
+<p>svg_user_profile("c_fill_interaction_orange");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_user_profile("c_fill_interaction_orange"); ?></div>
 </div>
 
 <hr><div>
-<p>svg_vote_negative("c_fill_main_menu_dark_blue", "c_fill_interaction_orange_neon");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_vote_negative("c_fill_main_menu_dark_blue", "c_fill_interaction_orange_neon"); ?></div>
-<p>svg_vote_negative("c_fill_interaction_orange_neon", "c_fill_interaction_red");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_vote_negative("c_fill_interaction_orange_neon", "c_fill_interaction_red"); ?></div>
+<p>svg_vote_negative("c_fill_blue_dark", "c_fill_interaction_orange");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_vote_negative("c_fill_blue_dark", "c_fill_interaction_orange"); ?></div>
+<p>svg_vote_negative("c_fill_interaction_orange", "c_fill_no_color");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_vote_negative("c_fill_interaction_orange", "c_fill_no_color"); ?></div>
 </div>
 
 <hr><div>
-<p>svg_vote_neutral("c_fill_main_menu_dark_blue", "c_fill_interaction_orange_neon");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_vote_neutral("c_fill_main_menu_dark_blue", "c_fill_interaction_orange_neon"); ?></div>
-<p>svg_vote_neutral("c_fill_interaction_orange_neon", "c_fill_interaction_red");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_vote_neutral("c_fill_interaction_orange_neon", "c_fill_interaction_red"); ?></div>
+<p>svg_vote_neutral("c_fill_blue_dark", "c_fill_interaction_orange");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_vote_neutral("c_fill_blue_dark", "c_fill_interaction_orange"); ?></div>
+<p>svg_vote_neutral("c_fill_interaction_orange", "c_fill_no_color");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_vote_neutral("c_fill_interaction_orange", "c_fill_no_color"); ?></div>
 </div>
 
 <hr><div>
-<p>svg_vote_positive("c_fill_main_menu_dark_blue", "c_fill_interaction_orange_neon");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_vote_positive("c_fill_main_menu_dark_blue", "c_fill_interaction_orange_neon"); ?></div>
-<p>svg_vote_positive("c_fill_interaction_orange_neon", "c_fill_interaction_red");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_vote_positive("c_fill_interaction_orange_neon", "c_fill_interaction_red"); ?></div>
+<p>svg_vote_positive("c_fill_blue_dark", "c_fill_interaction_orange");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_vote_positive("c_fill_blue_dark", "c_fill_interaction_orange"); ?></div>
+<p>svg_vote_positive("c_fill_interaction_orange", "c_fill_no_color");</p><div style="position: relative; width: 70px; margin: 3px; border: 1px dashed black;"><?php svg_vote_positive("c_fill_interaction_orange", "c_fill_no_color"); ?></div>
 </div>
 
 <?php } ?>
