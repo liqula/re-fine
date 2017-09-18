@@ -16,6 +16,7 @@ import           Network.Wai (Middleware)
 import           System.IO.Unsafe
 import           Network.WebSockets
 import           Network.Wai.Handler.WebSockets
+import           Crypto.Random.Entropy
 
 import Refine.Common.Types
 import Refine.Common.Rest (ApiError)
@@ -30,14 +31,14 @@ import Refine.Backend.Database
 import Refine.Backend.Logger
 
 
-type WebSocketMVar = MVar (Int{-to generate fresh CacheIds-}, Map WSSessionId WebSocketSession)
+type WebSocketMVar = MVar (Map WSSessionId WebSocketSession)
 type WebSocketSession = ((Connection, MVar AppState), Set CacheKey)
 
 -- | This is the place where all the session's 'AppState's are kept between websocket
 -- connections.
 {-# NOINLINE webSocketMVar #-}
 webSocketMVar :: WebSocketMVar
-webSocketMVar = unsafePerformIO $ newMVar (0, mempty)
+webSocketMVar = unsafePerformIO $ newMVar mempty
 
 -- | Clear the web socket server state and destroy all sessions.
 --
@@ -48,20 +49,22 @@ webSocketMVar = unsafePerformIO $ newMVar (0, mempty)
 -- this is mostly an issue in tests; in production, we only ever start one server and leave that
 -- running forever.
 resetWebSocketMVar :: IO ()
-resetWebSocketMVar = tryTakeMVar webSocketMVar >> putMVar webSocketMVar (0, mempty)
+resetWebSocketMVar = tryTakeMVar webSocketMVar >> putMVar webSocketMVar mempty
 
 openWsConn :: Config -> Connection -> IO WSSessionId
 openWsConn cfg conn = do
   appState <- newMVar $ initialAppState cfg
-  modifyMVar webSocketMVar $ \(n, cmap) -> do
-    let n' = n + 1
-        cmap' = Map.insert n ((conn, appState), mempty) cmap
-    pure ((n', cmap'), n)
+  modifyMVar webSocketMVar $ \cmap -> do
+    rnd <- getEntropy 512
+    time <- getCurrentTimestamp
+    let i = WSSessionId $ cs (rnd :: SBS) <> cs (show time)
+        cmap' = Map.insert i ((conn, appState), mempty) cmap
+    pure (cmap', i)
 
 closeWsConn :: WSSessionId -> IO ()
 closeWsConn n = do
-  modifyMVar webSocketMVar $ \(n_, cmap) ->do
-    pure ((n_, Map.delete n cmap), ())
+  modifyMVar webSocketMVar $ \cmap ->do
+    pure (Map.delete n cmap, ())
 
 
 class MonadWS m where
@@ -72,7 +75,7 @@ class MonadWS m where
 instance MonadIO m => MonadWS m where
   sendMessage conn msg = liftIO $ sendTextData conn (cs $ encode msg :: ST)
   receiveMessage conn = liftIO $ receiveData conn <&> fromMaybe (error "websockets json decoding error") . decode
-  modifyCache sid f = liftIO . modifyMVar webSocketMVar $ \(n, m) -> pure ((n, Map.adjust (second f) sid m), ())
+  modifyCache sid f = liftIO . modifyMVar webSocketMVar $ \m -> pure (Map.adjust (second f) sid m, ())
 
 
 getData :: CacheKey -> App ServerCache
@@ -89,8 +92,8 @@ getData = \case
 instance Database db => MonadCache (AppM db) where
     invalidateCaches keys = do
         cmap <- liftIO $ takeMVar webSocketMVar
-        let cmap' = second (second (Set.\\ keys) <$>) cmap
-            cls = [(n, conn, d) | (n, ((conn, _), s)) <- Map.assocs $ snd cmap, let d = Set.intersection keys s, not $ Set.null d]
+        let cmap' = second (Set.\\ keys) <$> cmap
+            cls = [(n, conn, d) | (n, ((conn, _), s)) <- Map.assocs cmap, let d = Set.intersection keys s, not $ Set.null d]
         appLog LogDebug $ "invalidate cache items " <> show (Set.toList keys)
         forM_ cls $ \(n, conn, d) -> do
             liftIO . sendMessage conn . TCInvalidateKeys $ Set.toList d
@@ -144,7 +147,7 @@ handshake cfg conn (Logger logger) = receiveMessage conn >>= \case
   -- the client is reconnected, its WSSessionId is n
   TSGreeting (Just n) -> do
     cmap <- takeMVar webSocketMVar
-    putMVar webSocketMVar $ second (Map.adjust (_2 .~ mempty) n) cmap
+    putMVar webSocketMVar $ Map.adjust (_2 .~ mempty) n cmap
     sendMessage conn $ TCRestrictKeys []  -- TUNING: only send this if we know something happened since the disconnect.
     logger LogDebug $ "websocket client #" <> show n <> " is reconnected"
     pure n
@@ -167,7 +170,7 @@ cmdLoopStepFrame toIO clientId = dolift . dostate
   where
     dostate :: m -> m
     dostate cmd = do
-      Just ((_, appStateMVar), _) <- Map.lookup clientId . snd <$> liftIO (readMVar webSocketMVar)
+      Just ((_, appStateMVar), _) <- Map.lookup clientId <$> liftIO (readMVar webSocketMVar)
       put =<< liftIO (takeMVar appStateMVar)
       cmd
       liftIO . putMVar appStateMVar =<< get

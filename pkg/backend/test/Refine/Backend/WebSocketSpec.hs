@@ -89,7 +89,7 @@ data WSBackend = WSBackend
 throttle :: IO ()
 throttle = threadDelay =<< randomRIO (1, 1000000)
 
-stresser :: Int -> Int -> IO (Async Int)
+stresser :: Int -> Int -> IO (Async WSSessionId)
 stresser port rounds = async $ do
   TCGreeting cid <- runWS port $ \conn ->
     sendMessage conn (TSGreeting Nothing) >> receiveMessage conn
@@ -106,7 +106,7 @@ stresser port rounds = async $ do
 
 stressers :: Int -> Int -> Int -> IO ()
 stressers port agents rounds = do
-  as :: [Async Int] <- forM [0..agents] . const $ stresser port rounds
+  as :: [Async WSSessionId] <- forM [0..agents] . const $ stresser port rounds
   result <- show <$> wait `mapM` as
   when verbose_ $ hPutStrLn stderr result
   length result `shouldNotBe` 0
