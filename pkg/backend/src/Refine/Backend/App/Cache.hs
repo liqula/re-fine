@@ -5,8 +5,8 @@
 
 -- | (This module is called "Cache" for historical reasons.  It's really more of a "WebSocket"
 -- protocol module, perhaps we should rename it.)
-module Refine.Backend.App.Cache
-  ( startWebSocketServer
+module Refine.Backend.App.Cache  -- FIXME: rename to WebSocket.  this is the only place where
+  ( startWebSocketServer         -- communication happens, it's not just about caching.
   , resetWebSocketMVar
   ) where
 #include "import_backend.hs"
@@ -16,7 +16,8 @@ import           Network.Wai (Middleware)
 import           System.IO.Unsafe
 import           Network.WebSockets
 import           Network.Wai.Handler.WebSockets
-import           Crypto.Random.Entropy
+import qualified "cryptonite" Crypto.Hash as CRT
+import qualified Crypto.Random.Entropy as CRT
 
 import Refine.Common.Types
 import Refine.Common.Rest (ApiError)
@@ -51,14 +52,18 @@ webSocketMVar = unsafePerformIO $ newMVar mempty
 resetWebSocketMVar :: IO ()
 resetWebSocketMVar = tryTakeMVar webSocketMVar >> putMVar webSocketMVar mempty
 
+mkWSSessionId :: IO WSSessionId
+mkWSSessionId = do
+  rnd  <- CRT.getEntropy 512
+  time <- cs . show <$> getCurrentTimestamp
+  pure . WSSessionId . cs . show . (CRT.hash @SBS @CRT.SHA3_512) $ rnd <> time
+
 openWsConn :: Config -> Connection -> IO WSSessionId
 openWsConn cfg conn = do
   appState <- newMVar $ initialAppState cfg
   modifyMVar webSocketMVar $ \cmap -> do
-    rnd <- getEntropy 512
-    time <- getCurrentTimestamp
-    let i = WSSessionId $ cs (rnd :: SBS) <> cs (show time)
-        cmap' = Map.insert i ((conn, appState), mempty) cmap
+    i <- mkWSSessionId
+    let cmap' = Map.insert i ((conn, appState), mempty) cmap
     pure (cmap', i)
 
 closeWsConn :: WSSessionId -> IO ()
