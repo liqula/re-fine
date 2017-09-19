@@ -13,9 +13,8 @@ import Refine.Common.Types.Vote
 
 -- | (it would be nice if we could re-use the session id from 'AppUserState', but that's only
 -- available when logged in, and web sockets need to work for anonymous users, too.)
---
--- FIXME: #435
-type WSSessionId = Int
+newtype WSSessionId = WSSessionId ST
+  deriving (Eq, Ord, Show, Generic)
 
 
 -- ** Server cache
@@ -111,4 +110,4 @@ invalidateOrRestrictCache invalidate (Set.toList -> keys) (ServerCache a b d e f
     restrictKeys m ks = Map.filterWithKey (\k _ -> Set.notMember k ks' == invalidate) m
       where ks' = Set.fromList ks
 
-deriveClasses [([''ServerCache, ''CacheKey, ''ToServer, ''ToClient], allClass)]
+deriveClasses [([''ServerCache, ''CacheKey, ''ToServer, ''ToClient, ''WSSessionId], allClass)]

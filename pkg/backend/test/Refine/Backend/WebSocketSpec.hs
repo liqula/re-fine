@@ -14,6 +14,7 @@ import System.Timeout
 import Test.Hspec
 
 import Refine.Backend.App.Access
+import Refine.Backend.App.Cache (mkWSSessionId)
 import Refine.Backend.App.MigrateDB (initializeDB)
 import Refine.Backend.Config
 import Refine.Backend.Server (backendServer)
@@ -89,7 +90,7 @@ data WSBackend = WSBackend
 throttle :: IO ()
 throttle = threadDelay =<< randomRIO (1, 1000000)
 
-stresser :: Int -> Int -> IO (Async Int)
+stresser :: Int -> Int -> IO (Async WSSessionId)
 stresser port rounds = async $ do
   TCGreeting cid <- runWS port $ \conn ->
     sendMessage conn (TSGreeting Nothing) >> receiveMessage conn
@@ -106,7 +107,7 @@ stresser port rounds = async $ do
 
 stressers :: Int -> Int -> Int -> IO ()
 stressers port agents rounds = do
-  as :: [Async Int] <- forM [0..agents] . const $ stresser port rounds
+  as :: [Async WSSessionId] <- forM [0..agents] . const $ stresser port rounds
   result <- show <$> wait `mapM` as
   when verbose_ $ hPutStrLn stderr result
   length result `shouldNotBe` 0
@@ -125,6 +126,14 @@ specStories = describe "stories" . around wsBackend $ do
     \(WSBackend _ port _) -> do
       pendingWith "this test is broken."
       stressers port 100 3
+
+  it "generating session ids is not too expensive" $ \_ -> do
+    -- generating 10k session ids takes <2secs in ghci.  shrinking the getEntropy parameter has little effect on this.
+    let n = 100
+    () <- print =<< getCurrentTime
+    sids <- replicateM n mkWSSessionId
+    () <- print =<< getCurrentTime
+    length sids `shouldBe` n
 
   it "story 1" $ do
     \(WSBackend _ _ conn) -> do
