@@ -14,5 +14,7 @@ import Refine.Common.Types.Prelude (ID, User)
 setUserSession :: ID User -> UserSession -> App ()
 setUserSession user session = appUserState .= UserLoggedIn user session
 
+-- | This only deletes the 'App' session state, the state maintained by the users package is cleared
+-- in 'Refine.Backend.App.User.logout'.
 clearUserSession :: App ()
 clearUserSession = appUserState .= UserLoggedOut
