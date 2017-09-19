@@ -59,7 +59,7 @@ mkWSSessionId :: IO WSSessionId
 mkWSSessionId = do
   rnd  <- CRT.getEntropy 512
   time <- cs . show <$> getCurrentTimestamp
-  pure . WSSessionId . cs . show . (CRT.hash @SBS @CRT.SHA3_512) $ rnd <> time
+  pure . WSSessionId . cs . show . CRT.hash @SBS @CRT.SHA3_512 $ rnd <> time
 
 openWsConn :: Config -> Connection -> IO WSSessionId
 openWsConn cfg conn = do
