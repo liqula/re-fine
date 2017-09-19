@@ -37,7 +37,11 @@ initWebSocket = do
 
         wsMessage msg = do
           case getData msg of
-            StringData x -> case fromMaybe (error "websockets json decoding error") . decode $ cs x of
+            StringData x -> maybe (error "websockets json decoding error") wsParsedMessage . decode $ cs x
+            (BlobData _)        -> error "websockets error: BlobData not supported."
+            (ArrayBufferData _) -> error "websockets error: ArrayBufferData not supported."
+
+        wsParsedMessage = \case
               TCServerCache sc ->
                 executeAction . action @GlobalState . CacheAction $ RefreshServerCache sc
               TCInvalidateKeys keys ->
@@ -75,12 +79,12 @@ initWebSocket = do
                 dispatchAndExec . SetCurrentUser . UserLoggedIn $ user ^. userID
                 dispatchAndExec $ MainMenuAction MainMenuActionClose
                 dispatchAndExec LoginGuardPop
+              TCLogout -> do
+                dispatchAndExec . SetCurrentUser $ UserLoggedOut
+                wsParsedMessage TCReset
 
               TCTranslations l10 ->
                 dispatchAndExec $ ChangeTranslations l10
-
-            (BlobData _)        -> error "websockets error: BlobData not supported."
-            (ArrayBufferData _) -> error "websockets error: ArrayBufferData not supported."
 
         wsUrl = case clientCfg of
           ClientCfg port host ssl

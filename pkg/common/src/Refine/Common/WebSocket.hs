@@ -13,7 +13,7 @@ import Refine.Common.Types.Vote
 
 -- | (it would be nice if we could re-use the session id from 'AppUserState', but that's only
 -- available when logged in, and web sockets need to work for anonymous users, too.)
-newtype WSSessionId = WSSessionId ST
+newtype WSSessionId = WSSessionId { unWSSessionId :: ST }
   deriving (Eq, Ord, Show, Generic)
 
 
@@ -82,6 +82,7 @@ data ToClient
 
   | TCCreateUserResp (Either ApiError User)  -- ^ response to 'TSCreateUser'
   | TCLoginResp (Either ApiError User)       -- ^ response to 'TSLogin'
+  | TCLogout                                 -- ^ e.g. in case of sesssion timeout
   | TCTranslations L10                       -- ^ response to 'TSGetTranslations'
 
   | TCGreeting WSSessionId           -- ^ first message on connect

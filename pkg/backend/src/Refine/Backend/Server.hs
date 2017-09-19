@@ -16,7 +16,6 @@ import           Control.Concurrent.MVar
 import           Network.HTTP.Media ((//))
 import           Network.Wai.Handler.Warp as Warp
 import           Network.Wai (Middleware)
-import qualified Network.Wai.Session as SCS
 import qualified Servant.Cookie.Session as SCS
 import           Servant.Server.Internal (responseServantErr)
 import           Servant.Utils.StaticFiles (serveDirectory)

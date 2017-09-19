@@ -418,7 +418,9 @@ getStatement sid = do
 
 -- * User
 
--- | FUTUREWORK: this is an instance of the VarArg problem: the functions in 'UserStorageBackend'
+-- | Pass user handling work on to users package.
+--
+-- FUTUREWORK: this is an instance of the VarArg problem: the functions in 'UserStorageBackend'
 -- class take different numbers of arguments, but they always take `db` first.  it would be nice to,
 -- instead of:
 --
@@ -430,8 +432,9 @@ getStatement sid = do
 -- >>> runUsersCmdVarArg Users.createUser user
 -- >>> runUsersCmdVarArg Users.authUser username password sessionDuration
 runUsersCmd :: (Users.Persistent -> IO a) -> DB a
-runUsersCmd cmd = liftDB . ReaderT $ \(sqlBackend :: SqlBackend) ->
-  liftIO $ cmd (Users.Persistent (`runReaderT` sqlBackend))
+runUsersCmd cmd = liftDB . ReaderT $ \(sqlBackend :: SqlBackend) -> do
+  result <- liftIO $ cmd (Users.Persistent (`runReaderT` sqlBackend))
+  result `seq` pure result
 
 insertDBUser :: ID User -> UserDetails -> DB ()
 insertDBUser (ID uid) (img, desc) = do

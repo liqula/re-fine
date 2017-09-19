@@ -18,13 +18,14 @@ import Refine.Backend.App.User        as App
 import Refine.Backend.App.VDoc        as App
 import Refine.Backend.App.Cache       as App
 import Refine.Backend.Config
+import Refine.Backend.Database.Class (Database)
 import Refine.Backend.Logger
 import Refine.Common.Rest (ApiError)
 
 
 runApp
-  :: forall (db :: * -> *)
-  .  MkDBNat db
+  :: forall db. Database db
+  => MkDBNat db
   -> DBRunner
   -> Logger
   -> Config
