@@ -120,7 +120,7 @@ startWebSocketServer cfg toIO = websocketsOr options server
       conn <- acceptRequest pendingconnection
       pingLoop toIO conn
       clientId <- handshake cfg conn (mkLogger cfg)
-      forever (cmdLoopStepFrame toIO clientId (cmdLoopStep conn clientId)
+      forever (cmdLoopStepFrame toIO conn clientId (cmdLoopStep conn clientId)
                 `catch` handleAllErrors cfg conn (mkLogger cfg) clientId)
         `catch` giveUp conn (mkLogger cfg) clientId  -- FUTUREWORK: handle exceptions during inital handshake?
 
@@ -173,13 +173,15 @@ pingLoop :: HasCallStack => (forall a. AppM DB a -> IO (Either ApiError a)) -> C
 pingLoop toIO conn = either (error . show) (forkPingThread conn . timespanSecs)
                      =<< toIO (asks . view $ appConfig . cfgWSPingPeriod)
 
-cmdLoopStepFrame :: forall m. (m ~ AppM DB ()) => (m -> IO (Either ApiError ())) -> WSSessionId -> m -> IO ()
-cmdLoopStepFrame toIO clientId = dolift . dostate
+cmdLoopStepFrame :: forall m. (m ~ AppM DB ()) => (m -> IO (Either ApiError ())) -> Connection -> WSSessionId -> m -> IO ()
+cmdLoopStepFrame toIO conn clientId = dolift . dostate
   where
     dostate :: m -> m
     dostate cmd = do
       Just ((_, appStateMVar), _) <- Map.lookup clientId <$> liftIO (readMVar webSocketMVar)
       put =<< liftIO (takeMVar appStateMVar)
+      sessvalid <- verifyAppState
+      unless sessvalid $ sendMessage (Just clientId) conn TCReset
       cmd
       liftIO . putMVar appStateMVar =<< get
 

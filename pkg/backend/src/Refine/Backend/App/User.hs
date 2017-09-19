@@ -15,6 +15,7 @@ module Refine.Backend.App.User
   , doesUserExist
   , withCurrentUser
   , updateUser
+  , verifyAppState
   ) where
 #include "import_backend.hs"
 
@@ -27,7 +28,7 @@ import Refine.Backend.App.Smtp
 import Refine.Backend.App.Role
 import Refine.Backend.Config
 import Refine.Backend.Types
-import Refine.Backend.Database.Class (createMetaID_, getMetaID, insertDBUser, replaceDBUser, getDBUser)
+import Refine.Backend.Database.Class (Database, createMetaID_, getMetaID, insertDBUser, replaceDBUser, getDBUser)
 import qualified Refine.Backend.Database.Class as DB
 import Refine.Backend.Database.Entity (toUserID, fromUserID)
 import qualified Refine.Common.Access.Policy as AP
@@ -149,3 +150,16 @@ updateUser uid avatar = do
   assertCreds $ AP.updateUser uid
   db $ replaceDBUser uid avatar
   invalidateCaches $ Set.fromList [CacheKeyUser uid]
+
+
+-- | Set 'AppUserState' to logged out if session is valid.  Returns 'False' if session is no longer
+-- valid.
+verifyAppState :: Database db => AppM db Bool
+verifyAppState = do
+  appLog LogDebug "verifyAppState"
+  sessionDuration <- asks . view $ appConfig . cfgSessionLength . to timespanToNominalDiffTime
+  gets (view appUserState) >>= \case
+    UserLoggedOut -> pure True
+    UserLoggedIn _ (UserSession sid) -> dbUsersCmd (\db_ -> Users.verifySession db_ sid sessionDuration) >>= \case
+      Nothing -> modify (appUserState .~ UserLoggedOut) >> pure False
+      Just _ -> pure True
