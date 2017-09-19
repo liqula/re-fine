@@ -14,6 +14,7 @@ import System.Timeout
 import Test.Hspec
 
 import Refine.Backend.App.Access
+import Refine.Backend.App.Cache (mkWSSessionId)
 import Refine.Backend.App.MigrateDB (initializeDB)
 import Refine.Backend.Config
 import Refine.Backend.Server (backendServer)
@@ -125,6 +126,14 @@ specStories = describe "stories" . around wsBackend $ do
     \(WSBackend _ port _) -> do
       pendingWith "this test is broken."
       stressers port 100 3
+
+  it "generating session ids is not too expensive" $ \_ -> do
+    -- generating 10k session ids takes <2secs in ghci.  shrinking the getEntropy parameter has little effect on this.
+    let n = 100
+    () <- print =<< getCurrentTime
+    sids <- replicateM n mkWSSessionId
+    () <- print =<< getCurrentTime
+    length sids `shouldBe` n
 
   it "story 1" $ do
     \(WSBackend _ _ conn) -> do

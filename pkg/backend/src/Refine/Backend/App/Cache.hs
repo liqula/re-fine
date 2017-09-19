@@ -8,6 +8,9 @@
 module Refine.Backend.App.Cache  -- FIXME: rename to WebSocket.  this is the only place where
   ( startWebSocketServer         -- communication happens, it's not just about caching.
   , resetWebSocketMVar
+
+    -- * exported for testing only
+  , mkWSSessionId
   ) where
 #include "import_backend.hs"
 
