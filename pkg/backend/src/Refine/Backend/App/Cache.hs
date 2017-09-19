@@ -190,7 +190,7 @@ cmdLoopStepFrame toIO conn clientId = dolift . dostate
       Just ((_, appStateMVar), _) <- Map.lookup clientId <$> liftIO (readMVar webSocketMVar)
       put =<< liftIO (takeMVar appStateMVar)
       sessvalid <- verifyAppState
-      unless sessvalid $ sendMessage (Just clientId) conn TCReset
+      unless sessvalid $ sendMessage (Just clientId) conn TCLogout
       cmd
       liftIO . putMVar appStateMVar =<< get
 
