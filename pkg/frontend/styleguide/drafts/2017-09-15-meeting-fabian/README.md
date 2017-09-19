@@ -39,3 +39,36 @@ this is a list of screenshots and the pages in
 - color table:
   - anything missing?
   - should we re-arrange anything?
+
+- do we need background tiling?  that's harder with inlined svgs.
+- what color schemes are there?  currently we have RO/dark/bright, RO/bright/dark and a few hidden exceptions.
+
+
+## meeting log (german)
+
+- <title> in svg drinlassen, das sind die auto-tooltips (siehe xkcd).
+- alle icons nur in runder form.  3 farben + hintergrund.
+- farbtabelle "rgba" => "rgb" (obwohl egal)
+
+.a: hintergrund
+.b: hauptfarbe
+.c: optional
+.d: optional
+
+- button states:
+  - inaktiv (alle farben 50% transparent, kein mouse-over-effekt)
+  - gedrückt
+  - gedrückt, roll-over
+  - nicht gedrückt
+  - nicht gedrückt, roll-over: hauptfarbe icon wird gelb
+
+- farbschema:
+  - hell
+  - dunkel
+  - note
+  - discussion
+  - edit
+
+mystery-icon:
+ - untergruppen
+ - oder zentrieren, wenn's keine untergruppen gibt.  oder lücke lassen.
