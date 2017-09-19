@@ -14,7 +14,9 @@ module Refine.Backend.Database
 
 import Control.Monad.Logger
 import Data.Pool (Pool, withResource, destroyAllResources)
-import Database.Persist.Sqlite (SqlBackend, createSqlitePool, persistBackend, getStmtConn, connBegin, connRollback, connCommit)
+import Database.Persist.Sqlite ( SqlBackend, persistBackend, getStmtConn, connBegin, connRollback, connCommit
+                               , SqliteConnectionInfo, mkSqliteConnectionInfo, walEnabled, createSqlitePoolFromInfo
+                               )
 
 import Refine.Backend.Config
 import Refine.Backend.Database.Class as DatabaseCore
@@ -36,9 +38,14 @@ type MkDBNat db = DBConnection -> DBContext -> (db :~> ExceptT DBError IO)
 
 newtype DBRunner = DBRunner { unDBRunner :: forall m a . MonadBaseControl IO m => (DBConnection -> m a) -> m a }
 
+mkSqlInfo :: String -> SqliteConnectionInfo
+mkSqlInfo = (walEnabled .~ False)  -- #291, #444
+          . mkSqliteConnectionInfo
+          . cs
+
 createDBNat :: Config -> IO (DBRunner, MkDBNat DB, IO ())
 createDBNat cfg = do
-  pool <- runLoggerT $ createSqlitePool (cs sqliteDb) (cfg ^. cfgPoolSize)
+  pool <- runLoggerT $ createSqlitePoolFromInfo (mkSqlInfo sqliteDb) (cfg ^. cfgPoolSize)
   pure ( DBRunner (dbConnectionCont pool)
        , \dbc dbctx -> NT (wrapErrors . dbRun dbc . (`runReaderT` dbctx) . runExceptT . unDB)
        , destroyAllResources pool
