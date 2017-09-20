@@ -65,36 +65,30 @@ sibutton_ stlens st props = do
                 , onMouseLeave $ \_ _ -> simpleHandler $ \s -> ([], Just $ s & stlens . buttonRollOver .~ NotRollOver)
                 ]
 
-      -- TODO: if pressable (according to props), toggle pressed state.
       onClk :: [PropertyOrHandler handler]
       onClk = [onClick $ \evt mevt -> mkIbuttonClickHandler props evt mevt | props ^. ibEnabled]
 
-      -- TODO: use scss-new exclusively!
-      divStyle :: [Decl]
-      divStyle = [ decl "direction" (Ident "ltr")
-               , decl "width" (maximum [100, sizePx $ props ^. ibSize])
-               , decl "float" (Ident (case props ^. ibAlign of AlignLeft -> "left"; AlignRight -> "right"))
-               , decl "textAlign" (Ident "center")
-               , decl "pointerEvents" (Ident "all")
-               ] <>
-               (-- the float style above only works in main menu, not in the menu bar in the main screen.
-                if props ^. ibAlign == AlignRight
-                 then [ decl "marginLeft" (Ident "auto")
-                      , decl "marginRight" (Percentage 10)
-                      ]
-                 else [decl "margin" (Px $ sizeInt (props ^. ibSize) `div` 5)])
-               <> [decl "borderRadius" (Percentage 100)]
-               <> [decl "cursor" (Ident "pointer") | props ^. ibEnabled]
-               <> css (props ^. ibSize)
+      divclss = [ iconSizeCls (props ^. ibSize)
+                , case props ^. ibAlign of
+                    AlignLeft  -> "float-left"
+                    AlignRight -> "float-right"
+                , "margin1"  -- only sometimes; introduce 'ibExtraClasses' for this.
+                ]
 
-  -- TODO: opacity 50% when disabled.  (for both img tag and inline-svg.)
-  -- TODO: when disabled, do not send rollover to appColorSchema.
-  div_ (onMsOvr <> onClk <> ["style" @@= divStyle]) $ do
+      -- TODO: should this go to scss for coherence reasons?
+      divstyles = [decl "pointerEvents" (Ident "all"), decl "cursor" (Ident "pointer")]
+
+  -- TODO: if pressable (according to props), toggle pressed state.
+
+  -- TODO: when disabled: set opacity to 50% (for both img tag and inline-svg); do not send rollover
+  -- to color schema.  when enabled: [ {cursor: pointer} | props ^. ibEnabled ]
+
+  div_ (onMsOvr <> onClk <> ["className" $= toClasses divclss, "style" @@= divstyles]) $ do
     case props ^. ibImage of
       ButtonImageInline (Common.ImageInline i) -> img_ ["src" $= cs i] $ pure ()
       ButtonImageIcon i scm                    -> Svg.render scm (st ^. stlens) i
     forM_ (props ^. ibIndexNum) $
-      div_ [ "className" $= "number-top-right" ] . elemText . cs . show
+      div_ ["className" $= "number-top-right"] . elemText . cs . show
 
 
 emptyIbuttonProps :: HasCallStack => forall onclick. ButtonImage -> onclick -> IbuttonProps onclick

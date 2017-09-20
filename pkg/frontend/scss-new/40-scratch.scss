@@ -331,14 +331,13 @@ body {
   margin-top: $dunit * 2;
 }
 
-.platform-title {
-  color: $c_blue_morning;
-  font-size: $dunit * 6;
+.platform-title {  // FIXME: needs tweaking.  also see menu bar where this class is used.
+  background-image: url("../images/liqula_logo.svg");
   height: $dunit * 10;
   margin-left: auto;
   margin-right: auto;
   position: relative;
-  width: $dunit * 15;
+  width: $dunit * 30
 }
 
 .number-top-right {
@@ -371,7 +370,7 @@ body {
   position: absolute;
   left: $dunit * 2;
   top: $dunit * 2;
-  height: $icon-size-xxlarge;
+  height: $icon-size-xxlarge;  // FIXME: this follows from the button props
   width: $icon-size-xxlarge;
 }
 
@@ -379,7 +378,7 @@ body {
   position: absolute;
   right: $dunit * 2;
   top: $dunit * 2;
-  height: $icon-size-xxlarge;
+  height: $icon-size-xxlarge;  // FIXME: this follows from the button props
   width: $icon-size-xxlarge;
 }
 
@@ -412,6 +411,7 @@ body {
   height: $icon-size-medium;
   width: $icon-size-medium;
 }
+
 
 /* test */
 

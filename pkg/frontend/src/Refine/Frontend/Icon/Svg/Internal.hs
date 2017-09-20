@@ -264,7 +264,7 @@ svgCommentNew c0 c1 = do
 
 svgDiffCollapse :: Color -> ReactElementM h ()
 svgDiffCollapse c0 = do
-  svg_ ["xmlns" $= "http://www.w3.org/2000/svg", "width" $= "100", "height" $= "100", "viewBox" $= "0 0 100 100"] $ do
+  svg_ ["xmlns" $= "http://www.w3.org/2000/svg", "viewBox" $= "0 0 100 100"] $ do
     defs_ $ do mempty
     title_ $ do
       elemText "Zeichenfl\228che 1 Kopie 5"
@@ -273,7 +273,7 @@ svgDiffCollapse c0 = do
 
 svgDiffDetails :: Color -> ReactElementM h ()
 svgDiffDetails c0 = do
-  svg_ ["xmlns" $= "http://www.w3.org/2000/svg", "width" $= "100", "height" $= "100", "viewBox" $= "0 0 100 100"] $ do
+  svg_ ["xmlns" $= "http://www.w3.org/2000/svg", "viewBox" $= "0 0 100 100"] $ do
     defs_ $ do mempty
     title_ $ do
       elemText "Zeichenfl\228che 1 Kopie 6"
@@ -282,7 +282,7 @@ svgDiffDetails c0 = do
 
 svgDiffExpand :: Color -> ReactElementM h ()
 svgDiffExpand c0 = do
-  svg_ ["xmlns" $= "http://www.w3.org/2000/svg", "width" $= "100", "height" $= "100", "viewBox" $= "0 0 100 100"] $ do
+  svg_ ["xmlns" $= "http://www.w3.org/2000/svg", "viewBox" $= "0 0 100 100"] $ do
     defs_ $ do mempty
     title_ $ do
       elemText "Zeichenfl\228che 1 Kopie 3"
@@ -301,7 +301,7 @@ svgDiscussion c0 c1 = do
 
 svgDiscussionFlat :: Color -> ReactElementM h ()
 svgDiscussionFlat c0 = do
-  svg_ ["xmlns" $= "http://www.w3.org/2000/svg", "width" $= "100", "height" $= "100", "viewBox" $= "0 0 100 100"] $ do
+  svg_ ["xmlns" $= "http://www.w3.org/2000/svg", "viewBox" $= "0 0 100 100"] $ do
     defs_ $ do mempty
     title_ $ do
       elemText "Zeichenfl\228che 1 Kopie 5"
@@ -310,7 +310,7 @@ svgDiscussionFlat c0 = do
 
 svgDiscussionTree :: Color -> ReactElementM h ()
 svgDiscussionTree c0 = do
-  svg_ ["xmlns" $= "http://www.w3.org/2000/svg", "width" $= "100", "height" $= "100", "viewBox" $= "0 0 100 100"] $ do
+  svg_ ["xmlns" $= "http://www.w3.org/2000/svg", "viewBox" $= "0 0 100 100"] $ do
     defs_ $ do mempty
     title_ $ do
       elemText "Zeichenfl\228che 1 Kopie 5"
@@ -391,7 +391,7 @@ svgEditNew c0 c1 c2 = do
 
 svgEditReason :: Color -> ReactElementM h ()
 svgEditReason c0 = do
-  svg_ ["xmlns" $= "http://www.w3.org/2000/svg", "width" $= "100", "height" $= "100", "viewBox" $= "0 0 100 100"] $ do
+  svg_ ["xmlns" $= "http://www.w3.org/2000/svg", "viewBox" $= "0 0 100 100"] $ do
     defs_ $ do mempty
     title_ $ do
       elemText "Zeichenfl\228che 1 Kopie 3"
@@ -400,7 +400,7 @@ svgEditReason c0 = do
 
 svgEditToolbarBold :: Color -> ReactElementM h ()
 svgEditToolbarBold c0 = do
-  svg_ ["xmlns" $= "http://www.w3.org/2000/svg", "width" $= "100", "height" $= "100", "viewBox" $= "0 0 100 100"] $ do
+  svg_ ["xmlns" $= "http://www.w3.org/2000/svg", "viewBox" $= "0 0 100 100"] $ do
     defs_ $ do mempty
     title_ $ do
       elemText "Zeichenfl\228che 1 Kopie 8"
@@ -409,7 +409,7 @@ svgEditToolbarBold c0 = do
 
 svgEditToolbarBullets :: Color -> ReactElementM h ()
 svgEditToolbarBullets c0 = do
-  svg_ ["xmlns" $= "http://www.w3.org/2000/svg", "width" $= "100", "height" $= "100", "viewBox" $= "0 0 100 100"] $ do
+  svg_ ["xmlns" $= "http://www.w3.org/2000/svg", "viewBox" $= "0 0 100 100"] $ do
     defs_ $ do mempty
     title_ $ do
       elemText "Zeichenfl\228che 1 Kopie 8"
@@ -418,7 +418,7 @@ svgEditToolbarBullets c0 = do
 
 svgEditToolbarH1 :: Color -> ReactElementM h ()
 svgEditToolbarH1 c0 = do
-  svg_ ["xmlns" $= "http://www.w3.org/2000/svg", "width" $= "100", "height" $= "100", "viewBox" $= "0 0 100 100"] $ do
+  svg_ ["xmlns" $= "http://www.w3.org/2000/svg", "viewBox" $= "0 0 100 100"] $ do
     defs_ $ do mempty
     title_ $ do
       elemText "Zeichenfl\228che 1 Kopie 5"
@@ -428,7 +428,7 @@ svgEditToolbarH1 c0 = do
 
 svgEditToolbarH2 :: Color -> ReactElementM h ()
 svgEditToolbarH2 c0 = do
-  svg_ ["xmlns" $= "http://www.w3.org/2000/svg", "width" $= "100", "height" $= "100", "viewBox" $= "0 0 100 100"] $ do
+  svg_ ["xmlns" $= "http://www.w3.org/2000/svg", "viewBox" $= "0 0 100 100"] $ do
     defs_ $ do mempty
     title_ $ do
       elemText "Zeichenfl\228che 1 Kopie 3"
@@ -438,7 +438,7 @@ svgEditToolbarH2 c0 = do
 
 svgEditToolbarH3 :: Color -> ReactElementM h ()
 svgEditToolbarH3 c0 = do
-  svg_ ["xmlns" $= "http://www.w3.org/2000/svg", "width" $= "100", "height" $= "100", "viewBox" $= "0 0 100 100"] $ do
+  svg_ ["xmlns" $= "http://www.w3.org/2000/svg", "viewBox" $= "0 0 100 100"] $ do
     defs_ $ do mempty
     title_ $ do
       elemText "Zeichenfl\228che 1 Kopie 8"
@@ -447,7 +447,7 @@ svgEditToolbarH3 c0 = do
 
 svgEditToolbarItalic :: Color -> ReactElementM h ()
 svgEditToolbarItalic c0 = do
-  svg_ ["xmlns" $= "http://www.w3.org/2000/svg", "width" $= "100", "height" $= "100", "viewBox" $= "0 0 100 100"] $ do
+  svg_ ["xmlns" $= "http://www.w3.org/2000/svg", "viewBox" $= "0 0 100 100"] $ do
     defs_ $ do mempty
     title_ $ do
       elemText "Zeichenfl\228che 1 Kopie 3"
@@ -456,7 +456,7 @@ svgEditToolbarItalic c0 = do
 
 svgEditToolbarLink :: Color -> ReactElementM h ()
 svgEditToolbarLink c0 = do
-  svg_ ["xmlns" $= "http://www.w3.org/2000/svg", "width" $= "100", "height" $= "100", "viewBox" $= "0 0 100 100"] $ do
+  svg_ ["xmlns" $= "http://www.w3.org/2000/svg", "viewBox" $= "0 0 100 100"] $ do
     defs_ $ do mempty
     title_ $ do
       elemText "Zeichenfl\228che 1 Kopie 3"
@@ -477,7 +477,7 @@ svgEditToolbarNumbers c0 = do
 
 svgEditToolbarRedo :: Color -> ReactElementM h ()
 svgEditToolbarRedo c0 = do
-  svg_ ["xmlns" $= "http://www.w3.org/2000/svg", "width" $= "100", "height" $= "100", "viewBox" $= "0 0 100 100"] $ do
+  svg_ ["xmlns" $= "http://www.w3.org/2000/svg", "viewBox" $= "0 0 100 100"] $ do
     defs_ $ do mempty
     title_ $ do
       elemText "Zeichenfl\228che 1 Kopie 3"
@@ -486,7 +486,7 @@ svgEditToolbarRedo c0 = do
 
 svgEditToolbarSave :: Color -> ReactElementM h ()
 svgEditToolbarSave c0 = do
-  svg_ ["xmlns" $= "http://www.w3.org/2000/svg", "width" $= "100", "height" $= "100", "viewBox" $= "0 0 100 100"] $ do
+  svg_ ["xmlns" $= "http://www.w3.org/2000/svg", "viewBox" $= "0 0 100 100"] $ do
     defs_ $ do mempty
     title_ $ do
       elemText "Zeichenfl\228che 1 Kopie 3"
@@ -495,7 +495,7 @@ svgEditToolbarSave c0 = do
 
 svgEditToolbarUndo :: Color -> ReactElementM h ()
 svgEditToolbarUndo c0 = do
-  svg_ ["xmlns" $= "http://www.w3.org/2000/svg", "width" $= "100", "height" $= "100", "viewBox" $= "0 0 100 100"] $ do
+  svg_ ["xmlns" $= "http://www.w3.org/2000/svg", "viewBox" $= "0 0 100 100"] $ do
     defs_ $ do mempty
     title_ $ do
       elemText "Zeichenfl\228che 1 Kopie 6"
@@ -504,7 +504,7 @@ svgEditToolbarUndo c0 = do
 
 svgEditView :: Color -> Color -> Color -> ReactElementM h ()
 svgEditView c0 c1 c2 = do
-  svg_ ["xmlns" $= "http://www.w3.org/2000/svg", "width" $= "100", "height" $= "100", "viewBox" $= "0 0 100 100"] $ do
+  svg_ ["xmlns" $= "http://www.w3.org/2000/svg", "viewBox" $= "0 0 100 100"] $ do
     defs_ $ do mempty
     title_ $ do
       elemText "Zeichenfl\228che 1 Kopie 3"
@@ -517,7 +517,7 @@ svgEditView c0 c1 c2 = do
 
 svgFaq :: Color -> ReactElementM h ()
 svgFaq c0 = do
-  svg_ ["xmlns" $= "http://www.w3.org/2000/svg", "width" $= "100", "height" $= "100", "viewBox" $= "0 0 100 100"] $ do
+  svg_ ["xmlns" $= "http://www.w3.org/2000/svg", "viewBox" $= "0 0 100 100"] $ do
     defs_ $ do mempty
     title_ $ do
       elemText "Zeichenfl\228che 1 Kopie 3"
@@ -526,7 +526,7 @@ svgFaq c0 = do
 
 svgFilter :: Color -> ReactElementM h ()
 svgFilter c0 = do
-  svg_ ["xmlns" $= "http://www.w3.org/2000/svg", "width" $= "100", "height" $= "100", "viewBox" $= "0 0 100 100"] $ do
+  svg_ ["xmlns" $= "http://www.w3.org/2000/svg", "viewBox" $= "0 0 100 100"] $ do
     defs_ $ do mempty
     title_ $ do
       elemText "Zeichenfl\228che 1 Kopie 3"
@@ -535,7 +535,7 @@ svgFilter c0 = do
 
 svgGroup :: Color -> ReactElementM h ()
 svgGroup c0 = do
-  svg_ ["xmlns" $= "http://www.w3.org/2000/svg", "width" $= "100", "height" $= "100", "viewBox" $= "0 0 100 100"] $ do
+  svg_ ["xmlns" $= "http://www.w3.org/2000/svg", "viewBox" $= "0 0 100 100"] $ do
     defs_ $ do mempty
     title_ $ do
       elemText "Zeichenfl\228che 1 Kopie 3"
@@ -571,7 +571,7 @@ svgGroupUpdate c0 = do
 
 svgHelp :: Color -> ReactElementM h ()
 svgHelp c0 = do
-  svg_ ["xmlns" $= "http://www.w3.org/2000/svg", "width" $= "100", "height" $= "100", "viewBox" $= "0 0 100 100"] $ do
+  svg_ ["xmlns" $= "http://www.w3.org/2000/svg", "viewBox" $= "0 0 100 100"] $ do
     defs_ $ do mempty
     title_ $ do
       elemText "Zeichenfl\228che 1 Kopie 3"
@@ -581,7 +581,7 @@ svgHelp c0 = do
 
 svgIdea :: Color -> ReactElementM h ()
 svgIdea c0 = do
-  svg_ ["xmlns" $= "http://www.w3.org/2000/svg", "width" $= "100", "height" $= "100", "viewBox" $= "0 0 100 100"] $ do
+  svg_ ["xmlns" $= "http://www.w3.org/2000/svg", "viewBox" $= "0 0 100 100"] $ do
     defs_ $ do mempty
     title_ $ do
       elemText "Zeichenfl\228che 1 Kopie 3"
@@ -677,7 +677,7 @@ svgNotePrivate c0 c1 c2 = do
 
 svgPhaseNext :: Color -> ReactElementM h ()
 svgPhaseNext c0 = do
-  svg_ ["xmlns" $= "http://www.w3.org/2000/svg", "width" $= "100", "height" $= "100", "viewBox" $= "0 0 100 100"] $ do
+  svg_ ["xmlns" $= "http://www.w3.org/2000/svg", "viewBox" $= "0 0 100 100"] $ do
     defs_ $ do mempty
     title_ $ do
       elemText "Zeichenfl\228che 1 Kopie 3"
@@ -686,7 +686,7 @@ svgPhaseNext c0 = do
 
 svgPlay :: Color -> ReactElementM h ()
 svgPlay c0 = do
-  svg_ ["xmlns" $= "http://www.w3.org/2000/svg", "width" $= "100", "height" $= "100", "viewBox" $= "0 0 100 100"] $ do
+  svg_ ["xmlns" $= "http://www.w3.org/2000/svg", "viewBox" $= "0 0 100 100"] $ do
     defs_ $ do mempty
     title_ $ do
       elemText "Zeichenfl\228che 1 Kopie 3"
@@ -695,7 +695,7 @@ svgPlay c0 = do
 
 svgPlus :: Color -> ReactElementM h ()
 svgPlus c0 = do
-  svg_ ["xmlns" $= "http://www.w3.org/2000/svg", "width" $= "100", "height" $= "100", "viewBox" $= "0 0 100 100"] $ do
+  svg_ ["xmlns" $= "http://www.w3.org/2000/svg", "viewBox" $= "0 0 100 100"] $ do
     defs_ $ do mempty
     title_ $ do
       elemText "Zeichenfl\228che 1 Kopie 3"
@@ -704,7 +704,7 @@ svgPlus c0 = do
 
 svgProcess :: Color -> ReactElementM h ()
 svgProcess c0 = do
-  svg_ ["xmlns" $= "http://www.w3.org/2000/svg", "width" $= "100", "height" $= "100", "viewBox" $= "0 0 100 100"] $ do
+  svg_ ["xmlns" $= "http://www.w3.org/2000/svg", "viewBox" $= "0 0 100 100"] $ do
     defs_ $ do mempty
     title_ $ do
       elemText "Zeichenfl\228che 1 Kopie 3"
@@ -767,7 +767,7 @@ svgReply c0 = do
 
 svgSave :: Color -> ReactElementM h ()
 svgSave c0 = do
-  svg_ ["xmlns" $= "http://www.w3.org/2000/svg", "width" $= "100", "height" $= "100", "viewBox" $= "0 0 100 100"] $ do
+  svg_ ["xmlns" $= "http://www.w3.org/2000/svg", "viewBox" $= "0 0 100 100"] $ do
     defs_ $ do mempty
     title_ $ do
       elemText "Zeichenfl\228che 1 Kopie 3"
@@ -795,7 +795,7 @@ svgShare c0 c1 = do
 
 svgSort :: Color -> ReactElementM h ()
 svgSort c0 = do
-  svg_ ["xmlns" $= "http://www.w3.org/2000/svg", "width" $= "100", "height" $= "100", "viewBox" $= "0 0 100 100"] $ do
+  svg_ ["xmlns" $= "http://www.w3.org/2000/svg", "viewBox" $= "0 0 100 100"] $ do
     defs_ $ do mempty
     title_ $ do
       elemText "Zeichenfl\228che 1 Kopie 3"

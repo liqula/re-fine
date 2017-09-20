@@ -151,7 +151,10 @@ webdriver cnf appurl = sessionWith cnf "@webdriver" . using allBrowsers $ do
 
   it "create new process" . runWD $ do
     let titleText = "iDWD16VgtbLgI"
-    onEl [ByCSS "#group-list-item-1"] click
+    onEl [ByCSS "#group-list-item-1"] click  -- FIXME: look for 'key' attribute here, 'id' is not
+                                             -- set any more!  (it is possible that 'key' is not a
+                                             -- proper html attribute yet; it that's the case we
+                                             -- will have to think of something else.)
     onEl [xpathButton "Process_add"] click
     onEls [ByXPath "//*[@id='o-vdoc-overlay-content__textarea-annotation']"] $ sendKeys titleText . head
     onEl [xpathButton "Save"] click
