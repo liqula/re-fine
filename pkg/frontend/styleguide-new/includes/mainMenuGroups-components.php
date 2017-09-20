@@ -1,6 +1,7 @@
 <?php
 #include "svgs/daniel_user.php";
 
+// FIXME: rename to mainMenuGroupShort (that's the name of the corresponding haskell component.)
 function mainMenuGroupsSmall($data){
 ?>
 			<div class="mainMenuGroupShort <?= $data['background-color']?>"> 

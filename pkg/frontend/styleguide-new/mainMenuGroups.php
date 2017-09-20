@@ -6,7 +6,7 @@ include "includes/svgs/daniel_test2.php";
 include "includes/svgs/svgs1.php";
 ?>
 <?php include "includes/page-header-main.php"; ?>
-		<div class="mainMenuGroup">
+		<div class="mainMenuGroups">
 
 			<?php mainMenuGroupsSmall(example_mainMenuGroupsSmall('c_bg_blue_dawn', 'testbild.png',       NULL,                                                      'Stadtentwicklungspolitik der SPD', 'svgDanielUser', ["c_fill_yes_color", "c_fill_interaction_yellow"],         '12', 'svg_info',     ["c_fill_interaction_yellow", "c_fill_yes_color"], '99', 'svgDanielUser', ["c_fill_yes_color", "c_fill_interaction_yellow"], '77')); ?>
 			<?php mainMenuGroupsSmall(example_mainMenuGroupsSmall('c_bg_blue_dawn', 'testbild2.jpg',      NULL,                                                      'Initiative für eine grüne Stadt', 'svgDanielUser', ["c_fill_yes_color", "c_fill_interaction_yellow"],         '12', 'svg_info', ["c_fill_yes_color", "c_fill_interaction_yellow"], '99', 'svgDanielUser', ["c_fill_yes_color", "c_fill_interaction_yellow"], '77')); ?>
