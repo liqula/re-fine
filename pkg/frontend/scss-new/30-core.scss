@@ -1,19 +1,17 @@
 .#{$v}ibutton {
-    min-width:  $icon-size-xxlarge;
-    max-width:  $icon-size-xxlarge;
+  min-width: $icon-size-xxlarge;
+  max-width: $icon-size-xxlarge;
 
-    &-icon {
-        min-height: $icon-size-xxlarge;
-        max-height: $icon-size-xxlarge;
-    }
+  &-icon {
+    min-height: $icon-size-xxlarge;
+    max-height: $icon-size-xxlarge;
+  }
 
-    &-label {
-        min-height: $icon-size-xxlarge / 3;
-        max-height: $icon-size-xxlarge / 3;
-    }
+  &-label {
+    min-height: $icon-size-xxlarge / 3;
+    max-height: $icon-size-xxlarge / 3;
+  }
 }
-
-
 
 /*
 

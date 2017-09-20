@@ -31,6 +31,7 @@ the way you run in dev mode is as follows:
 
 ```
 cd pkg/frontend
+stack build --fast #seems to be necessary
 make all
 npm start
 ```

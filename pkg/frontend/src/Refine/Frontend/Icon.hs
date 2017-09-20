@@ -9,7 +9,6 @@ module Refine.Frontend.Icon
   , ibutton_
   , sibutton_
   , emptyIbuttonProps
-  , emptyIbuttonProps_
   , IbuttonOnClick(..)
 
     -- * outdated
@@ -22,18 +21,23 @@ module Refine.Frontend.Icon
 
 import Language.Css.Syntax
 
+import           Refine.Frontend.Access
+import           Refine.Frontend.Icon.Svg as Svg
 import           Refine.Frontend.Icon.Types
 import           Refine.Frontend.Store ()
 import           Refine.Frontend.Store.Types
 import           Refine.Frontend.Util
-import           Refine.Frontend.Access
 
 
 -- * icons buttons
 
 ibutton :: forall onclick. (HasCallStack, IbuttonOnClick onclick 'EventHandlerCode)
-        => View '[IbuttonProps onclick]
-ibutton = mkStatefulView "Ibutton" False (sibutton_ id)
+        => Maybe Bool -> View '[IbuttonProps onclick]
+ibutton pressed = mkStatefulView "Ibutton" (ButtonState (f pressed) NotRollOver) (sibutton_ id)
+  where
+    f Nothing      = Released
+    f (Just False) = Released
+    f (Just True)  = Pressed
 
 -- | (implemented in terms of 'sibutton_'.)
 --
@@ -42,7 +46,7 @@ ibutton = mkStatefulView "Ibutton" False (sibutton_ id)
 -- nicer interface to the application.
 ibutton_ :: forall onclick handler. (HasCallStack, IbuttonOnClick onclick 'EventHandlerCode)
          => IbuttonProps onclick -> ReactElementM handler ()
-ibutton_ props = view_ ibutton ("Ibutton_" <> props ^. ibListKey) props
+ibutton_ props = view_ (ibutton (props ^. ibPressed)) ("Ibutton_" <> props ^. ibListKey) props
 
 
 -- | A variant of 'ibutton_' that inherits the local state from the
@@ -54,19 +58,20 @@ ibutton_ props = view_ ibutton ("Ibutton_" <> props ^. ibListKey) props
 -- 'ReactElement' directly.
 sibutton_ :: forall onclick st (handler :: EventHandlerCode *).
                   (HasCallStack, IbuttonOnClick onclick handler, handler ~ 'StatefulEventHandlerCode st)
-               => Lens' st Bool -> st -> IbuttonProps onclick -> ReactElementM handler ()
-sibutton_ mouseIsOver st props = do
-  let --FIXME onMsOvr :: [PropertyOrHandler handler]
-      onMsOvr = [ onMouseEnter $ \_ _ -> simpleHandler $ \s -> ([], Just $ s & mouseIsOver .~ True)
-                , onMouseLeave $ \_ _ -> simpleHandler $ \s -> ([], Just $ s & mouseIsOver .~ False)
+               => Lens' st ButtonState -> st -> IbuttonProps onclick -> ReactElementM handler ()
+sibutton_ stlens st props = do
+  let onMsOvr :: [PropertyOrHandler handler]
+      onMsOvr = [ onMouseEnter $ \_ _ -> simpleHandler $ \s -> ([], Just $ s & stlens . buttonRollOver .~ RollOver)
+                , onMouseLeave $ \_ _ -> simpleHandler $ \s -> ([], Just $ s & stlens . buttonRollOver .~ NotRollOver)
                 ]
 
-      --FIXME onClk :: [PropertyOrHandler handler]
+      -- TODO: if pressable (according to props), toggle pressed state.
+      onClk :: [PropertyOrHandler handler]
       onClk = [onClick $ \evt mevt -> mkIbuttonClickHandler props evt mevt | props ^. ibEnabled]
 
-      -- FIXME: ibutton must not contain divs, so we can use it inside spans.
-      divSty :: [Decl]
-      divSty = [ decl "direction" (Ident "ltr")
+      -- TODO: use scss-new exclusively!
+      divStyle :: [Decl]
+      divStyle = [ decl "direction" (Ident "ltr")
                , decl "width" (maximum [100, sizePx $ props ^. ibSize])
                , decl "float" (Ident (case props ^. ibAlign of AlignLeft -> "left"; AlignRight -> "right"))
                , decl "textAlign" (Ident "center")
@@ -78,55 +83,28 @@ sibutton_ mouseIsOver st props = do
                       , decl "marginRight" (Percentage 10)
                       ]
                  else [decl "margin" (Px $ sizeInt (props ^. ibSize) `div` 5)])
+               <> [decl "borderRadius" (Percentage 100)]
+               <> [decl "cursor" (Ident "pointer") | props ^. ibEnabled]
+               <> css (props ^. ibSize)
 
-      -- FUTUREWORK: do we want to have grayed-out images for all buttons?
-      iconSty :: [Decl]
-      iconSty = [decl "borderRadius" (Percentage 100)]
-             <> [decl "cursor" (Ident "pointer") | props ^. ibEnabled]
-             <> css (props ^. ibSize)
-
-      bg :: Either BackgroundImage Common.ImageInline
-      bg = case props ^. ibImage of
-        ButtonImageInline i -> Right i
-        ButtonImageIcon n -> Left $ BackgroundImage n imageState
-        where
-          imageState = case props ^. ibHighlightWhen of
-            HighlightAlways      | props ^. ibEnabled                      -> BisRO
-            HighlightOnMouseOver | st ^. mouseIsOver && props ^. ibEnabled -> BisRO
-            _                    | props ^. ibDarkBackground               -> BisBright
-            _                                                              -> BisDark
-
-      spanSty :: [Decl]
-      spanSty = [ decl "color" (Ident textColor)
-                , decl "fontSize" (Rem 0.75)
-                , decl "marginTop" (Rem 0.3125)
-                ]
-             <> [decl "cursor" (Ident "pointer") | props ^. ibEnabled]
-        where
-          textColor
-            | not (props ^. ibEnabled)  = "rgba(169, 169, 169, 1)"
-            | props ^. ibDarkBackground = "rgba(210, 217, 223, 1)"
-            | otherwise                 = "rgba(0, 0, 0, 1)"
-
-  div_ (onMsOvr <> onClk <> ["style" @@= divSty]) $ do
-    case bg of
-      Left i  -> div_  ["style" @@= iconSty, "className" $= iconCssClass i] $ pure ()
-      Right (Common.ImageInline i) -> div_ ["style" @@= iconSty] . img_ ["src" $= cs i] $ pure ()
-    span_ ["style" @@= spanSty] $ elemText (props ^. ibLabel)
+  -- TODO: opacity 50% when disabled.  (for both img tag and inline-svg.)
+  -- TODO: when disabled, do not send rollover to appColorSchema.
+  div_ (onMsOvr <> onClk <> ["style" @@= divStyle]) $ do
+    case props ^. ibImage of
+      ButtonImageInline (Common.ImageInline i) -> img_ ["src" $= cs i] $ pure ()
+      ButtonImageIcon i scm                    -> Svg.render scm (st ^. stlens) i
+    forM_ (props ^. ibIndexNum) $
+      div_ [ "className" $= "number-top-right" ] . elemText . cs . show
 
 
-emptyIbuttonProps :: HasCallStack => forall onclick. ST -> onclick -> IbuttonProps onclick
-emptyIbuttonProps = emptyIbuttonProps_ . ButtonImageIcon
-
-emptyIbuttonProps_ :: HasCallStack => forall onclick. ButtonImage -> onclick -> IbuttonProps onclick
-emptyIbuttonProps_ img onclick = IbuttonProps
+emptyIbuttonProps :: HasCallStack => forall onclick. ButtonImage -> onclick -> IbuttonProps onclick
+emptyIbuttonProps img onclick = IbuttonProps
   { _ibListKey          = "0"
-  , _ibLabel            = mempty
-  , _ibDarkBackground   = False
-  , _ibImage            = img
-  , _ibHighlightWhen    = HighlightOnMouseOver
   , _ibOnClick          = onclick
   , _ibOnClickMods      = []
+  , _ibPressed          = Nothing
+  , _ibImage            = img
+  , _ibIndexNum         = Nothing
   , _ibEnabled          = True
   , _ibSize             = Large
   , _ibAlign            = AlignLeft

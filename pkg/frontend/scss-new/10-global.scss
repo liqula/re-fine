@@ -2,7 +2,7 @@
 // name spaces
 
 // view (aka component)
-$v: 'v-';
+$v: "v-";
 
 // ----------------------------------------------------------------------------------------------------
 // misc globals
@@ -11,51 +11,50 @@ $v: 'v-';
 $dunit: 6px;
 
 // `data IconSize`.
-$icon-size-medium:  2 * $dunit;
-$icon-size-large:   3 * $dunit;
-$icon-size-xlarge:  4 * $dunit;
+$icon-size-medium: 2 * $dunit;
+$icon-size-large: 3 * $dunit;
+$icon-size-xlarge: 4 * $dunit;
 $icon-size-xxlarge: 6 * $dunit;
-
 
 // ----------------------------------------------------------------------------------------------------
 // fonts
 
 //@import url('https://fonts.googleapis.com/css?family=Open+Sans:400,600,700|PT+Serif:400,700');
 
-$font-serif: 'PT Serif', Times, serif;
-$font-sans: 'Open Sans', Arial, sans-serif;
+$font-serif: "PT Serif", Times, serif;
+$font-sans: "Open Sans", Arial, sans-serif;
 
 body {
-    font-family: $font-sans;
-    font-weight: 400;
+  font-family: $font-sans;
+  font-weight: 400;
 }
 
 article {
-    h1,
-    h2,
-    h3,
-    h4,
-    h5,
-    h6 {
-        font-family: $font-sans;
-        font-weight: 800;
-    }
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-family: $font-sans;
+    font-weight: 800;
+  }
 
-    p,
-    th,
-    td,
-    span,
-    div,
-    strong {
-        font-family: $font-serif;
-    }
+  p,
+  th,
+  td,
+  span,
+  div,
+  strong {
+    font-family: $font-serif;
+  }
 }
-
 
 // ----------------------------------------------------------------------------------------------------
 // for construction work
 
 .draft-box {
-    border: 2px dashed black;
-//    padding: 50px;
+  border: 2px dashed black;
+
+  //    padding: 50px;
 }

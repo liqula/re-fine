@@ -8,6 +8,7 @@ import Test.Hspec
 import Language.Css.Syntax hiding (S)
 
 import           Refine.Frontend.Icon
+import           Refine.Frontend.Icon.Svg
 import           Refine.Frontend.Test.Enzyme
 import           Refine.Frontend.Util
 
@@ -31,6 +32,14 @@ iconProps = IconProps "the-block-name" True ("Image", "striped")
 
 spec :: Spec
 spec = do
+  describe "render" $ do
+    let t scm st ro icn = do
+          let msg = (scm, st, ro, icn)
+          r <- html =<< shallow (render scm (ButtonState st ro) icn)
+          (msg, r) `shouldNotBe` (msg, mempty)
+    it "works" $ do
+      sequence_ $ t <$> [minBound ..] <*> [minBound ..] <*> [minBound ..] <*> [minBound ..]
+
   describe "The icon_ component" $ do
     it "renders ok" $ do  -- FUTUREWORK: make this a generic test that is run on all properties implicitly.
       wrapper <- mount $ icon_ IconProps

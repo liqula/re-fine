@@ -18,6 +18,7 @@ import           Refine.Frontend.Document.Types
 import           Refine.Frontend.Document.Store
 import           Refine.Frontend.Header.Types
 import           Refine.Frontend.Icon
+import           Refine.Frontend.Icon.Svg as Svg
 import           Refine.Frontend.Login.Types
 import           Refine.Frontend.Store.Types
 import           Refine.Frontend.Test.Debug
@@ -108,10 +109,9 @@ editToolbar = mkView' "editToolbar" $ \ep -> do
         & iconButtonPropsElementName  .~ "btn-index"
 
   let props :: IbuttonProps [GlobalAction]
-      props = emptyIbuttonProps "Close" [DocumentAction DocumentCancelSave, DocumentAction UpdateDocumentStateView]
+      props = emptyIbuttonProps (ButtonImageIcon Svg.Close ColorSchemaEdit)
+                                [DocumentAction DocumentCancelSave, DocumentAction UpdateDocumentStateView]
         & ibListKey      .~ "cancel"
-        & ibLabel        .~ "cancel"
-        & ibEnabled      .~ True
         & ibSize         .~ XXLarge
    in ibutton_ props
 

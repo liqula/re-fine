@@ -5,17 +5,18 @@
 
 module Refine.Frontend.Icon.Types
   ( ReactListKey
-
   , Align(..)
-  , HighlightWhen(..)
+  , Svg.ColorSchema(..)
+  , Svg.ButtonState(..)
+  , Svg.ButtonRollOver(..)
+  , ButtonImage(..)
   , IbuttonProps(..)
   , ibListKey
-  , ibLabel
-  , ibDarkBackground
-  , ibImage
-  , ibHighlightWhen
   , ibOnClick
   , ibOnClickMods
+  , ibPressed
+  , ibImage
+  , ibIndexNum
   , ibEnabled
   , ibSize
   , ibAlign
@@ -28,14 +29,7 @@ module Refine.Frontend.Icon.Types
   , IconSize(..)
   , sizePx, sizeInt
 
-  , ButtonImage(..)
   , IconDescription
-
-  , BackgroundImageState(..)
-  , BackgroundImage(..)
-  , backgroundImageName
-  , backgroundImageState
-  , iconCssClass
 
   , IconProps(..)
   , iconPropsBlockName
@@ -63,6 +57,7 @@ import Language.Css.Build hiding (ex, s)
 
 import           Refine.Common.Types.Prelude
 import           Refine.Frontend.CS ()
+import qualified Refine.Frontend.Icon.Svg as Svg
 import           Refine.Frontend.Types
 import           Refine.Frontend.Util
 
@@ -72,22 +67,18 @@ import           Refine.Frontend.Util
 data Align = AlignRight | AlignLeft
   deriving (Eq, Show, Generic)
 
-data HighlightWhen = HighlightNever | HighlightOnMouseOver | HighlightAlways
-  deriving (Eq, Show, Generic)
-
 data ButtonImage
-  = ButtonImageIcon ST             -- ^ Like "User" which refers to a file
+  = ButtonImageIcon Svg.Icon Svg.ColorSchema  -- ^ inlined icon
   | ButtonImageInline ImageInline  -- ^ "data:image/..."
   deriving (Eq, Show, Generic)
 
 data IbuttonProps onclick = IbuttonProps
   { _ibListKey          :: ReactListKey  -- ^ this is not morally part of the props, but it's convenient to keep it here.
-  , _ibLabel            :: ST
-  , _ibDarkBackground   :: Bool
-  , _ibImage            :: ButtonImage
-  , _ibHighlightWhen    :: HighlightWhen  -- ^ when to switch to @_RO.svg@ variant.
   , _ibOnClick          :: onclick
   , _ibOnClickMods      :: [EventModification]
+  , _ibPressed          :: Maybe Bool  -- ^ @Just _@: behave like a light switch; @Nothing@: behave like a car honk.
+  , _ibImage            :: ButtonImage
+  , _ibIndexNum         :: Maybe Int -- ^ the number in the small black circle in the upper right corner of the button.
   , _ibEnabled          :: Bool
   , _ibSize             :: IconSize
   , _ibAlign            :: Align
@@ -103,7 +94,7 @@ class (Typeable onclick, Eq onclick) => IbuttonOnClick onclick handler where
 
 -- * icon sizes
 
-data IconSize
+data IconSize  -- FIXME: eliminate duplication between this and the corresponding scss variables.
   = Medium
   | Large
   | XLarge
@@ -124,35 +115,6 @@ instance Css IconSize where
           , decl "width" (sizePx s)
           , decl "height" (sizePx s)
           ]
-
-
--- * background images
-
-data BackgroundImageState = BisRO | BisBright | BisDark
-  deriving (Eq, Show, Generic)
-
-data BackgroundImage = BackgroundImage
-  { _backgroundImageName  :: ST
-  , _backgroundImageState :: BackgroundImageState
-  }
-  deriving (Eq, Show, Generic)
-
--- FIXME: this instance does not work, since webpack loads all images into the bundle and replaces
--- the paths with data-urls in the css class, but not in the inline-styles here.  use 'iconCssClass'
--- instead for now.
-instance Css BackgroundImage where
-  css bimg = [decl "backgroundImage" ex]
-    where
-      ex = Func "url" (expr $ Ident fp)
-      fp = "\"../images/" <> cs (iconCssClass bimg) <> ".svg\""
-
--- | work-around for @instance Css BackgroundImage@.
-iconCssClass :: HasCallStack => BackgroundImage -> JSString
-iconCssClass (BackgroundImage fname st) = mconcat ["icon-", cs fname, "_", renderState st]
-    where
-      renderState BisRO     = "RO"
-      renderState BisBright = "bright"
-      renderState BisDark   = "dark"
 
 
 -- * outdated
@@ -204,5 +166,5 @@ data IconButtonPropsWithHandler onclick = IconButtonProps
 
 deriveClasses
   [ ([''IbuttonState], allClass)
-  , ([''IconProps, ''BackgroundImage, ''IbuttonProps, ''IconButtonPropsWithHandler], [''Lens'])
+  , ([''IconProps, ''IbuttonProps, ''IconButtonPropsWithHandler], [''Lens'])
   ]

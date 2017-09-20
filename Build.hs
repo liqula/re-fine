@@ -6,6 +6,7 @@ import Control.Monad
 import Data.Monoid
 import Development.Shake
 import System.Exit
+import System.FilePath
 import System.Process
 
 
@@ -123,7 +124,7 @@ main = shakeArgs refineOptions $ do
     stackBuildFast pkgBackend
 
   phony "build-frontend" $ do
-    need ["build-frontend-npm", "build-frontend-trans"]
+    need ["build-frontend-npm", "build-frontend-icons", "build-frontend-trans"]
     stackBuildFast pkgFrontend
     command_ [Cwd pkgFrontend] "make" []
 
@@ -132,6 +133,12 @@ main = shakeArgs refineOptions $ do
     command_ [Cwd pkgFrontend] "stack" ["exec", "--", "node", "--version"]
     command_ [Cwd pkgFrontend] "npm" ["install"]
     command_ [Cwd pkgFrontend] "npm" ["prune"]  -- remove unused dependencies
+
+  phony "build-frontend-icons" $ do
+    -- NOTE: needs to run with repo root as current directory.  when calling compile-svg.hs from
+    -- inside `pkg/frontend`, despite it being a stand-alone stack script, it reads stack.yaml and
+    -- gets very confused about whether to use ghcjs or not.
+    command_ [] "./scripts/compile-svg.hs" ((pkgFrontend </>) <$> ["images/icon", "src/Refine/Frontend/Icon/Svg/Internal.hs"])
 
   phony "build-frontend-trans" $ do
     command_ [] "./scripts/i18n.hs" []

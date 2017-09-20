@@ -7,12 +7,14 @@ module Refine.Frontend.Contribution.Types where
 #include "import_frontend.hs"
 
 import Control.DeepSeq
+import Data.List (nubBy)
 import Language.Css.Syntax hiding (Value)
 
 import React.Flux.Missing
 import Refine.Common.Types
 import Refine.Common.VDoc.OT
 import Refine.Frontend.Document.FFI.Types (EditorState)
+import Refine.Frontend.Icon.Svg
 import Refine.Frontend.Icon.Types
 import Refine.Frontend.Screen.Types
 import Refine.Frontend.Types
@@ -79,13 +81,26 @@ data ContributionState = ContributionState
 data BubblePositioning = BubblePositioningAbsolute | BubblePositioningEvenlySpaced
   deriving (Show, Eq, Generic)
 
+emptyContributionState :: HasCallStack => ContributionState
+emptyContributionState = ContributionState
+  { _csCurrentSelectionWithPx   = Nothing
+  , _csDisplayedContributionID  = Nothing
+  , _csActiveDialog             = Nothing
+  , _csHighlightedMarkAndBubble = []
+  , _csQuickCreateShowState     = QuickCreateNotShown
+  , _csAllVerticalSpanBounds    = mempty
+  , _csBubblePositioning        = BubblePositioningAbsolute
+  , _csBubbleFilter             = Nothing
+  }
+
+
 -- | The state of 'commentInput_' consists of the 'CommentInfo'
 -- entered by the user, plus two mouse-over booleans for the
 -- 'CommentKind' toggle buttons.
 data CommentInputState = CommentInputState
   { _commentInputStateData                :: CommentInfo (Maybe CommentKind)
-  , _commentInputStateMouseOverNote       :: Bool
-  , _commentInputStateMouseOverDiscussion :: Bool
+  , _commentInputStateNoteButton          :: ButtonState
+  , _commentInputStateDiscussionButton    :: ButtonState
   }
   deriving (Show, Eq, Generic)
 
@@ -100,8 +115,8 @@ data CommentKind =
 
 -- | Like 'CommentInputState', but for 'editInput_'.
 data EditInputState = EditInputState
-  { _editInputStateData      :: EditInfo (Maybe EditKind)
-  , _editInputStateMouseOver :: Maybe EditKind
+  { _editInputStateData    :: EditInfo (Maybe EditKind)
+  , _editInputStateButtons :: [(EditKind, ButtonState)]
   }
   deriving (Show, Eq, Generic)
 
@@ -116,20 +131,19 @@ data EditInfo kind = EditInfo
   }
   deriving (Show, Eq, Generic)
 
+cleanupEditInputStateButtons :: [(EditKind, ButtonState)] -> [(EditKind, ButtonState)]
+cleanupEditInputStateButtons = f . g . nubBy ((==) `on` fst)
+  where
+    f (x@(_, ButtonState Pressed _) : xs) = x : f ((_2 . buttonPressed .~ Released) <$> xs)
+    f (x : xs) = x : f xs
+    f [] = []
+
+    g (x@(_, ButtonState _ RollOver) : xs) = x : g ((_2 . buttonRollOver .~ NotRollOver) <$> xs)
+    g (x : xs) = x : g xs
+    g [] = []
+
 data ActiveDialog = ActiveDialogComment (LocalStateRef CommentInputState) | ActiveDialogEdit EditorState
   deriving (Show, Eq, Generic)
-
-emptyContributionState :: HasCallStack => ContributionState
-emptyContributionState = ContributionState
-  { _csCurrentSelectionWithPx   = Nothing
-  , _csDisplayedContributionID  = Nothing
-  , _csActiveDialog             = Nothing
-  , _csHighlightedMarkAndBubble = []
-  , _csQuickCreateShowState     = QuickCreateNotShown
-  , _csAllVerticalSpanBounds    = mempty
-  , _csBubblePositioning        = BubblePositioningAbsolute
-  , _csBubbleFilter             = Nothing
-  }
 
 
 -- * Bubble

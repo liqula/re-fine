@@ -6,6 +6,7 @@ module Refine.Frontend.Login.Status where
 
 import Refine.Common.Types
 import Refine.Frontend.Icon
+import Refine.Frontend.Icon.Svg as Svg
 import Refine.Frontend.Login.Types
 import Refine.Frontend.MainMenu.Types
 import Refine.Frontend.Store.Types
@@ -13,13 +14,14 @@ import Refine.Frontend.Types
 
 
 loginStatusButton_ :: HasCallStack
-                   => (forall onclick. IbuttonProps onclick -> IbuttonProps onclick)
-                   -> CurrentUser (Lookup User) -> ReactElementM handler ()
-loginStatusButton_ tweak cu = ibutton_ $ emptyIbuttonProps_ (mkIcon cu) onclick
-  & ibLabel .~ mkLabel cu
-  & ibSize .~ XXLarge
-  & ibAlign .~ AlignRight
-  & tweak
+                   => ColorSchema -> Maybe Bool -> CurrentUser (Lookup User) -> ReactElementM handler ()
+loginStatusButton_ schema pressed cu = div_ $ do
+  ibutton_ $ emptyIbuttonProps (mkIcon cu) onclick
+    & ibSize .~ XXLarge
+    & ibAlign .~ AlignRight
+    & ibPressed .~ pressed
+  span_ $ do
+    elemText $ mkLabel cu
   where
     onclick = [MainMenuAction $ MainMenuActionOpen (MainMenuLogin MainMenuSubTabLogin)]
 
@@ -27,4 +29,4 @@ loginStatusButton_ tweak cu = ibutton_ $ emptyIbuttonProps_ (mkIcon cu) onclick
     mkLabel (UserLoggedIn n) = "I am " <> either (const "...") (^. Common.userName) n
 
     mkIcon (UserLoggedIn (Right ((^. userAvatar) -> Just img))) = ButtonImageInline img
-    mkIcon _ = ButtonImageIcon "Login"
+    mkIcon _ = ButtonImageIcon Svg.Login schema

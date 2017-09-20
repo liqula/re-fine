@@ -12,6 +12,7 @@ import           Refine.Common.VDoc.Draft
 import           Refine.Frontend.Access
 import           Refine.Frontend.Contribution.Dialog (contributionDialogTextForm)
 import           Refine.Frontend.Icon
+import           Refine.Frontend.Icon.Svg as Svg
 import           Refine.Frontend.ImageUpload
 import           Refine.Frontend.Login.Component
 import           Refine.Frontend.Login.Status
@@ -30,57 +31,34 @@ topMenuBarInMainMenu :: HasCallStack => View '[TopMenuBarInMainMenuProps]
 topMenuBarInMainMenu = mkView "TopMenuBarInMainMenu" $ \(TopMenuBarInMainMenuProps currentTab currentUser) ->
   div_ ["className" $= "c-mainmenu-content__header"] $ do
     div_ ["className" $= "gr-2"] $ do
-      ibutton_ $ emptyIbuttonProps "Close" [MainMenuAction MainMenuActionClose]
+      ibutton_ $ emptyIbuttonProps (ButtonImageIcon Svg.Close ColorSchemaBright) [MainMenuAction MainMenuActionClose]
         & ibListKey .~ "1"
-        & ibDarkBackground .~ True
         & ibSize .~ XXLarge
-        & ibLabel .~ mempty
 
     div_ ["className" $= "gr-20"] $ do
 
       case currentUser of
         UserLoggedIn user -> do
-          ibutton_ $ emptyIbuttonProps "User_profile"
+          ibutton_ $ emptyIbuttonProps (ButtonImageIcon Svg.UserProfile ColorSchemaBright)
             [ MainMenuAction . MainMenuActionOpen
               $ MainMenuProfile ( either id (^. userID) user
                                 , FormBegin $ newLocalStateRef (Nothing, Nothing) user)
             ]
             & ibListKey .~ "5"
-            & ibDarkBackground .~ True
             & ibSize .~ XXLarge
-            & ibLabel .~ mempty
---            & ibEnabled .~ either (const False) (const True) user   -- this is not needed
         _ -> pure ()
 
-      ibutton_ $ emptyIbuttonProps "Group" [MainMenuAction . MainMenuActionOpen $ MainMenuGroups ()]
+      ibutton_ $ emptyIbuttonProps (ButtonImageIcon Svg.Group ColorSchemaBright) [MainMenuAction . MainMenuActionOpen $ MainMenuGroups ()]
         & ibListKey .~ "3"
-        & ibDarkBackground .~ True
-        & ibHighlightWhen .~ (if currentTab & has _MainMenuGroup then HighlightAlways else HighlightOnMouseOver)
+        & ibPressed .~ Just (currentTab & has _MainMenuGroup)
         & ibSize .~ XXLarge
-        & ibLabel .~ mempty
 
-      ibutton_ $ emptyIbuttonProps "Help" [MainMenuAction $ MainMenuActionOpen MainMenuHelp]
+      ibutton_ $ emptyIbuttonProps (ButtonImageIcon Svg.Help ColorSchemaBright) [MainMenuAction $ MainMenuActionOpen MainMenuHelp]
         & ibListKey .~ "4"
-        & ibDarkBackground .~ True
-        & ibHighlightWhen .~ (if currentTab == MainMenuHelp then HighlightAlways else HighlightOnMouseOver)
+        & ibPressed .~ Just (currentTab == MainMenuHelp)
         & ibSize .~ XXLarge
-        & ibLabel .~ mempty
 
-      -- search
-
-      loginStatusButton_
-        ( (ibDarkBackground .~ True)
-        . (ibLabel .~ mempty)
-        . (ibHighlightWhen .~ case currentTab of MainMenuLogin _ -> HighlightAlways; _ -> HighlightOnMouseOver)
-        )
-        currentUser
-
-    div_ ["className" $= "gr-2"] $ do
-      ibutton_ $ emptyIbuttonProps "00_joker" [ShowNotImplementedYet]
-        & ibListKey .~ "7"
-        & ibDarkBackground .~ True
-        & ibSize .~ XXLarge
-        & ibLabel .~ mempty
+      loginStatusButton_ ColorSchemaBright (Just $ has _MainMenuLogin currentTab) currentUser
 
 topMenuBarInMainMenu_ :: HasCallStack => TopMenuBarInMainMenuProps -> ReactElementM eventHandler ()
 topMenuBarInMainMenu_ = view_ topMenuBarInMainMenu "topMenuBarInMainMenu_"
@@ -144,12 +122,9 @@ mainMenuGroups = mkView "MainMenuGroups" $ \groups -> do
                                     Nothing)
                                   groups
 
-      ibutton_ $ emptyIbuttonProps "Group_add" [mkCreateGroupAction]
+      ibutton_ $ emptyIbuttonProps (ButtonImageIcon GroupNew ColorSchemaDark) [mkCreateGroupAction]
         & ibListKey .~ "create_group"
         & ibSize .~ XLarge
-        & ibDarkBackground .~ False
-        & ibHighlightWhen .~ HighlightOnMouseOver
-        & ibLabel .~ "create group"
 
     div_ $ do
       br_ [] >> br_ [] >> br_ [] >> hr_ []
@@ -178,12 +153,9 @@ mainMenuGroupShort = mkView "MainMenuGroupShort" $ \group -> do
 
     -- image (FIXME: allow the user to store one in the group and use that)
     br_ []
-    ibutton_ $ emptyIbuttonProps "Group" ([] :: [GlobalAction])
+    ibutton_ $ emptyIbuttonProps (ButtonImageIcon Svg.Group ColorSchemaBright) ([] :: [GlobalAction])
       & ibListKey .~ "group"
       & ibSize .~ XXLarge
-      & ibDarkBackground .~ True
-      & ibHighlightWhen .~ HighlightNever
-      & ibLabel .~ mempty
 
     -- title
     br_ []
@@ -195,20 +167,16 @@ mainMenuGroupShort = mkView "MainMenuGroupShort" $ \group -> do
     br_ []
     div_ [] $ do
       let numProcesses :: Int = length $ group ^. groupVDocs
-      ibutton_ $ emptyIbuttonProps "Process" ([] :: [GlobalAction])
+      ibutton_ $ emptyIbuttonProps (ButtonImageIcon Svg.Process ColorSchemaBright) ([] :: [GlobalAction])
         & ibListKey .~ (listKey <> "-processes")
+        & ibIndexNum .~ Just numProcesses
         & ibSize .~ Large
-        & ibDarkBackground .~ True
-        & ibHighlightWhen .~ HighlightNever
-        & ibLabel .~ cs (show numProcesses)  -- FIXME: should be rendered differently, see click dummy
 
       let numUsers = length $ group ^. groupMembers
-      ibutton_ $ emptyIbuttonProps "User" ([] :: [GlobalAction])
+      ibutton_ $ emptyIbuttonProps (ButtonImageIcon Svg.User ColorSchemaBright) ([] :: [GlobalAction])
         & ibListKey .~ (listKey <> "-users")
+        & ibIndexNum .~ Just numUsers
         & ibSize .~ Large
-        & ibDarkBackground .~ True
-        & ibHighlightWhen .~ HighlightNever
-        & ibLabel .~ cs (show numUsers)  -- FIXME: should be rendered differently, see click dummy
 
 mainMenuGroupShort_ :: HasCallStack => Group -> ReactElementM eventHandler ()
 mainMenuGroupShort_ group = view_ mainMenuGroupShort listKey group
@@ -220,21 +188,15 @@ mainMenuGroup = mkView "mainMenuGroup" $ \case
  (_, (Nothing, _, _)) -> "Loading..."
  (sub, (Just group, vdocs, users)) -> do
   div_ $ do
-    ibutton_ $ emptyIbuttonProps "Arrow_left" [MainMenuAction . MainMenuActionOpen $ MainMenuGroups ()]
+    ibutton_ $ emptyIbuttonProps (ButtonImageIcon Svg.ArrowLeft ColorSchemaBright)
+          [MainMenuAction . MainMenuActionOpen $ MainMenuGroups ()]
       & ibListKey .~ "group_back"
       & ibSize .~ XXLarge
-      & ibDarkBackground .~ False
-      & ibHighlightWhen .~ HighlightOnMouseOver
-      & ibLabel .~ mempty
 
-    -- image (FIXME: allow the user to store one in the group and use that)
     br_ []
-    ibutton_ $ emptyIbuttonProps "Group" ([] :: [GlobalAction])
+    ibutton_ $ emptyIbuttonProps (ButtonImageIcon Svg.Group ColorSchemaBright) ([] :: [GlobalAction])
       & ibListKey .~ "group"
       & ibSize .~ XXLarge
-      & ibDarkBackground .~ False
-      & ibHighlightWhen .~ HighlightOnMouseOver
-      & ibLabel .~ mempty
 
     -- title, abstract
     br_ [] >> hr_ []
@@ -244,36 +206,29 @@ mainMenuGroup = mkView "mainMenuGroup" $ \case
     br_ [] >> hr_ []
 
     -- buttons for users, processes, create new process, update group
-    -- the first two, users, processes, are morally tabs.
-    span_ ["style" @@= [decl "marginLeft" (Px 50)]] . ibutton_ $ emptyIbuttonProps "User"
+    span_ ["style" @@= [decl "marginLeft" (Px 50)]] . ibutton_ $ emptyIbuttonProps
+        (ButtonImageIcon Svg.User ColorSchemaDark)
         [ MainMenuAction . MainMenuActionOpen
                          . MainMenuGroup MainMenuGroupMembers $ group ^. groupID ]
       & ibListKey .~ "user"
       & ibSize .~ XXLarge
-      & ibDarkBackground .~ False
-      & ibHighlightWhen .~ HighlightOnMouseOver
-      & ibLabel .~ "members"
+      & ibPressed .~ Just (has _MainMenuGroupProcesses sub)
 
-    ibutton_ $ emptyIbuttonProps "Process"
+    ibutton_ $ emptyIbuttonProps (ButtonImageIcon Svg.Process ColorSchemaDark)
         [ MainMenuAction . MainMenuActionOpen
                          . MainMenuGroup MainMenuGroupProcesses $ group ^. groupID ]
       & ibListKey .~ "process"
       & ibSize .~ XXLarge
-      & ibDarkBackground .~ False
-      & ibHighlightWhen .~ HighlightAlways
-      & ibLabel .~ "processes"
+      & ibPressed .~ Just (has _MainMenuGroupMembers sub)
 
-    ibutton_ $ emptyIbuttonProps "Process_add"
+    ibutton_ $ emptyIbuttonProps (ButtonImageIcon Svg.ProcessNew ColorSchemaDark)
         [ MainMenuAction . MainMenuActionOpen . MainMenuCreateProcess . FormBegin
           $ newLocalStateRef (CreateVDoc (Title "[no title]") (Abstract "[no abstract]") emptyRawContent (group ^. groupID) Nothing) group
         ]
       & ibListKey .~ "process_add"
       & ibSize .~ XXLarge
-      & ibDarkBackground .~ False
-      & ibHighlightWhen .~ HighlightOnMouseOver
-      & ibLabel .~ "create new process"
 
-    ibutton_ $ emptyIbuttonProps "Group_update"
+    ibutton_ $ emptyIbuttonProps (ButtonImageIcon Svg.GroupUpdate ColorSchemaDark)
         [ MainMenuAction . MainMenuActionOpen . MainMenuCreateOrUpdateGroup (Just $ group ^. groupID) . FormBegin
           $ newLocalStateRef
               (CreateGroup (group ^. groupTitle) (group ^. groupDesc) [] []
@@ -283,9 +238,6 @@ mainMenuGroup = mkView "mainMenuGroup" $ \case
         ]
       & ibListKey .~ "group_update"
       & ibSize .~ XXLarge
-      & ibDarkBackground .~ False
-      & ibHighlightWhen .~ HighlightOnMouseOver
-      & ibLabel .~ "change group details"
 
     -- process list
     br_ [] >> br_ [] >> br_ [] >> br_ [] >> hr_ [] >> br_ []
@@ -340,12 +292,10 @@ mainMenuMemberShort = mkView "MainMenuProcessShort" $ \props -> do
 
     -- image
     br_ []
-    ibutton_ $ emptyIbuttonProps_ (maybe (ButtonImageIcon "User") ButtonImageInline $ props ^. userAvatar) ([] :: [GlobalAction])
-      & ibListKey .~ "user"
-      & ibSize .~ XXLarge
-      & ibDarkBackground .~ True
-      & ibHighlightWhen .~ HighlightNever
-      & ibLabel .~ mempty
+    let img = maybe (ButtonImageIcon Svg.User ColorSchemaDark) ButtonImageInline $ props ^. userAvatar
+     in ibutton_ $ emptyIbuttonProps img ([] :: [GlobalAction])
+          & ibListKey .~ "user"
+          & ibSize .~ XXLarge
 
     -- title
     br_ []
@@ -398,12 +348,9 @@ mainMenuProcessShort = mkView "MainMenuProcessShort" $ \props -> do
 
     -- image
     br_ []
-    ibutton_ $ emptyIbuttonProps "Process" ([] :: [GlobalAction])
+    ibutton_ $ emptyIbuttonProps (ButtonImageIcon Svg.Process ColorSchemaBright) ([] :: [GlobalAction])
       & ibListKey .~ "process"
       & ibSize .~ XXLarge
-      & ibDarkBackground .~ True
-      & ibHighlightWhen .~ HighlightNever
-      & ibLabel .~ mempty
 
     -- title
     br_ []
@@ -414,26 +361,20 @@ mainMenuProcessShort = mkView "MainMenuProcessShort" $ \props -> do
     -- tile.  clicking on 'users' button should get you there directly.)
     br_ []
     div_ [] $ do
-      ibutton_ $ emptyIbuttonProps "Comment" ([] :: [GlobalAction])
+      ibutton_ $ emptyIbuttonProps (ButtonImageIcon Svg.Comment ColorSchemaBright) ([] :: [GlobalAction])
         & ibListKey .~ (listKey <> "-comments")
+        & ibIndexNum .~ Just (props ^. mmprocShrtNumComments)
         & ibSize .~ Large
-        & ibDarkBackground .~ True
-        & ibHighlightWhen .~ HighlightNever
-        & ibLabel .~ (cs . show $ props ^. mmprocShrtNumComments)
 
-      ibutton_ $ emptyIbuttonProps "Edit" ([] :: [GlobalAction])
+      ibutton_ $ emptyIbuttonProps (ButtonImageIcon Svg.Edit ColorSchemaBright) ([] :: [GlobalAction])
         & ibListKey .~ (listKey <> "-edits")
+        & ibIndexNum .~ Just (props ^. mmprocShrtNumEdits)
         & ibSize .~ Large
-        & ibDarkBackground .~ True
-        & ibHighlightWhen .~ HighlightNever
-        & ibLabel .~ (cs . show $ props ^. mmprocShrtNumEdits)
 
-      ibutton_ $ emptyIbuttonProps "User" ([] :: [GlobalAction])
+      ibutton_ $ emptyIbuttonProps (ButtonImageIcon Svg.User ColorSchemaBright) ([] :: [GlobalAction])
         & ibListKey .~ (listKey <> "-users")
+        & ibIndexNum .~ Just (props ^. mmprocShrtNumUsers)
         & ibSize .~ Large
-        & ibDarkBackground .~ True
-        & ibHighlightWhen .~ HighlightNever
-        & ibLabel .~ (cs . show $ props ^. mmprocShrtNumUsers)
 
 mainMenuProcessShort_ :: HasCallStack => MainMenuProcessShortProps -> ReactElementM 'EventHandlerCode ()
 mainMenuProcessShort_ props = view_ mainMenuProcessShort listKey props
@@ -614,13 +555,15 @@ mainMenuLoginTab :: HasCallStack => View '[MainMenuProps MainMenuSubTabLogin]
 mainMenuLoginTab = mkView "MainMenuLoginTab" $ \(MainMenuProps currentTab menuErrors currentUser) -> do
   let tabButton :: Int -> MainMenuSubTabLogin -> ReactElementM eventHandler ()
       tabButton key this = div_ ["style" @@= [decl "marginLeft" (Px 40)]] $ do
-        ibutton_ $ emptyIbuttonProps "00_joker" [MainMenuAction . MainMenuActionOpen . MainMenuLogin $ this]
+        ibutton_ $ emptyIbuttonProps
+            (ButtonImageIcon img ColorSchemaDark)
+            [MainMenuAction . MainMenuActionOpen . MainMenuLogin $ this]
           & ibListKey .~ cs (show key)
-          & ibDarkBackground .~ False
-          & ibHighlightWhen .~ (if currentTab == this then HighlightAlways else HighlightOnMouseOver)
-          & ibLabel .~ (case this of
-                         MainMenuSubTabLogin        -> "login"
-                         MainMenuSubTabRegistration -> "register")
+          & ibPressed .~ Just (currentTab == this)
+        where
+          img = case this of
+            MainMenuSubTabLogin        -> Svg.Login
+            MainMenuSubTabRegistration -> Svg.Login  -- (do we need a different icon for this?)
 
   div_ $ do
     tabButton 0 MainMenuSubTabLogin
