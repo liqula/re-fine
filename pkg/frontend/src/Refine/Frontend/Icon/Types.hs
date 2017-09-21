@@ -26,8 +26,7 @@ module Refine.Frontend.Icon.Types
 
   , IbuttonOnClick(..)
 
-  , IconSize(..)
-  , sizePx, sizeInt
+  , IconSize(..), iconSizeCls
 
   , IconDescription
 
@@ -99,7 +98,24 @@ data IconSize  -- FIXME: eliminate duplication between this and the correspondin
   | Large
   | XLarge
   | XXLarge
+  | XXXLarge
   deriving (Eq, Show)
+
+iconSizeCls :: IconSize -> ST
+iconSizeCls Medium   = "ibutton_medium"
+iconSizeCls Large    = "ibutton_large"
+iconSizeCls XLarge   = "ibutton_xlarge"
+iconSizeCls XXLarge  = "ibutton_xxlarge"
+iconSizeCls XXXLarge = "ibutton_xxxlarge"
+
+
+-- * outdated
+
+-- FUTUREWORK: the rest of this module should be removed and everything ported to the ibutton_
+-- component above.  this may take a few more steps, though.
+
+
+
 
 sizePx :: HasCallStack => IconSize -> Px
 sizePx = Px . sizeInt
@@ -109,19 +125,13 @@ sizeInt Medium  = 14
 sizeInt Large   = 20
 sizeInt XLarge  = 26
 sizeInt XXLarge = 32
+sizeInt XXXLarge  = 45
 
 instance Css IconSize where
   css s = [ decl "backgroundSize" (Percentage 100)
           , decl "width" (sizePx s)
           , decl "height" (sizePx s)
           ]
-
-
--- * outdated
-
--- FUTUREWORK: the rest of this module should be removed and everything ported to the ibutton_
--- component above.  this may take a few more steps, though.
-
 
 -- ** icon
 
@@ -147,7 +157,7 @@ instance Default IconProps where
 -- ** icon button
 
 data IconButtonPropsWithHandler onclick = IconButtonProps
-  { _iconButtonPropsListKey      :: ReactListKey  -- (this is not morally part of the props, but it's convenient to keep it here.)
+  { _iconButtonPropsListKey      :: ReactListKey  -- TODO: remove this and refactor the places where it is set using inlined view_ calls.
   , _iconButtonPropsIconProps    :: IconProps
   , _iconButtonPropsElementName  :: JSString
   , _iconButtonPropsModuleName   :: JSString

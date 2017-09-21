@@ -32,6 +32,11 @@ data Color
   | NoColor
   | GreenBackground
   | RedBackground
+
+  -- FIXME: the following is for development only; remove once we have the new svgs!
+  | BlackHack
+  | WhiteHack
+  | GreenHack
   deriving (Eq, Show, Ord, Bounded, Enum)
 
 colorValue :: Color -> RGBA
@@ -56,6 +61,10 @@ colorValue YesColor              = RGBA 139 196 77 1
 colorValue NoColor               = RGBA 221 73 43 1
 colorValue GreenBackground       = RGBA 199 227 156 1
 colorValue RedBackground         = RGBA 209 154 137 1
+
+colorValue BlackHack = RGBA 0 0 0 1
+colorValue WhiteHack = RGBA 255 255 255 1
+colorValue GreenHack = RGBA 0 255 0 1
 
 
 data ColorAttr

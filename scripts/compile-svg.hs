@@ -136,7 +136,7 @@ reduceToSvgTags :: [TagTree ST] -> TagTree ST
 reduceToSvgTags tree = f tree
   where
     f :: [TagTree ST] -> TagTree ST
-    f (TagBranch "svg" attrs nodes : _)    = TagBranch "svg" attrs (mconcat $ g <$> nodes)
+    f (TagBranch "svg" attrs nodes : _)    = TagBranch "svg" (mconcat $ sanitizeSvgAttrs <$> attrs) (mconcat $ g <$> nodes)
     f (TagBranch _ _ nodes : nodes')       = f $ nodes <> nodes'
     f (TagLeaf _ : nodes)                  = f nodes
     f []                                   = error $ "reduceToSvgTags: no svg node: " <> show tree
@@ -152,6 +152,15 @@ reduceToSvgTags tree = f tree
               ] <>
               [ "title"  -- for the build-in tooltips.
               ]
+
+-- | FIXME: this should not be necessary; check again when the new svgs are out.
+--
+-- also consider this: @preserveAspectRatio="none"@; make @viewBox@ assume the correct (dynamic)
+-- icon size; <https://css-tricks.com/scale-svg/>.
+sanitizeSvgAttrs :: Attribute ST -> [Attribute ST]
+sanitizeSvgAttrs ("width", _) = []
+sanitizeSvgAttrs ("height", _) = []
+sanitizeSvgAttrs a = [a]
 
 substituteColorClasses :: TagTree ST -> TagTree ST
 substituteColorClasses = f

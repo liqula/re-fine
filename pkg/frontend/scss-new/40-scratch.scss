@@ -32,7 +32,7 @@ nesting may also be useful.
   height: 11 * $dunit;
 }
 
-.mainMenuGroup {
+.mainMenuGroups {
   position: relative;
   display: flex;
   width: 152 * $dunit;
@@ -331,14 +331,13 @@ body {
   margin-top: $dunit * 2;
 }
 
-.platform-title {
-  color: $c_blue_morning;
-  font-size: $dunit * 6;
+.platform-title {  // FIXME: needs tweaking.  also see menu bar where this class is used.
+  background-image: url("../images/liqula_logo.svg");
   height: $dunit * 10;
   margin-left: auto;
   margin-right: auto;
   position: relative;
-  width: $dunit * 15;
+  width: $dunit * 30
 }
 
 .number-top-right {
@@ -371,7 +370,7 @@ body {
   position: absolute;
   left: $dunit * 2;
   top: $dunit * 2;
-  height: $icon-size-xxlarge;
+  height: $icon-size-xxlarge;  // FIXME: this follows from the button props
   width: $icon-size-xxlarge;
 }
 
@@ -379,14 +378,14 @@ body {
   position: absolute;
   right: $dunit * 2;
   top: $dunit * 2;
-  height: $icon-size-xxlarge;
+  height: $icon-size-xxlarge;  // FIXME: this follows from the button props
   width: $icon-size-xxlarge;
 }
 
 .ibutton_xxxlarge {
   position: relative;
-  height: $dunit * 9;
-  width: $dunit * 9;
+  height: $icon-size-xxxlarge;
+  width: $icon-size-xxxlarge;
 }
 
 .ibutton_xxlarge {
@@ -407,14 +406,23 @@ body {
   width: $icon-size-large;
 }
 
+.ibutton_medium {
+  position: relative;
+  height: $icon-size-medium;
+  width: $icon-size-medium;
+}
+
+
 /* test */
 
+/* commented out to make this compile with /pkg/frontend/webpack*.config.js
 .svg-button-myself {
   background: url(../images/testuser.svg) $dunit $dunit/#{$dunit * 4} ($dunit * 4) no-repeat;
   background-color: $c_blue_morning;
   border-radius: $icon-size-xxlarge * 0.5;
   cursor: pointer;
 }
+*/
 
 .icon-daniel_test1 {
   background-image: url("../images/daniel_test1.svg");
@@ -428,6 +436,7 @@ body {
   background-image: url("../images/daniel_user.svg");
 }
 
+/* commented out to make this compile with /pkg/frontend/webpack*.config.js
 .test-icon {
   background-image: url(../images/00_joker_dark.svg);
 }
@@ -436,3 +445,4 @@ body {
   position: relative;
   background-image: url(../images/00_joker_bright.svg);
 }
+*/

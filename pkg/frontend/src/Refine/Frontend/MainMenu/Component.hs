@@ -28,14 +28,11 @@ import System.IO.Unsafe
 
 
 topMenuBarInMainMenu :: HasCallStack => View '[TopMenuBarInMainMenuProps]
-topMenuBarInMainMenu = mkView "TopMenuBarInMainMenu" $ \(TopMenuBarInMainMenuProps currentTab currentUser) ->
-  div_ ["className" $= "c-mainmenu-content__header"] $ do
-    div_ ["className" $= "gr-2"] $ do
+topMenuBarInMainMenu = mkView "TopMenuBarInMainMenu" $ \(TopMenuBarInMainMenuProps currentTab currentUser) -> do
+    div_ [] $ do
       ibutton_ $ emptyIbuttonProps (ButtonImageIcon Svg.Close ColorSchemaBright) [MainMenuAction MainMenuActionClose]
         & ibListKey .~ "1"
         & ibSize .~ XXLarge
-
-    div_ ["className" $= "gr-20"] $ do
 
       case currentUser of
         UserLoggedIn user -> do
@@ -44,7 +41,7 @@ topMenuBarInMainMenu = mkView "TopMenuBarInMainMenu" $ \(TopMenuBarInMainMenuPro
               $ MainMenuProfile ( either id (^. userID) user
                                 , FormBegin $ newLocalStateRef (Nothing, Nothing) user)
             ]
-            & ibListKey .~ "5"
+            & ibListKey .~ "2"
             & ibSize .~ XXLarge
         _ -> pure ()
 
@@ -58,31 +55,21 @@ topMenuBarInMainMenu = mkView "TopMenuBarInMainMenu" $ \(TopMenuBarInMainMenuPro
         & ibPressed .~ Just (currentTab == MainMenuHelp)
         & ibSize .~ XXLarge
 
+    div_ ["className" $= toClasses @ST ["platform-title"]] $ do
+      pure ()
+
+    div_ ["className" $= "ibutton_absolute-topright"] $ do
       loginStatusButton_ ColorSchemaBright (Just $ has _MainMenuLogin currentTab) currentUser
 
 topMenuBarInMainMenu_ :: HasCallStack => TopMenuBarInMainMenuProps -> ReactElementM eventHandler ()
 topMenuBarInMainMenu_ = view_ topMenuBarInMainMenu "topMenuBarInMainMenu_"
 
 
-tabStyles :: HasCallStack => [Decl]
-tabStyles =
-  [ decl "position" (Ident "absolute")
-  , zindex ZIxLoginTab
-  , decl "backgroundColor" (Ident "rgba(210, 217, 223, 1)")
-  , decl "padding" (Px 50)
-  , decl "borderRadius" (Px 12)
-  ]
-
 mainMenu :: HasCallStack => View '[MainMenuProps MainMenuTabProps]
 mainMenu = mkView "MainMenu" $ \(MainMenuProps currentTab menuErrors currentUser) -> do
-  div_ ["className" $= "row row-align-middle c-mainmenu-content"] $ do
-    div_ ["className" $= "grid-wrapper"] $ do
+  div_ ["className" $= "body-container"] $ do
       topMenuBarInMainMenu_ (TopMenuBarInMainMenuProps currentTab currentUser)
-      div_ [ "className" $= "gr-2" ] $ do
-        pure ()
-      div_ [ "className" $= "gr-20"
-           , "style" @@= tabStyles
-           ] $ do
+      div_ ["className" $= "main-content"] $ do
         case currentTab of
           MainMenuGroups groups               -> mainMenuGroups_ groups
           MainMenuGroup sub group             -> mainMenuGroup_ (sub, group)
@@ -103,9 +90,6 @@ mainMenu = mkView "MainMenu" $ \(MainMenuProps currentTab menuErrors currentUser
 
           MainMenuLogin subtab -> mainMenuLoginTab_ (MainMenuProps subtab menuErrors currentUser)
 
-      div_ [ "className" $= "gr-2" ] $ do
-        pure ()
-
 mainMenu_ :: HasCallStack => MainMenuProps MainMenuTabProps -> ReactElementM eventHandler ()
 mainMenu_ = view_ mainMenu "mainMenu_"
 
@@ -113,7 +97,7 @@ mainMenu_ = view_ mainMenu "mainMenu_"
 mainMenuGroups :: View '[GroupsProps]
 mainMenuGroups = mkView "MainMenuGroups" $ \groups -> do
   div_ $ do
-    div_ ["style" @@= [decl "marginLeft" (Px 3)]] $ do
+    div_ ["class" $= "main-content_header"] $ do
       let mkCreateGroupAction :: GlobalAction
           mkCreateGroupAction = MainMenuAction . MainMenuActionOpen . MainMenuCreateOrUpdateGroup Nothing . FormBegin
                               $ newLocalStateRef
@@ -126,10 +110,13 @@ mainMenuGroups = mkView "MainMenuGroups" $ \groups -> do
         & ibListKey .~ "create_group"
         & ibSize .~ XLarge
 
-    div_ $ do
-      br_ [] >> br_ [] >> br_ [] >> hr_ []
+    div_ ["className" $= "hr-div"] $ do
+      pure ()
 
-    div_ $ do
+    div_ ["className" $= "mainMenuGroups"] $ do
+      let mainMenuGroupShort_ :: HasCallStack => Group -> ReactElementM eventHandler ()
+          mainMenuGroupShort_ group = view_ mainMenuGroupShort listKey group
+            where listKey = "mainMenuGroupShort-" <> (cs . show $ group ^. groupID . unID)
       mainMenuGroupShort_ `mapM_` sortBy (compare `on` view groupTitle) (groups ^. _1)
 
 mainMenuGroups_ :: HasCallStack => GroupsProps -> ReactElementM eventHandler ()
@@ -137,51 +124,41 @@ mainMenuGroups_ = view_ mainMenuGroups "mainMenuGroups"
 
 mainMenuGroupShort :: HasCallStack => View '[Group]
 mainMenuGroupShort = mkView "MainMenuGroupShort" $ \group -> do
-  let listKey = "group-list-item-" <> (cs . show $ group ^. groupID . unID)
-  div_ [ onClick $ \_ _ -> simpleHandler . dispatch
+  div_ [ "class" $= "mainMenuGroupShort c_bg_blue_dawn"
+       , onClick $ \_ _ -> simpleHandler . dispatch
                          . MainMenuAction . MainMenuActionOpen
                          . MainMenuGroup MainMenuGroupProcesses $ group ^. groupID
-       , "id" $= listKey  -- FUTUREWORK: get rid of this.  at the time of writing this it's only
-                          -- used in the acceptance test.
-
-       , "style" @@= [ decl "backgroundColor" (Ident "rgba(84, 99, 122, 1)")
-                     , decl "padding" (Px 50)
-                     , decl "margin" (Px 50)
-                     , decl "borderRadius" (Px 12)
-                     ]
        ] $ do
 
-    -- image (FIXME: allow the user to store one in the group and use that)
-    br_ []
-    ibutton_ $ emptyIbuttonProps (ButtonImageIcon Svg.Group ColorSchemaBright) ([] :: [GlobalAction])
-      & ibListKey .~ "group"
-      & ibSize .~ XXLarge
+    case group ^. groupImage of
+      Nothing -> do
+        div_ ["class" $= "mainMenuGroupShort-svg_div"] $ do
+          div_ ["class" $= "on_top"] $ do
+            Svg.render ColorSchemaBright def Svg.Group
+      Just (ImageInline img) -> do
+        div_ ["class" $= "mainMenuGroupShort-image_div"] $ do
+          img_ ["class" $= "mainMenuGroupShort-image", "src" $= cs img, "alt" $= "[group logo]"] $ pure ()
 
-    -- title
-    br_ []
-    div_ [] $ do
+    div_ ["class" $= "mainMenuGroupShort-groupname"] $ do
       elemText $ group ^. groupTitle
 
-    -- buttons for processes, users (FUTUREWORK: make those clickable in addition to the entire
-    -- tile.  clicking on 'users' button should get you there directly.)
-    br_ []
-    div_ [] $ do
-      let numProcesses :: Int = length $ group ^. groupVDocs
+    -- buttons for subgroups, processes, users (FUTUREWORK: make those clickable in addition to the entire
+    -- tile.  clicking on 'members' button should get you to the members tab directly.)
+    div_ ["class" $= "mainMenuGroupShort-iconlist"] $ do
+      ibutton_ $ emptyIbuttonProps (ButtonImageIcon Svg.Group ColorSchemaBright) ([] :: [GlobalAction])
+        & ibListKey .~ "subgroups"
+        & ibIndexNum .~ Nothing
+        & ibSize .~ Large
+
       ibutton_ $ emptyIbuttonProps (ButtonImageIcon Svg.Process ColorSchemaBright) ([] :: [GlobalAction])
-        & ibListKey .~ (listKey <> "-processes")
-        & ibIndexNum .~ Just numProcesses
+        & ibListKey .~ "processes"
+        & ibIndexNum .~ Just (length $ group ^. groupVDocs)
         & ibSize .~ Large
 
-      let numUsers = length $ group ^. groupMembers
       ibutton_ $ emptyIbuttonProps (ButtonImageIcon Svg.User ColorSchemaBright) ([] :: [GlobalAction])
-        & ibListKey .~ (listKey <> "-users")
-        & ibIndexNum .~ Just numUsers
+        & ibListKey .~ "members"
+        & ibIndexNum .~ Just (length $ group ^. groupMembers)
         & ibSize .~ Large
-
-mainMenuGroupShort_ :: HasCallStack => Group -> ReactElementM eventHandler ()
-mainMenuGroupShort_ group = view_ mainMenuGroupShort listKey group
-  where
-    listKey = "mainMenuGroupShort-" <> (cs . show $ group ^. groupID . unID)
 
 mainMenuGroup :: View '[(MainMenuGroup, GroupProps)]
 mainMenuGroup = mkView "mainMenuGroup" $ \case

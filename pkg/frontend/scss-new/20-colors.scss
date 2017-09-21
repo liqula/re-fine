@@ -22,6 +22,9 @@ $c_yes_color: rgba(139, 196, 77, 1.0);
 $c_no_color: rgba(221, 73, 43, 1.0);
 $c_green_background: rgba(199, 227, 156, 1.0);
 $c_red_background: rgba(209, 154, 137, 1.0);
+$c_black_hack: rgba(0, 0, 0, 1.0);
+$c_white_hack: rgba(255, 255, 255, 1.0);
+$c_green_hack: rgba(0, 255, 0, 1.0);
 .c_blue_dark { color: $c_blue_dark }
 .c_blue_night { color: $c_blue_night }
 .c_blue_dawn { color: $c_blue_dawn }
@@ -43,6 +46,9 @@ $c_red_background: rgba(209, 154, 137, 1.0);
 .c_no_color { color: $c_no_color }
 .c_green_background { color: $c_green_background }
 .c_red_background { color: $c_red_background }
+.c_black_hack { color: $c_black_hack }
+.c_white_hack { color: $c_white_hack }
+.c_green_hack { color: $c_green_hack }
 .c_bg_blue_dark { background-color: $c_blue_dark }
 .c_bg_blue_night { background-color: $c_blue_night }
 .c_bg_blue_dawn { background-color: $c_blue_dawn }
@@ -64,6 +70,9 @@ $c_red_background: rgba(209, 154, 137, 1.0);
 .c_bg_no_color { background-color: $c_no_color }
 .c_bg_green_background { background-color: $c_green_background }
 .c_bg_red_background { background-color: $c_red_background }
+.c_bg_black_hack { background-color: $c_black_hack }
+.c_bg_white_hack { background-color: $c_white_hack }
+.c_bg_green_hack { background-color: $c_green_hack }
 .c_fill_blue_dark { fill: $c_blue_dark }
 .c_fill_blue_night { fill: $c_blue_night }
 .c_fill_blue_dawn { fill: $c_blue_dawn }
@@ -85,3 +94,6 @@ $c_red_background: rgba(209, 154, 137, 1.0);
 .c_fill_no_color { fill: $c_no_color }
 .c_fill_green_background { fill: $c_green_background }
 .c_fill_red_background { fill: $c_red_background }
+.c_fill_black_hack { fill: $c_black_hack }
+.c_fill_white_hack { fill: $c_white_hack }
+.c_fill_green_hack { fill: $c_green_hack }

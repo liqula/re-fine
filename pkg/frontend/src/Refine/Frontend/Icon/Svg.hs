@@ -42,6 +42,11 @@ instance Default ButtonState where
 
 
 applyColorSchema :: ColorSchema -> ButtonState -> (Color -> Color -> a) -> a
+applyColorSchema _ (ButtonState Released NotRollOver) f = f BlackHack WhiteHack
+applyColorSchema _ (ButtonState Released RollOver)    f = f BlackHack GreenHack
+applyColorSchema _ (ButtonState Pressed  NotRollOver) f = f WhiteHack WhiteHack
+applyColorSchema _ (ButtonState Pressed  RollOver)    f = f WhiteHack GreenHack
+{-
 applyColorSchema ColorSchemaBright     (ButtonState Released NotRollOver) f = f BlueDark BlueLight
 applyColorSchema ColorSchemaBright     (ButtonState Released RollOver)    f = f BlueLight BlueDark
 applyColorSchema ColorSchemaBright     (ButtonState Pressed  NotRollOver) f = f BlueLight BlueDark
@@ -62,7 +67,7 @@ applyColorSchema ColorSchemaEdit       (ButtonState Released NotRollOver) f = f 
 applyColorSchema ColorSchemaEdit       (ButtonState Released RollOver)    f = f BlueLight EditDark
 applyColorSchema ColorSchemaEdit       (ButtonState Pressed  NotRollOver) f = f BlueLight EditDark
 applyColorSchema ColorSchemaEdit       (ButtonState Pressed  RollOver)    f = f EditDark BlueLight
-
+-}
 
 render :: ColorSchema -> ButtonState -> Icon -> ReactElementM h ()
 render scm st ArrowDown = applyColorSchema scm st (\c0 _c1 -> svgArrowDown c0)
