@@ -23,10 +23,9 @@ include "includes/svgs/svgs1.php";
 			</div>
 			<div class="hr-2-div"></div>
 			<div class="groupDetailsProcesses_iconlist">
-				<?= iconWithNumber('ibutton_xxxlarge', 'svgDanielUser', ['c_fill_interaction_yellow', ' c_fill_note_bubble'], '12', ['margin1',"float-left"]) ?>
-				<?= iconWithNumber('ibutton_xxxlarge', 'svgDanielUser', ['c_fill_interaction_yellow', ' c_fill_note_bubble'], '12', ['margin1',"float-left"]) ?>
-				<?= iconWithNumber('ibutton_xxxlarge', 'svgDanielUser', ['c_fill_interaction_yellow', ' c_fill_note_bubble'], '12', ['margin1',"float-left"]) ?>
-				<div class="clearboth"></div>
+				<?= iconWithNumber('ibutton_xxxlarge', 'svgDanielUser', ['c_fill_interaction_yellow', ' c_fill_note_bubble'], '12', ['margin1']) ?>
+				<?= iconWithNumber('ibutton_xxxlarge', 'svgDanielUser', ['c_fill_interaction_yellow', ' c_fill_note_bubble'], '12', ['margin1']) ?>
+				<?= iconWithNumber('ibutton_xxxlarge', 'svgDanielUser', ['c_fill_interaction_yellow', ' c_fill_note_bubble'], '12', ['margin1']) ?>
 			</div>
 
 
@@ -34,9 +33,10 @@ include "includes/svgs/svgs1.php";
 				<div class="groupDetailsProcesses_submenu-title">
 					Dokumente der Gruppe (css ist eine Ausgeburt der Hölle)
 				</div>
-				<div class="test-icon ibutton_xlarge margin1 float-right"></div>
-				<div class="test-icon ibutton_xlarge margin1 float-right"></div>
-				<div class="clearboth"></div>
+				<div class="groupDetailsProcesses_submenu-icons">
+					<?= icon('ibutton_xlarge', 'svgDanielUser', ['c_fill_interaction_yellow', ' c_fill_note_bubble'], ['margin1']) ?>
+					<?= icon('ibutton_xlarge', 'svgDanielUser', ['c_fill_interaction_yellow', ' c_fill_note_bubble'], ['margin1']) ?>
+				</div>
 			</div>
 
 			<?php groupDetailsProcessesDocument(); ?>

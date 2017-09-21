@@ -167,17 +167,23 @@ nesting may also be useful.
   &_iconlist {
     position: relative;
     padding: $dunit;
+    display: flex;
   }
 
   &_submenu {
     position: relative;
     padding-left: $dunit * 2;
     padding-right: $dunit;
+    display: flex;
+    justify-content: space-between;
   }
 
   &_submenu-title {
     position: relative;
-    float: left;
+  }
+  
+  &_submenu-icons {
+    display: flex;
   }
 }
 
