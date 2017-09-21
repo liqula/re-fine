@@ -415,53 +415,20 @@ body {
   width: $icon-size-medium;
 }
 
+
+/* the following 2 definitions must come after the definitions of the button classes 
+   because "absolute" should override the "relative" property of the button size class
+*/
+
 .ibutton_absolute-topleft {
   position: absolute;
   left: $dunit * 2;
   top: $dunit * 2;
-  //height: $icon-size-xxlarge;  // FIXME: this follows from the button props
-  //width: $icon-size-xxlarge;
 }
 
 .ibutton_absolute-topright {
   position: absolute;
   right: $dunit * 2;
   top: $dunit * 2;
-  height: $icon-size-xxlarge;  // FIXME: this follows from the button props
-  width: $icon-size-xxlarge;
 }
 
-
-/* test */
-
-/* commented out to make this compile with /pkg/frontend/webpack*.config.js
-.svg-button-myself {
-  background: url(../images/testuser.svg) $dunit $dunit/#{$dunit * 4} ($dunit * 4) no-repeat;
-  background-color: $c_blue_morning;
-  border-radius: $icon-size-xxlarge * 0.5;
-  cursor: pointer;
-}
-*/
-
-.icon-daniel_test1 {
-  background-image: url("../images/daniel_test1.svg");
-}
-
-.icon-daniel_test2 {
-  background-image: url("../images/daniel_test2.svg");
-}
-
-.icon-daniel_test3 {
-  background-image: url("../images/daniel_user.svg");
-}
-
-/* commented out to make this compile with /pkg/frontend/webpack*.config.js
-.test-icon {
-  background-image: url(../images/00_joker_dark.svg);
-}
-
-.test-icon2 {
-  position: relative;
-  background-image: url(../images/00_joker_bright.svg);
-}
-*/
