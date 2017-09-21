@@ -10,8 +10,8 @@
 <body>
 <div class="body-container">
 
-	<?= icon('ibutton_absolute-topleft', 'svg_close', ['c_fill_blue_night', ' c_fill_note_bubble'], []) ?>
-	<div class="platform-title">liqula</div>
+	<?= icon('ibutton_absolute-topleft', 'svg_close', ['c_fill_blue_night', ' c_fill_note_bubble'], ['ibutton_xxlarge']) ?>
+	<div class="platform-title"></div>
 	<?= icon('ibutton_absolute-topright', 'svgDanielUser', ['c_fill_interaction_yellow', ' c_fill_note_bubble'], []) ?>
 
 	<div class="main-content">
