@@ -97,7 +97,7 @@ mainMenu_ = view_ mainMenu "mainMenu_"
 mainMenuGroups :: View '[GroupsProps]
 mainMenuGroups = mkView "MainMenuGroups" $ \groups -> do
   div_ $ do
-    div_ ["class" $= "main-content_header"] $ do
+    div_ ["className" $= "main-content_header"] $ do
       let mkCreateGroupAction :: GlobalAction
           mkCreateGroupAction = MainMenuAction . MainMenuActionOpen . MainMenuCreateOrUpdateGroup Nothing . FormBegin
                               $ newLocalStateRef
