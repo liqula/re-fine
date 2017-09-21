@@ -29,30 +29,9 @@ import System.IO.Unsafe
 
 topMenuBarInMainMenu :: HasCallStack => View '[TopMenuBarInMainMenuProps]
 topMenuBarInMainMenu = mkView "TopMenuBarInMainMenu" $ \(TopMenuBarInMainMenuProps currentTab currentUser) -> do
-    div_ [] $ do
+    div_ ["className" $= "ibutton_absolute-topleft"] $ do
       ibutton_ $ emptyIbuttonProps (ButtonImageIcon Svg.Close ColorSchemaBright) [MainMenuAction MainMenuActionClose]
         & ibListKey .~ "1"
-        & ibSize .~ XXLarge
-
-      case currentUser of
-        UserLoggedIn user -> do
-          ibutton_ $ emptyIbuttonProps (ButtonImageIcon Svg.UserProfile ColorSchemaBright)
-            [ MainMenuAction . MainMenuActionOpen
-              $ MainMenuProfile ( either id (^. userID) user
-                                , FormBegin $ newLocalStateRef (Nothing, Nothing) user)
-            ]
-            & ibListKey .~ "2"
-            & ibSize .~ XXLarge
-        _ -> pure ()
-
-      ibutton_ $ emptyIbuttonProps (ButtonImageIcon Svg.Group ColorSchemaBright) [MainMenuAction . MainMenuActionOpen $ MainMenuGroups ()]
-        & ibListKey .~ "3"
-        & ibPressed .~ Just (currentTab & has _MainMenuGroup)
-        & ibSize .~ XXLarge
-
-      ibutton_ $ emptyIbuttonProps (ButtonImageIcon Svg.Help ColorSchemaBright) [MainMenuAction $ MainMenuActionOpen MainMenuHelp]
-        & ibListKey .~ "4"
-        & ibPressed .~ Just (currentTab == MainMenuHelp)
         & ibSize .~ XXLarge
 
     div_ ["className" $= toClasses @ST ["platform-title"]] $ do
@@ -60,6 +39,30 @@ topMenuBarInMainMenu = mkView "TopMenuBarInMainMenu" $ \(TopMenuBarInMainMenuPro
 
     div_ ["className" $= "ibutton_absolute-topright"] $ do
       loginStatusButton_ ColorSchemaBright (Just $ has _MainMenuLogin currentTab) currentUser
+
+    -- FIXME: move this div_ into the resp. tab component (or something...)
+    div_ ["className" $= "main-content_header"] $ do
+      div_ ["className" $= "main-content_header_inner"] $ do
+        case currentUser of
+          UserLoggedIn user -> do
+            ibutton_ $ emptyIbuttonProps (ButtonImageIcon Svg.UserProfile ColorSchemaBright)
+              [ MainMenuAction . MainMenuActionOpen
+                $ MainMenuProfile ( either id (^. userID) user
+                                  , FormBegin $ newLocalStateRef (Nothing, Nothing) user)
+              ]
+              & ibListKey .~ "2"
+              & ibSize .~ XXLarge
+          _ -> pure ()
+
+        ibutton_ $ emptyIbuttonProps (ButtonImageIcon Svg.Group ColorSchemaBright) [MainMenuAction . MainMenuActionOpen $ MainMenuGroups ()]
+          & ibListKey .~ "3"
+          & ibPressed .~ Just (currentTab & has _MainMenuGroup)
+          & ibSize .~ XXLarge
+
+        ibutton_ $ emptyIbuttonProps (ButtonImageIcon Svg.Help ColorSchemaBright) [MainMenuAction $ MainMenuActionOpen MainMenuHelp]
+          & ibListKey .~ "4"
+          & ibPressed .~ Just (currentTab == MainMenuHelp)
+          & ibSize .~ XXLarge
 
 topMenuBarInMainMenu_ :: HasCallStack => TopMenuBarInMainMenuProps -> ReactElementM eventHandler ()
 topMenuBarInMainMenu_ = view_ topMenuBarInMainMenu "topMenuBarInMainMenu_"
@@ -106,9 +109,11 @@ mainMenuGroups = mkView "MainMenuGroups" $ \groups -> do
                                     Nothing)
                                   groups
 
-      ibutton_ $ emptyIbuttonProps (ButtonImageIcon GroupNew ColorSchemaDark) [mkCreateGroupAction]
-        & ibListKey .~ "create_group"
-        & ibSize .~ XLarge
+
+      div_ ["className" $= "main-content_header_inner"] $ do
+        ibutton_ $ emptyIbuttonProps (ButtonImageIcon GroupNew ColorSchemaDark) [mkCreateGroupAction]
+          & ibListKey .~ "create_group"
+          & ibSize .~ XLarge
 
     div_ ["className" $= "hr-div"] $ do
       pure ()
@@ -124,7 +129,7 @@ mainMenuGroups_ = view_ mainMenuGroups "mainMenuGroups"
 
 mainMenuGroupShort :: HasCallStack => View '[Group]
 mainMenuGroupShort = mkView "MainMenuGroupShort" $ \group -> do
-  div_ [ "class" $= "mainMenuGroupShort c_bg_blue_dawn"
+  div_ [ "className" $= "mainMenuGroupShort c_bg_blue_dawn"
        , onClick $ \_ _ -> simpleHandler . dispatch
                          . MainMenuAction . MainMenuActionOpen
                          . MainMenuGroup MainMenuGroupProcesses $ group ^. groupID
@@ -132,33 +137,33 @@ mainMenuGroupShort = mkView "MainMenuGroupShort" $ \group -> do
 
     case group ^. groupImage of
       Nothing -> do
-        div_ ["class" $= "mainMenuGroupShort-svg_div"] $ do
-          div_ ["class" $= "on_top"] $ do
+        div_ ["className" $= "mainMenuGroupShort-svg_div"] $ do
+          div_ ["className" $= "on_top"] $ do
             Svg.render ColorSchemaBright def Svg.Group
       Just (ImageInline img) -> do
-        div_ ["class" $= "mainMenuGroupShort-image_div"] $ do
-          img_ ["class" $= "mainMenuGroupShort-image", "src" $= cs img, "alt" $= "[group logo]"] $ pure ()
+        div_ ["className" $= "mainMenuGroupShort-image_div"] $ do
+          img_ ["className" $= "mainMenuGroupShort-image", "src" $= cs img, "alt" $= "[group logo]"] $ pure ()
 
-    div_ ["class" $= "mainMenuGroupShort-groupname"] $ do
+    div_ ["className" $= "mainMenuGroupShort-groupname"] $ do
       elemText $ group ^. groupTitle
 
     -- buttons for subgroups, processes, users (FUTUREWORK: make those clickable in addition to the entire
     -- tile.  clicking on 'members' button should get you to the members tab directly.)
-    div_ ["class" $= "mainMenuGroupShort-iconlist"] $ do
+    div_ ["className" $= "mainMenuGroupShort-iconlist"] $ do
       ibutton_ $ emptyIbuttonProps (ButtonImageIcon Svg.Group ColorSchemaBright) ([] :: [GlobalAction])
         & ibListKey .~ "subgroups"
         & ibIndexNum .~ Nothing
-        & ibSize .~ Large
+        & ibSize .~ XXXLarge
 
       ibutton_ $ emptyIbuttonProps (ButtonImageIcon Svg.Process ColorSchemaBright) ([] :: [GlobalAction])
         & ibListKey .~ "processes"
         & ibIndexNum .~ Just (length $ group ^. groupVDocs)
-        & ibSize .~ Large
+        & ibSize .~ XXXLarge
 
       ibutton_ $ emptyIbuttonProps (ButtonImageIcon Svg.User ColorSchemaBright) ([] :: [GlobalAction])
         & ibListKey .~ "members"
         & ibIndexNum .~ Just (length $ group ^. groupMembers)
-        & ibSize .~ Large
+        & ibSize .~ XXXLarge
 
 mainMenuGroup :: View '[(MainMenuGroup, GroupProps)]
 mainMenuGroup = mkView "mainMenuGroup" $ \case

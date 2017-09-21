@@ -18,7 +18,6 @@ loginStatusButton_ :: HasCallStack
 loginStatusButton_ schema pressed cu = div_ $ do
   ibutton_ $ emptyIbuttonProps (mkIcon cu) onclick
     & ibSize .~ XXLarge
-    & ibAlign .~ AlignRight
     & ibPressed .~ pressed
   span_ $ do
     elemText $ mkLabel cu
