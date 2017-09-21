@@ -124,6 +124,11 @@ toClasses = JSS.unwords . filter (not . JSS.null) . fmap cs
 deriving instance FromJSVal (NoJSONRep JSVal)
 deriving instance ToJSVal (NoJSONRep JSVal)
 
+-- | use this instead of inlined strings in case of cache misses!
+hourglass :: IsString s => s
+hourglass = "loading..."
+
+
 #ifdef __GHCJS__
 
 foreign import javascript safe

@@ -88,7 +88,7 @@ wholeScreen = React.defineLifecycleView "WholeScreen" () React.lifecycleConfig
 mainScreen :: HasCallStack => View' '[(GlobalState, AccessState)]
 mainScreen = mkView' "MainScreen" $ \(rs, as) -> case rs ^. gsCompositeVDoc of
   Nothing -> error "mainScreen: no gsVDoc"
-  Just Nothing -> "Loading..."
+  Just Nothing -> hourglass
   Just (Just vdoc) -> do
     let __ :: Translations = rs ^. RS.gsTranslations . unTrans
                                 -- FIXME: I think this could be done more nicely.

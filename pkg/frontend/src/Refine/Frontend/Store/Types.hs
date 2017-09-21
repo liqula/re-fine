@@ -14,9 +14,10 @@ import Refine.Frontend.Contribution.Types
 import Refine.Frontend.Document.Types
 import Refine.Frontend.Header.Types
 import Refine.Frontend.MainMenu.Types
+import qualified Refine.Frontend.Route as Route
 import Refine.Frontend.Screen.Types
 import Refine.Frontend.Types
-import qualified Refine.Frontend.Route as Route
+import Refine.Frontend.Util
 
 
 -- * state
@@ -130,7 +131,7 @@ cacheMissId i x = cacheMiss (cacheKey i) x i
 gsRawContent :: Getter (GlobalState_ a) RawContent
 gsRawContent = to $ \case
   (view gsCompositeVDoc -> Just (Just cvdoc)) -> rawContentFromCompositeVDoc cvdoc
-  _                                           -> mkRawContent $ mkBlock "loading..." :| []
+  _                                           -> mkRawContent $ mkBlock hourglass :| []
 
 class CacheLookup a where
   cacheKey :: ID a -> CacheKey

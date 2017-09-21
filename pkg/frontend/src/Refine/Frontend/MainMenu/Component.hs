@@ -184,7 +184,7 @@ mainMenuGroupShort = mkView "MainMenuGroupShort" $ \group -> do
 
 mainMenuGroup :: View '[(MainMenuGroup, GroupProps)]
 mainMenuGroup = mkView "mainMenuGroup" $ \case
- (_, GroupProps Nothing _ _) -> "Loading..."
+ (_, GroupProps Nothing _ _) -> hourglass
  (sub, GroupProps (Just group) vdocs users) -> do
   div_ $ do
     ibutton_ $ emptyIbuttonProps (ButtonImageIcon Svg.ArrowLeft ColorSchemaBright)
@@ -324,8 +324,9 @@ mainMenuMemberShort = mkView "MainMenuProcessShort" $ \props -> do
         & ibHighlightWhen .~ HighlightNever
         & ibLabel .~ (cs . show $ props ^. mmprocShrtNumUsers)
 -}
+
 mainMenuMemberShort_ :: HasCallStack => Maybe User -> ReactElementM 'EventHandlerCode ()
-mainMenuMemberShort_ Nothing = "Loading..."
+mainMenuMemberShort_ Nothing = hourglass
 mainMenuMemberShort_ (Just props) = view_ mainMenuMemberShort listKey props
   where
     listKey = "mainMenuMemberShort-" <> (cs . show $ props ^. userID . unID)
@@ -465,7 +466,7 @@ mainMenuCreateProcess_ lst = view_ (mainMenuCreateProcess lst) "mainMenuCreatePr
 
 mainMenuProfile :: HasCallStack => Bool -> Lookup User -> LocalStateRef ProfileLocalState -> View '[]
 mainMenuProfile editable user lst = mkPersistentStatefulView "MainMenuProfile" lst Nothing $ \st -> case user of
-  Left _uid -> elemText "Loading..."
+  Left _uid -> hourglass
   Right u -> do
     elemText $ u ^. userName
 

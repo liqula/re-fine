@@ -269,7 +269,7 @@ data StatementEditorProps = StatementEditorProps
 
 discussionProps :: Either (ID Discussion) (Range Position, Discussion)  -> RawContent -> StatementPropDetails -> Bool -> DiscussionProps
 discussionProps d@(Right disc) = DiscussionProps d . cropToBlocks (fst disc)
-discussionProps d = DiscussionProps d . const (mkRawContent $ mkBlock "loading..." :| [])
+discussionProps d = DiscussionProps d . const (mkRawContent $ mkBlock hourglass :| [])
 
 -- | Remove all blocks that do not overlap with a range.
 --
