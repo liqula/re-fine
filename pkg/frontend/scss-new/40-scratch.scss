@@ -202,7 +202,7 @@ $groupDetailsProcessesDocumentHeight: 30 * $dunit;
   margin-right: $dunit * 2;
   margin-bottom: $dunit * 2;
 
-  &_column1 {
+  &__column1 {
     position: relative;
     width: 24 * $dunit;
     height: $groupDetailsProcessesDocumentHeight;
@@ -218,7 +218,7 @@ $groupDetailsProcessesDocumentHeight: 30 * $dunit;
     }
   }
 
-  &_column2 {
+  &__column2 {
     position: relative;
     width: 92 * $dunit;
     height: $groupDetailsProcessesDocumentHeight;
@@ -239,12 +239,12 @@ $groupDetailsProcessesDocumentHeight: 30 * $dunit;
     }
   }
 
-  &_column3 {
+  &__column3 {
     position: relative;
     width: 4 * $dunit;
     height: $groupDetailsProcessesDocumentHeight;
 
-    &-vertical_line {
+    &-vertical-line {
       position: relative;
       border-left: 1px solid black;
       height: $groupDetailsProcessesDocumentHeight - 6 * $dunit;
@@ -252,7 +252,7 @@ $groupDetailsProcessesDocumentHeight: 30 * $dunit;
     }
   }
 
-  &_column4 {
+  &__column4 {
     position: relative;
     width: 28 * $dunit;
     height: $groupDetailsProcessesDocumentHeight;
