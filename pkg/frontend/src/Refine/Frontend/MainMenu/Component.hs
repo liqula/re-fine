@@ -50,8 +50,8 @@ topMenuBar = mkView "TopMenuBarInMainMenu" $ \(TopMenuBarProps mCurrentTab curre
   -- FIXME: move this div_ into the resp. tab component (or something...)
   case mCurrentTab of
     Nothing -> pure ()
-    Just currentTab -> div_ ["className" $= "main-content_header"] $ do
-      div_ ["className" $= "main-content_header_inner"] $ do
+    Just currentTab -> div_ ["className" $= "main-content__header"] $ do
+      div_ ["className" $= "main-content__header-inner"] $ do
         case currentUser of
           UserLoggedIn user -> do
             ibutton_ $ emptyIbuttonProps (ButtonImageIcon Svg.UserProfile ColorSchemaBright)
@@ -117,7 +117,7 @@ mainMenu = mkView "MainMenu" $ \(MainMenuProps currentTab menuErrors currentUser
 mainMenuGroups :: View '[GroupsProps]
 mainMenuGroups = mkView "MainMenuGroups" $ \groups -> do
   div_ $ do
-    div_ ["className" $= "main-content_header"] $ do
+    div_ ["className" $= "main-content__header"] $ do
       let mkCreateGroupAction :: GlobalAction
           mkCreateGroupAction = MainMenuAction . MainMenuActionOpen . MainMenuCreateOrUpdateGroup Nothing . FormBegin
                               $ newLocalStateRef
@@ -127,7 +127,7 @@ mainMenuGroups = mkView "MainMenuGroups" $ \groups -> do
                                   groups
 
 
-      div_ ["className" $= "main-content_header_inner"] $ do
+      div_ ["className" $= "main-content__header-inner"] $ do
         ibutton_ $ emptyIbuttonProps (ButtonImageIcon GroupNew ColorSchemaDark) [mkCreateGroupAction]
           & ibListKey .~ "create_group"
           & ibSize .~ XLarge
@@ -154,19 +154,19 @@ mainMenuGroupShort = mkView "MainMenuGroupShort" $ \group -> do
 
     case group ^. groupImage of
       Nothing -> do
-        div_ ["className" $= "mainMenuGroupShort-svg_div"] $ do
+        div_ ["className" $= "mainMenuGroupShort_svg-div"] $ do
           div_ ["className" $= "on_top"] $ do
             Svg.render ColorSchemaBright def Svg.Group
       Just (ImageInline img) -> do
-        div_ ["className" $= "mainMenuGroupShort-image_div"] $ do
-          img_ ["className" $= "mainMenuGroupShort-image", "src" $= cs img, "alt" $= "[group logo]"] $ pure ()
+        div_ ["className" $= "mainMenuGroupShort__image-div"] $ do
+          img_ ["className" $= "mainMenuGroupShort__image", "src" $= cs img, "alt" $= "[group logo]"] $ pure ()
 
-    div_ ["className" $= "mainMenuGroupShort-groupname"] $ do
+    div_ ["className" $= "mainMenuGroupShort__groupname"] $ do
       elemText $ group ^. groupTitle
 
     -- buttons for subgroups, processes, users (FUTUREWORK: make those clickable in addition to the entire
     -- tile.  clicking on 'members' button should get you to the members tab directly.)
-    div_ ["className" $= "mainMenuGroupShort-iconlist"] $ do
+    div_ ["className" $= "mainMenuGroupShort__iconlist"] $ do
       ibutton_ $ emptyIbuttonProps (ButtonImageIcon Svg.Group ColorSchemaBright) ([] :: [GlobalAction])
         & ibListKey .~ "subgroups"
         & ibIndexNum .~ Nothing
