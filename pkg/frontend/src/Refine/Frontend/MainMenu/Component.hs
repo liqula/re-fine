@@ -102,7 +102,7 @@ mainMenuGroups = mkView "MainMenuGroups" $ \groups -> do
           mkCreateGroupAction = MainMenuAction . MainMenuActionOpen . MainMenuCreateOrUpdateGroup Nothing . FormBegin
                               $ newLocalStateRef
                                   (CreateGroup "" "" [] []
-                                    (flip (,) False <$> Map.elems (groups ^. _3))
+                                    (flip (,) False <$> Map.elems (groups ^. groupsPropsAllMembers))
                                     Nothing)
                                   groups
 
@@ -117,7 +117,7 @@ mainMenuGroups = mkView "MainMenuGroups" $ \groups -> do
       let mainMenuGroupShort_ :: HasCallStack => Group -> ReactElementM eventHandler ()
           mainMenuGroupShort_ group = view_ mainMenuGroupShort listKey group
             where listKey = "mainMenuGroupShort-" <> (cs . show $ group ^. groupID . unID)
-      mainMenuGroupShort_ `mapM_` sortBy (compare `on` view groupTitle) (groups ^. _1)
+      mainMenuGroupShort_ `mapM_` sortBy (compare `on` view groupTitle) (groups ^. groupsPropsGroups)
 
 mainMenuGroups_ :: HasCallStack => GroupsProps -> ReactElementM eventHandler ()
 mainMenuGroups_ = view_ mainMenuGroups "mainMenuGroups"
@@ -162,8 +162,8 @@ mainMenuGroupShort = mkView "MainMenuGroupShort" $ \group -> do
 
 mainMenuGroup :: View '[(MainMenuGroup, GroupProps)]
 mainMenuGroup = mkView "mainMenuGroup" $ \case
- (_, (Nothing, _, _)) -> "Loading..."
- (sub, (Just group, vdocs, users)) -> do
+ (_, GroupProps Nothing _ _) -> "Loading..."
+ (sub, GroupProps (Just group) vdocs users) -> do
   div_ $ do
     ibutton_ $ emptyIbuttonProps (ButtonImageIcon Svg.ArrowLeft ColorSchemaBright)
           [MainMenuAction . MainMenuActionOpen $ MainMenuGroups ()]

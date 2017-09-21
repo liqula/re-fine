@@ -52,7 +52,7 @@ wholeScreen = React.defineLifecycleView "WholeScreen" () React.lifecycleConfig
       Nothing  -> mainScreen_ (gs, as)
       Just tab -> mainMenu_ $ MainMenuProps
                             (mapMainMenuTab
-                              (const (groups, vdocs, users))
+                              (const (GroupsProps groups vdocs users))
                               groupFromCache
                               (flip (,) users)
                               id
@@ -62,12 +62,14 @@ wholeScreen = React.defineLifecycleView "WholeScreen" () React.lifecycleConfig
                             (gs ^. gsMainMenuState . mmErrors)
                             (cacheLookup' gs <$> (as ^. accLoginState . lsCurrentUser))
         where
-          groupFromCache :: ID Group -> (Maybe Group, Map (ID VDoc) VDoc, Map (ID User) User)
-          groupFromCache gid = (cacheLookup gs gid, vdocs, users)
+          groupFromCache :: ID Group -> GroupProps
+          groupFromCache gid = GroupProps (cacheLookup gs gid) vdocs users
+
           groups :: [Group]
           groups = mapMaybe (cacheLookup gs) . Set.elems
                  . fromMaybe (cacheMiss CacheKeyGroupIds mempty tab)
                  $ gs ^. gsServerCache . scGroupIds
+
           vdocs :: Map (ID VDoc) VDoc
           vdocs = gs ^. gsServerCache . scVDocs
 
