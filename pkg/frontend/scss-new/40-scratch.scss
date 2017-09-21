@@ -25,7 +25,6 @@ nesting may also be useful.
   position: relative;
   width: $dunit * 152;
 
-
   &__header {
     position: relative;
     width: 100%;
@@ -38,7 +37,6 @@ nesting may also be useful.
     display: flex;
   }
 }
-
 
 .mainMenuGroups {
   position: relative;
@@ -157,12 +155,11 @@ nesting may also be useful.
       font-size: 4 * $dunit;
       padding-top: 2 * $dunit;
       padding-bottom: 2 * $dunit;
-      width: 120*$dunit;
+      width: 120 * $dunit;
     }
 
     &-text {
-      width: 120*$dunit;
-
+      width: 120 * $dunit;
     }
   }
 
@@ -349,14 +346,15 @@ body {
   margin-top: $dunit * 2;
 }
 
-.platform-title {  // FIXME: needs tweaking.  also see menu bar where this class is used.
+.platform-title {
+  // FIXME: needs tweaking.  also see menu bar where this class is used.
   background-image: url("../images/liqula_logo.svg");
   height: $dunit * 10;
   margin-left: auto;
   margin-right: auto;
   top: $dunit;
   position: relative;
-  width: $dunit * 18
+  width: $dunit * 18;
 }
 
 .number-top-right {
@@ -415,8 +413,7 @@ body {
   width: $icon-size-medium;
 }
 
-
-/* the following 2 definitions must come after the definitions of the button classes 
+/* the following 2 definitions must come after the definitions of the button classes
    because "absolute" should override the "relative" property of the button size class
 */
 
@@ -431,4 +428,3 @@ body {
   right: $dunit * 2;
   top: $dunit * 2;
 }
-
