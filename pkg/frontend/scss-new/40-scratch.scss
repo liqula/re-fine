@@ -57,7 +57,6 @@ nesting may also be useful.
   /*background-color: $c_blue_dawn;*/
   border: 0px solid black;
   border-radius: $dunit;
-  z-index: 0;
 
   &-image_div {
     position: relative;
@@ -66,7 +65,6 @@ nesting may also be useful.
     border-top-left-radius: $dunit;
     border-top-right-radius: $dunit;
     border-width: 0px;
-    z-index: 0;
   }
 
   &-image {
@@ -87,7 +85,6 @@ nesting may also be useful.
     border-top-right-radius: $dunit;
     border-width: 0px;
     margin-left: 5 * $dunit;
-    z-index: 0;
   }
 
   &-groupname {
@@ -101,7 +98,6 @@ nesting may also be useful.
     font-size: 3.5 * $dunit;
     font-weight: bold;
     overflow: hidden;
-    z-index: 10;
   }
 
   &-iconlist {
@@ -181,7 +177,7 @@ nesting may also be useful.
   &_submenu-title {
     position: relative;
   }
-  
+
   &_submenu-icons {
     display: flex;
   }
@@ -326,6 +322,7 @@ body {
   border-top: 1px solid $c_blue_morning;
 }
 
+/*
 .on_top {
   position: absolute;
   top: 0;
@@ -333,6 +330,7 @@ body {
   bottom: 0;
   right: 0;
 }
+*/
 
 .search-input {
   position: relative;

@@ -6,9 +6,9 @@ function mainMenuGroupsSmall($data){
 ?>
 			<div class="mainMenuGroupShort <?= $data['background-color']?>"> 
 				<?php if ($data['svgArgs']) { ?>
-					<div class="mainMenuGroupShort-svg_div"><div class="on_top">
-					<?php call_user_func_array($data['image'], $data['svgArgs']) ?>
-					</div></div>
+					<div class="mainMenuGroupShort-svg_div">
+						<?php call_user_func_array($data['image'], $data['svgArgs']) ?>
+					</div>
 				<?php } else { ?>
 					<div class="mainMenuGroupShort-image_div">
 						<img class="mainMenuGroupShort-image" src="<?= $data['image']?>" alt="" >
