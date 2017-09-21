@@ -295,17 +295,20 @@ viewsSources =
     [ ("toy_", toy_, ["testclass"])
 
     , ("menu/login_", login_ Nothing, [])
-    , ("menu/mainMenuGroups_", mainMenuGroups_
-        ( [sampleGroup1, sampleGroup2]
-        , Map.singleton (ID 0) sampleVDoc
-        , mkUserMap [ User sampleMetaID "user" "<email@bla.com>" Nothing ""
-                    , User sampleMetaID "üsör" "<grr@bla.com>" Nothing "" & userID .~ ID 8479]
+    , ("menu/mainMenuGroups_", view_ mainMenuGroups "mainMenuGroups"
+        ( GroupsProps
+            [sampleGroup1, sampleGroup2]
+            (Map.singleton (ID 0) sampleVDoc)
+            (mkUserMap [ User sampleMetaID "user" "<email@bla.com>" Nothing ""
+                       , User sampleMetaID "üsör" "<grr@bla.com>" Nothing "" & userID .~ ID 8479])
         ), [])
-    , ("menu/mainMenuGroup_", mainMenuGroup_ . (,) MainMenuGroupProcesses $
-        ( Just sampleGroup1
-        , Map.singleton (ID 0) sampleVDoc
-        , mkUserMap [ User sampleMetaID "user" "<email@bla.com>" Nothing ""
-                    , User sampleMetaID "üsör" "<grr@bla.com>" Nothing "" & userID .~ ID 8479]
+    , ("menu/mainMenuGroup_", view_ mainMenuGroup "mainMenuGroup"
+        ( MainMenuGroupProcesses
+        , GroupProps
+            (Just sampleGroup1)
+            (Map.singleton (ID 0) sampleVDoc)
+            (mkUserMap [ User sampleMetaID "user" "<email@bla.com>" Nothing ""
+                       , User sampleMetaID "üsör" "<grr@bla.com>" Nothing "" & userID .~ ID 8479])
         ), [])
     -- , ("mainMenuCreateGroup_", mainMenuCreateGroup_ _, [])
     -- , ("mainMenuCreateProcess_", mainMenuCreateProcess_ _, [])

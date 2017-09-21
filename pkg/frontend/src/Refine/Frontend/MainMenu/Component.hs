@@ -1,7 +1,12 @@
 {-# LANGUAGE CPP #-}
 #include "language_frontend.hs"
 
-module Refine.Frontend.MainMenu.Component where
+module Refine.Frontend.MainMenu.Component
+  ( topMenuBar
+  , mainMenu
+  , mainMenuGroups
+  , mainMenuGroup
+  ) where
 #include "import_frontend.hs"
 
 import           Language.Css.Syntax
@@ -27,21 +32,25 @@ import qualified Refine.Prelude.BuildInfo as BuildInfo
 import System.IO.Unsafe
 
 
-topMenuBarInMainMenu :: HasCallStack => View '[TopMenuBarInMainMenuProps]
-topMenuBarInMainMenu = mkView "TopMenuBarInMainMenu" $ \(TopMenuBarInMainMenuProps currentTab currentUser) -> do
-    div_ ["className" $= "ibutton_absolute-topleft"] $ do
-      ibutton_ $ emptyIbuttonProps (ButtonImageIcon Svg.Close ColorSchemaBright) [MainMenuAction MainMenuActionClose]
+topMenuBar :: HasCallStack => View '[TopMenuBarProps]
+topMenuBar = mkView "TopMenuBarInMainMenu" $ \(TopMenuBarProps mCurrentTab currentUser) -> do
+  div_ ["className" $= "ibutton_absolute-topleft"] $ do
+    case mCurrentTab of
+      Nothing -> burgerButton_
+      Just _ -> ibutton_ $ emptyIbuttonProps (ButtonImageIcon Svg.Close ColorSchemaBright) [MainMenuAction MainMenuActionClose]
         & ibListKey .~ "1"
         & ibSize .~ XXLarge
 
-    div_ ["className" $= toClasses @ST ["platform-title"]] $ do
-      pure ()
+  div_ ["className" $= "platform-title"] $ do
+    pure ()
 
-    div_ ["className" $= "ibutton_absolute-topright"] $ do
-      loginStatusButton_ ColorSchemaBright (Just $ has _MainMenuLogin currentTab) currentUser
+  div_ ["className" $= "ibutton_absolute-topright"] $ do
+    loginStatusButton_ ColorSchemaBright (has _MainMenuLogin <$> mCurrentTab) currentUser
 
-    -- FIXME: move this div_ into the resp. tab component (or something...)
-    div_ ["className" $= "main-content_header"] $ do
+  -- FIXME: move this div_ into the resp. tab component (or something...)
+  case mCurrentTab of
+    Nothing -> pure ()
+    Just currentTab -> div_ ["className" $= "main-content_header"] $ do
       div_ ["className" $= "main-content_header_inner"] $ do
         case currentUser of
           UserLoggedIn user -> do
@@ -64,14 +73,25 @@ topMenuBarInMainMenu = mkView "TopMenuBarInMainMenu" $ \(TopMenuBarInMainMenuPro
           & ibPressed .~ Just (currentTab == MainMenuHelp)
           & ibSize .~ XXLarge
 
-topMenuBarInMainMenu_ :: HasCallStack => TopMenuBarInMainMenuProps -> ReactElementM eventHandler ()
-topMenuBarInMainMenu_ = view_ topMenuBarInMainMenu "topMenuBarInMainMenu_"
+burgerButton_ :: ReactElementM 'EventHandlerCode ()
+burgerButton_ = do
+    button_ [ "aria-controls" $= "bs-navbar"
+            , "aria-expanded" $= "false"
+            , "className" $= "c-mainmenu__menu-button"
+            , "type" $= "button"
+            , "style" @@= [decl "pointerEvents" (Ident "all")]
+            , onClick $ \_ _ -> simpleHandler . dispatch . MainMenuAction $ MainMenuActionOpen defaultMainMenuTab
+            ] $ do
+      span_ ["className" $= "sr-only"] "Navigation an/aus"
+      span_ ["className" $= "c-mainmenu__icon-bar"] ""
+      span_ ["className" $= "c-mainmenu__icon-bar"] ""
+      span_ ["className" $= "c-mainmenu__icon-bar"] ""
 
 
 mainMenu :: HasCallStack => View '[MainMenuProps MainMenuTabProps]
 mainMenu = mkView "MainMenu" $ \(MainMenuProps currentTab menuErrors currentUser) -> do
   div_ ["className" $= "body-container"] $ do
-      topMenuBarInMainMenu_ (TopMenuBarInMainMenuProps currentTab currentUser)
+      view_ topMenuBar "topMenuBar" (TopMenuBarProps (Just currentTab) currentUser)
       div_ ["className" $= "main-content"] $ do
         case currentTab of
           MainMenuGroups groups               -> mainMenuGroups_ groups
@@ -92,9 +112,6 @@ mainMenu = mkView "MainMenu" $ \(MainMenuProps currentTab menuErrors currentUser
             "\n"
 
           MainMenuLogin subtab -> mainMenuLoginTab_ (MainMenuProps subtab menuErrors currentUser)
-
-mainMenu_ :: HasCallStack => MainMenuProps MainMenuTabProps -> ReactElementM eventHandler ()
-mainMenu_ = view_ mainMenu "mainMenu_"
 
 
 mainMenuGroups :: View '[GroupsProps]

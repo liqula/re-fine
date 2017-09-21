@@ -138,8 +138,8 @@ data MainMenuProps tab = MainMenuProps
   }
   deriving (Eq)
 
-data TopMenuBarInMainMenuProps = TopMenuBarInMainMenuProps
-  { _tmbimmpMainMenuTab    :: MainMenuTabProps
+data TopMenuBarProps = TopMenuBarProps
+  { _tmbimmpMainMenuTab    :: Maybe MainMenuTabProps  -- ^ 'Nothing' iff main menu is closed.
   , _tmbimmpCurrentUser    :: CurrentUser (Lookup User)
   }
   deriving (Eq)

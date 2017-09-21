@@ -25,7 +25,7 @@ import           Refine.Frontend.Header.EditToolbar
 import           Refine.Frontend.Header.Heading
 import           Refine.Frontend.Header.Types as HT
 import           Refine.Frontend.Login.Types as LG
-import           Refine.Frontend.MainMenu.Component (mainMenu_)
+import           Refine.Frontend.MainMenu.Component (mainMenu)
 import           Refine.Frontend.MainMenu.Types
 import           Refine.Frontend.Screen.Types as SC
 import           Refine.Frontend.Screen.WindowSize (windowSize_, WindowSizeProps(..))
@@ -50,7 +50,7 @@ wholeScreen = React.defineLifecycleView "WholeScreen" () React.lifecycleConfig
   { React.lRender = \() (gs, as) ->
      case gs ^? gsMainMenuState . mmState . mainMenuOpenTab of
       Nothing  -> mainScreen_ (gs, as)
-      Just tab -> mainMenu_ $ MainMenuProps
+      Just tab -> view_ mainMenu "mainMenu" $ MainMenuProps
                             (mapMainMenuTab
                               (const (GroupsProps groups vdocs users))
                               groupFromCache
@@ -97,7 +97,7 @@ mainScreen = mkView' "MainScreen" $ \(rs, as) -> case rs ^. gsCompositeVDoc of
       windowSize_ (WindowSizeProps (rs ^. gsScreenState . SC.ssWindowSize)) mempty
       do
           let rswiped = wipeDocumentState as rs
-          mainHeader_ (mkMainHeaderProps as rswiped)
+          div_ ["className" $= "c_bg_blue_dark"] $ mainHeader_ (mkMainHeaderProps as rswiped)
 
           -- components that are visible only sometimes:
           case rs ^. RS.gsContributionState . RS.csActiveDialog of
