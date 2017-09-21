@@ -122,7 +122,7 @@ nesting may also be useful.
 
   // $dunit*0.01 works :)
 
-  &_titleimage-div {
+  &__titleimage-div {
     position: relative;
     border-top-left-radius: $dunit;
     border-top-right-radius: $dunit;
@@ -130,7 +130,7 @@ nesting may also be useful.
     height: 30 * $dunit;
   }
 
-  &_titleimage-img {
+  &__titleimage-img {
     position: relative;
     border-top-left-radius: $dunit;
     border-top-right-radius: $dunit;
@@ -138,7 +138,7 @@ nesting may also be useful.
     height: 30 * $dunit;
   }
 
-  &_profile-img {
+  &__profile-img {
     position: absolute;
     width: 24 * $dunit;
     height: 24 * $dunit;
@@ -147,7 +147,7 @@ nesting may also be useful.
     border-radius: $dunit;
   }
 
-  &_description {
+  &__description {
     position: relative;
     margin-left: 28 * $dunit;
     min-height: 20 * $dunit;
@@ -166,13 +166,13 @@ nesting may also be useful.
     }
   }
 
-  &_iconlist {
+  &__iconlist {
     position: relative;
     padding: $dunit;
     display: flex;
   }
 
-  &_submenu {
+  &__submenu {
     position: relative;
     padding-left: $dunit * 2;
     padding-right: $dunit;
@@ -180,11 +180,11 @@ nesting may also be useful.
     justify-content: space-between;
   }
 
-  &_submenu-title {
+  &__submenu-title {
     position: relative;
   }
 
-  &_submenu-icons {
+  &__submenu-icons {
     display: flex;
   }
 }
