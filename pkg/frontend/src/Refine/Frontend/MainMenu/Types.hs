@@ -148,6 +148,7 @@ data MainMenuProcessShortProps = MainMenuProcessShortProps
   { _mmprocShrtID          :: ID VDoc
   , _mmprocShrtIcon        :: ()  -- FIXME
   , _mmprocShrtTitle       :: Title
+  , _mmprocShrtAbstract    :: Abstract
   , _mmprocShrtNumComments :: Int
   , _mmprocShrtNumEdits    :: Int
   , _mmprocShrtNumUsers    :: Int
