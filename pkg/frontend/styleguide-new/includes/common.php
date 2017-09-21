@@ -29,13 +29,13 @@ function icon($ibuttonSizeClass, $svgFunction, $svgArgs, $moreClasses=[]) {
 
 function commonHeader() {
 ?>
-		<div class="main-content_header">
-			<div class="main-content_header_inner">
+		<div class="main-content__header">
+			<div class="main-content__header-inner">
 				<?= icon('ibutton_xxlarge', 'svgDanielUser', ['c_fill_interaction_yellow', 'c_fill_blue_dawn'], ['margin1']) ?>
 				<?= icon('ibutton_xxlarge', 'svgDanielUser', ['c_fill_interaction_orange', 'c_fill_note_bubble'], ['margin1']) ?>
 			</div>
 			
-			<div class="main-content_header_inner">
+			<div class="main-content__header-inner">
 				<?= icon('ibutton_xxlarge', 'svgDanielUser', ['c_fill_no_color', 'c_fill_interaction_yellow'], ['margin1']) ?>
 				<?= icon('ibutton_xxlarge', 'svgDanielUser', ['c_fill_note_dark', 'c_fill_note_bubble'], ['margin1']) ?>
 				<input class="search-input">
