@@ -28,7 +28,7 @@ import           Refine.Frontend.Login.Types as LG
 import           Refine.Frontend.MainMenu.Component (mainMenu)
 import           Refine.Frontend.MainMenu.Types
 import           Refine.Frontend.Screen.Types as SC
-import           Refine.Frontend.Screen.WindowSize (windowSize_, WindowSizeProps(..))
+import           Refine.Frontend.Screen.WindowSize (trackWindowSize)
 import           Refine.Frontend.Store.Types as RS
 import           Refine.Frontend.Test.Debug
 import           Refine.Frontend.Types
@@ -94,8 +94,8 @@ mainScreen = mkView' "MainScreen" $ \(rs, as) -> case rs ^. gsCompositeVDoc of
                                 -- FIXME: I think this could be done more nicely.
 
     div_ ["key" $= "maindiv" {-FIXME: seems not to work as expected, we still have a warning-}] $ do
-      windowSize_ (WindowSizeProps (rs ^. gsScreenState . SC.ssWindowSize)) mempty
-      do
+          React.view trackWindowSize (rs ^. gsScreenState . SC.ssWindowSize) mempty
+
           let rswiped = wipeDocumentState as rs
           div_ ["className" $= "c_bg_blue_dark"] $ mainHeader_ (mkMainHeaderProps as rswiped)
 

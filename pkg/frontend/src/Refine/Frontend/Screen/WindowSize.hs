@@ -1,11 +1,13 @@
 {-# LANGUAGE CPP #-}
 #include "language_frontend.hs"
 
-module Refine.Frontend.Screen.WindowSize (WindowSizeProps(..), windowSize_) where
+module Refine.Frontend.Screen.WindowSize (trackWindowSize) where
 #include "import_frontend.hs"
 
+import           Control.Concurrent.MVar
 import           GHCJS.Foreign.Callback (Callback, asyncCallback)
 import           React.Flux.Outdated
+import           System.IO.Unsafe (unsafePerformIO)
 
 import           Refine.Frontend.Screen.Types
 import           Refine.Frontend.Store ()
@@ -13,35 +15,31 @@ import           Refine.Frontend.Store.Types
 import           Refine.Frontend.Test.Console (weAreInDevMode)
 
 
-newtype WindowSizeProps = WindowSizeProps
-  { _currentSize :: WindowSize
-  }
-  deriving (Eq)
-
-windowSize :: HasCallStack => ReactView WindowSizeProps
-windowSize = defineLifecycleView "WindowSize" () lifecycleConfig
-   { lRender = \_state (WindowSizeProps size) ->
-       if weAreInDevMode
-         then span_ ["className" $= "layout-indicator"] . elemString $ "layout: " <> show size
-         else pure ()
+trackWindowSize :: HasCallStack => ReactView WindowSize
+trackWindowSize = defineLifecycleView "TrackWindowSize" () lifecycleConfig
+   { lRender = \_state _size -> do
+       -- when weAreInDevMode $ do
+       --   span_ ["className" $= "layout-indicator"] . elemString $ "layout: " <> show size
+       pure ()
    , lComponentDidMount = Just $ \_ _ _ -> didMountOrUpdate
    , lComponentDidUpdate = Just $ \_ _ _ _ _ -> didMountOrUpdate
    , lComponentWillUnmount = Just $ \_ _ -> willUnmount
    }
 
+{-# NOINLINE trackWindowSizeCb #-}
+trackWindowSizeCb :: MVar (Callback (IO ()))
+trackWindowSizeCb = unsafePerformIO $ newMVar =<< asyncCallback setWindowSize
+
 didMountOrUpdate :: IO ()
 didMountOrUpdate = do
-  cb <- asyncCallback setWindowSize
+  cb <- readMVar trackWindowSizeCb
   js_windowAddEventListener "resize" cb
   setWindowSize
 
 willUnmount :: IO ()
 willUnmount = do
-  cb <- asyncCallback setWindowSize
+  cb <- readMVar trackWindowSizeCb
   js_windowRemoveEventListener "resize" cb
-
-windowSize_ :: HasCallStack => WindowSizeProps -> ReactElementM eventHandler () -> ReactElementM eventHandler ()
-windowSize_ = React.view windowSize
 
 setWindowSize :: HasCallStack => IO ()
 setWindowSize = do
