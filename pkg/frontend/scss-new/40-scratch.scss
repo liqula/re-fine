@@ -119,18 +119,14 @@ nesting may also be useful.
   border-radius: $dunit;
   padding-bottom: $dunit;
 
-  // $dunit*0.01 works :)  // TODO: is this comment still valid?  what does it refer to?
-
   // TODO: like in group-short, i need both svg and img logo support; title image upload will come later.
   //   also, the names should be consistent with the names in groupshort.
   &__svg-div {
-    position: relative;
-    margin-top: 4 * $dunit;
-    width: 26 * $dunit;
-    height: 26 * $dunit;
-    border-radius: $dunit;
-    border-width: 0px;
-    margin-left: 5 * $dunit;
+    position: absolute;
+    width: 24 * $dunit;
+    height: 24 * $dunit;
+    left: 2*$dunit;
+    top: 2*$dunit;
   }
 
   &__titleimage-div {
@@ -161,7 +157,7 @@ nesting may also be useful.
   &__description {
     position: relative;
     margin-left: 28 * $dunit;
-    min-height: 20 * $dunit;
+    min-height: 24 * $dunit;
     padding-bottom: 4 * $dunit;
 
     &-headline {

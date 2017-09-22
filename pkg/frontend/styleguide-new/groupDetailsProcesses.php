@@ -8,14 +8,19 @@ include "includes/svgs/svgs1.php";
 <?php include "includes/page-header-main.php"; ?>
 
 		<div class="groupDetailsProcesses">
+			<?php if (isset($_GET['svg'])) { ?>
+			<div class="groupDetailsProcesses__svg-div">
+				<?php svgDanielUser('c_fill_interaction_yellow', ' c_fill_note_bubble'); ?>
+			</div>			
+			<?php } else { ?>
 			<div class="groupDetailsProcesses__titleimage-div">
 				<img class="groupDetailsProcesses__titleimage-img" src="testbild.png" alt="">
 			</div>
 			<img class="groupDetailsProcesses__profile-img" src="testbild.png" alt="">
-		
+			<?php } ?>
 			<div class="groupDetailsProcesses__description">
 				<div class="groupDetailsProcesses__description-headline">
-				Das ist eine supertolle Gruppe
+					Das ist eine supertolle Gruppe
 				</div>
 				<div class="groupDetailsProcesses__description-text">
 					Or alis ped ma cum es eium qui si solor autasped et est recae volupta consequi debis abor suntus. Liquidus, nos mo corpore acipidus.Berum unt plia alit voluptat laborio. Ari cumendi aturesciusam quo et quiae. Or alis ped ma cum es eium qui si solor autasped et est recae volupta consequi debis abor suntus. Liquidus, nos mo corpore acipidus. Berum unt plia alit voluptat laborio. Ari cumendi aturesciusam quo et quiae. Or alis ped ma cum es eium qui si solor autasped et est recae volupta consequi debis abor suntus.
