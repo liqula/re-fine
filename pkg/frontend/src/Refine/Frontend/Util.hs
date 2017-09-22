@@ -129,6 +129,8 @@ hourglass :: IsString s => s
 hourglass = "loading..."
 
 
+-- * ffi
+
 #ifdef __GHCJS__
 
 foreign import javascript safe
