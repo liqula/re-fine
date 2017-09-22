@@ -42,7 +42,7 @@ library
       src
   include-dirs:
       src
-  ghc-options: -j -Wall -Wno-redundant-constraints -Wno-unused-imports
+  ghc-options: -j -Wall -Wno-redundant-constraints -Wno-unused-imports -O0
   if flag(ghc-warn-error)
       ghc-options: -Werror
 

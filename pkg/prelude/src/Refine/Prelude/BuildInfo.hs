@@ -21,11 +21,11 @@
 module Refine.Prelude.BuildInfo
 where
 
-import Refine.Prelude.BuildInfo.TH
+--import Refine.Prelude.BuildInfo.TH
 
 
 gitCommitHash :: String
-gitCommitHash = $(runAtbuildTime gitCommitHashIO)
+gitCommitHash = "<git commit hash>" -- $(runAtbuildTime gitCommitHashIO)
 
 gitBuildTimestamp :: String
-gitBuildTimestamp = $(runAtbuildTime gitBuildTimestampIO)
+gitBuildTimestamp = "<git build timestamp>" -- $(runAtbuildTime gitBuildTimestampIO)

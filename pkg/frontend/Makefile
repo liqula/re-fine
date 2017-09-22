@@ -4,7 +4,7 @@
 # FUTUREWORK: merge with Build.hs
 
 .PHONY: all clean
-INSTALL_ROOT:=$(shell stack path --local-install-root)
+INSTALL_ROOT:=result
 
 # to build with cabal:
 # curl https://www.stackage.org/lts-7.19/cabal.config >> cabal.config
