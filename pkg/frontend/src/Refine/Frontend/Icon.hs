@@ -69,9 +69,6 @@ sibutton_ stlens st props = do
       onClk = [onClick $ \evt mevt -> mkIbuttonClickHandler props evt mevt | props ^. ibEnabled]
 
       divclss = [ iconSizeCls (props ^. ibSize)
-                , case props ^. ibAlign of
-                    AlignLeft  -> "float-left"
-                    AlignRight -> "float-right"
                 , "margin1"  -- only sometimes; introduce 'ibExtraClasses' for this.
                 ]
 
@@ -101,7 +98,6 @@ emptyIbuttonProps img onclick = IbuttonProps
   , _ibIndexNum         = Nothing
   , _ibEnabled          = True
   , _ibSize             = Large
-  , _ibAlign            = AlignLeft
   }
 
 

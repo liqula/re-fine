@@ -1,7 +1,12 @@
 {-# LANGUAGE CPP #-}
 #include "language_frontend.hs"
 
-module Refine.Frontend.MainMenu.Component where
+module Refine.Frontend.MainMenu.Component
+  ( topMenuBar
+  , mainMenu
+  , mainMenuGroups
+  , mainMenuGroup
+  ) where
 #include "import_frontend.hs"
 
 import           Language.Css.Syntax
@@ -27,48 +32,66 @@ import qualified Refine.Prelude.BuildInfo as BuildInfo
 import System.IO.Unsafe
 
 
-topMenuBarInMainMenu :: HasCallStack => View '[TopMenuBarInMainMenuProps]
-topMenuBarInMainMenu = mkView "TopMenuBarInMainMenu" $ \(TopMenuBarInMainMenuProps currentTab currentUser) -> do
-    div_ [] $ do
-      ibutton_ $ emptyIbuttonProps (ButtonImageIcon Svg.Close ColorSchemaBright) [MainMenuAction MainMenuActionClose]
+topMenuBar :: HasCallStack => View '[TopMenuBarProps]
+topMenuBar = mkView "TopMenuBarInMainMenu" $ \(TopMenuBarProps mCurrentTab currentUser) -> do
+  div_ ["className" $= "ibutton_absolute-topleft"] $ do
+    case mCurrentTab of
+      Nothing -> burgerButton_
+      Just _ -> ibutton_ $ emptyIbuttonProps (ButtonImageIcon Svg.Close ColorSchemaBright) [MainMenuAction MainMenuActionClose]
         & ibListKey .~ "1"
         & ibSize .~ XXLarge
 
-      case currentUser of
-        UserLoggedIn user -> do
-          ibutton_ $ emptyIbuttonProps (ButtonImageIcon Svg.UserProfile ColorSchemaBright)
-            [ MainMenuAction . MainMenuActionOpen
-              $ MainMenuProfile ( either id (^. userID) user
-                                , FormBegin $ newLocalStateRef (Nothing, Nothing) user)
-            ]
-            & ibListKey .~ "2"
-            & ibSize .~ XXLarge
-        _ -> pure ()
+  div_ ["className" $= "platform-title"] $ do
+    pure ()
 
-      ibutton_ $ emptyIbuttonProps (ButtonImageIcon Svg.Group ColorSchemaBright) [MainMenuAction . MainMenuActionOpen $ MainMenuGroups ()]
-        & ibListKey .~ "3"
-        & ibPressed .~ Just (currentTab & has _MainMenuGroup)
-        & ibSize .~ XXLarge
+  div_ ["className" $= "ibutton_absolute-topright"] $ do
+    loginStatusButton_ ColorSchemaBright (has _MainMenuLogin <$> mCurrentTab) currentUser
 
-      ibutton_ $ emptyIbuttonProps (ButtonImageIcon Svg.Help ColorSchemaBright) [MainMenuAction $ MainMenuActionOpen MainMenuHelp]
-        & ibListKey .~ "4"
-        & ibPressed .~ Just (currentTab == MainMenuHelp)
-        & ibSize .~ XXLarge
+  -- FIXME: move this div_ into the resp. tab component (or something...)
+  case mCurrentTab of
+    Nothing -> pure ()
+    Just currentTab -> div_ ["className" $= "main-content__header"] $ do
+      div_ ["className" $= "main-content__header-inner"] $ do
+        case currentUser of
+          UserLoggedIn user -> do
+            ibutton_ $ emptyIbuttonProps (ButtonImageIcon Svg.UserProfile ColorSchemaBright)
+              [ MainMenuAction . MainMenuActionOpen
+                $ MainMenuProfile ( either id (^. userID) user
+                                  , FormBegin $ newLocalStateRef (Nothing, Nothing) user)
+              ]
+              & ibListKey .~ "2"
+              & ibSize .~ XXLarge
+          _ -> pure ()
 
-    div_ ["className" $= toClasses @ST ["platform-title"]] $ do
-      pure ()
+        ibutton_ $ emptyIbuttonProps (ButtonImageIcon Svg.Group ColorSchemaBright) [MainMenuAction . MainMenuActionOpen $ MainMenuGroups ()]
+          & ibListKey .~ "3"
+          & ibPressed .~ Just (currentTab & has _MainMenuGroup)
+          & ibSize .~ XXLarge
 
-    div_ ["className" $= "ibutton_absolute-topright"] $ do
-      loginStatusButton_ ColorSchemaBright (Just $ has _MainMenuLogin currentTab) currentUser
+        ibutton_ $ emptyIbuttonProps (ButtonImageIcon Svg.Help ColorSchemaBright) [MainMenuAction $ MainMenuActionOpen MainMenuHelp]
+          & ibListKey .~ "4"
+          & ibPressed .~ Just (currentTab == MainMenuHelp)
+          & ibSize .~ XXLarge
 
-topMenuBarInMainMenu_ :: HasCallStack => TopMenuBarInMainMenuProps -> ReactElementM eventHandler ()
-topMenuBarInMainMenu_ = view_ topMenuBarInMainMenu "topMenuBarInMainMenu_"
+burgerButton_ :: ReactElementM 'EventHandlerCode ()
+burgerButton_ = do
+    button_ [ "aria-controls" $= "bs-navbar"
+            , "aria-expanded" $= "false"
+            , "className" $= "c-mainmenu__menu-button"
+            , "type" $= "button"
+            , "style" @@= [decl "pointerEvents" (Ident "all")]
+            , onClick $ \_ _ -> simpleHandler . dispatch . MainMenuAction $ MainMenuActionOpen defaultMainMenuTab
+            ] $ do
+      span_ ["className" $= "sr-only"] "Navigation an/aus"
+      span_ ["className" $= "c-mainmenu__icon-bar"] ""
+      span_ ["className" $= "c-mainmenu__icon-bar"] ""
+      span_ ["className" $= "c-mainmenu__icon-bar"] ""
 
 
 mainMenu :: HasCallStack => View '[MainMenuProps MainMenuTabProps]
 mainMenu = mkView "MainMenu" $ \(MainMenuProps currentTab menuErrors currentUser) -> do
   div_ ["className" $= "body-container"] $ do
-      topMenuBarInMainMenu_ (TopMenuBarInMainMenuProps currentTab currentUser)
+      view_ topMenuBar "topMenuBar" (TopMenuBarProps (Just currentTab) currentUser)
       div_ ["className" $= "main-content"] $ do
         case currentTab of
           MainMenuGroups groups               -> mainMenuGroups_ groups
@@ -90,25 +113,23 @@ mainMenu = mkView "MainMenu" $ \(MainMenuProps currentTab menuErrors currentUser
 
           MainMenuLogin subtab -> mainMenuLoginTab_ (MainMenuProps subtab menuErrors currentUser)
 
-mainMenu_ :: HasCallStack => MainMenuProps MainMenuTabProps -> ReactElementM eventHandler ()
-mainMenu_ = view_ mainMenu "mainMenu_"
-
 
 mainMenuGroups :: View '[GroupsProps]
 mainMenuGroups = mkView "MainMenuGroups" $ \groups -> do
   div_ $ do
-    div_ ["class" $= "main-content_header"] $ do
+    div_ ["className" $= "main-content__header"] $ do
       let mkCreateGroupAction :: GlobalAction
           mkCreateGroupAction = MainMenuAction . MainMenuActionOpen . MainMenuCreateOrUpdateGroup Nothing . FormBegin
                               $ newLocalStateRef
                                   (CreateGroup "" "" [] []
-                                    (flip (,) False <$> Map.elems (groups ^. _3))
+                                    (flip (,) False <$> Map.elems (groups ^. groupsPropsAllMembers))
                                     Nothing)
                                   groups
 
-      ibutton_ $ emptyIbuttonProps (ButtonImageIcon GroupNew ColorSchemaDark) [mkCreateGroupAction]
-        & ibListKey .~ "create_group"
-        & ibSize .~ XLarge
+      div_ ["className" $= "main-content__header-inner"] $ do
+        ibutton_ $ emptyIbuttonProps (ButtonImageIcon GroupNew ColorSchemaDark) [mkCreateGroupAction]
+          & ibListKey .~ "create_group"
+          & ibSize .~ XLarge
 
     div_ ["className" $= "hr-div"] $ do
       pure ()
@@ -117,14 +138,14 @@ mainMenuGroups = mkView "MainMenuGroups" $ \groups -> do
       let mainMenuGroupShort_ :: HasCallStack => Group -> ReactElementM eventHandler ()
           mainMenuGroupShort_ group = view_ mainMenuGroupShort listKey group
             where listKey = "mainMenuGroupShort-" <> (cs . show $ group ^. groupID . unID)
-      mainMenuGroupShort_ `mapM_` sortBy (compare `on` view groupTitle) (groups ^. _1)
+      mainMenuGroupShort_ `mapM_` sortBy (compare `on` view groupTitle) (groups ^. groupsPropsGroups)
 
 mainMenuGroups_ :: HasCallStack => GroupsProps -> ReactElementM eventHandler ()
 mainMenuGroups_ = view_ mainMenuGroups "mainMenuGroups"
 
 mainMenuGroupShort :: HasCallStack => View '[Group]
 mainMenuGroupShort = mkView "MainMenuGroupShort" $ \group -> do
-  div_ [ "class" $= "mainMenuGroupShort c_bg_blue_dawn"
+  div_ [ "className" $= "mainMenuGroupShort c_bg_blue_dawn"
        , onClick $ \_ _ -> simpleHandler . dispatch
                          . MainMenuAction . MainMenuActionOpen
                          . MainMenuGroup MainMenuGroupProcesses $ group ^. groupID
@@ -132,122 +153,134 @@ mainMenuGroupShort = mkView "MainMenuGroupShort" $ \group -> do
 
     case group ^. groupImage of
       Nothing -> do
-        div_ ["class" $= "mainMenuGroupShort-svg_div"] $ do
-          div_ ["class" $= "on_top"] $ do
+        div_ ["className" $= "mainMenuGroupShort__svg-div"] $ do
+          div_ ["className" $= "on_top"] $ do
             Svg.render ColorSchemaBright def Svg.Group
       Just (ImageInline img) -> do
-        div_ ["class" $= "mainMenuGroupShort-image_div"] $ do
-          img_ ["class" $= "mainMenuGroupShort-image", "src" $= cs img, "alt" $= "[group logo]"] $ pure ()
+        div_ ["className" $= "mainMenuGroupShort__image-div"] $ do
+          img_ ["className" $= "mainMenuGroupShort__image", "src" $= cs img, "alt" $= "[group logo]"] $ pure ()
 
-    div_ ["class" $= "mainMenuGroupShort-groupname"] $ do
+    div_ ["className" $= "mainMenuGroupShort__groupname"] $ do
       elemText $ group ^. groupTitle
 
     -- buttons for subgroups, processes, users (FUTUREWORK: make those clickable in addition to the entire
     -- tile.  clicking on 'members' button should get you to the members tab directly.)
-    div_ ["class" $= "mainMenuGroupShort-iconlist"] $ do
+    div_ ["className" $= "mainMenuGroupShort__iconlist"] $ do
       ibutton_ $ emptyIbuttonProps (ButtonImageIcon Svg.Group ColorSchemaBright) ([] :: [GlobalAction])
         & ibListKey .~ "subgroups"
         & ibIndexNum .~ Nothing
-        & ibSize .~ Large
+        & ibSize .~ XXXLarge
 
       ibutton_ $ emptyIbuttonProps (ButtonImageIcon Svg.Process ColorSchemaBright) ([] :: [GlobalAction])
         & ibListKey .~ "processes"
         & ibIndexNum .~ Just (length $ group ^. groupVDocs)
-        & ibSize .~ Large
+        & ibSize .~ XXXLarge
 
       ibutton_ $ emptyIbuttonProps (ButtonImageIcon Svg.User ColorSchemaBright) ([] :: [GlobalAction])
         & ibListKey .~ "members"
         & ibIndexNum .~ Just (length $ group ^. groupMembers)
-        & ibSize .~ Large
+        & ibSize .~ XXXLarge
 
 mainMenuGroup :: View '[(MainMenuGroup, GroupProps)]
 mainMenuGroup = mkView "mainMenuGroup" $ \case
- (_, (Nothing, _, _)) -> "Loading..."
- (sub, (Just group, vdocs, users)) -> do
-  div_ $ do
-    ibutton_ $ emptyIbuttonProps (ButtonImageIcon Svg.ArrowLeft ColorSchemaBright)
-          [MainMenuAction . MainMenuActionOpen $ MainMenuGroups ()]
-      & ibListKey .~ "group_back"
-      & ibSize .~ XXLarge
+ (_, GroupProps Nothing _ _) -> hourglass
+ (sub, GroupProps (Just group) vdocs users) -> do
+    div_ ["className" $= "main-content__header"] $ do
+      div_ ["className" $= "main-content__header-inner"] $ do
+        ibutton_ $ emptyIbuttonProps (ButtonImageIcon Svg.ProcessNew ColorSchemaDark)
+            [ MainMenuAction . MainMenuActionOpen . MainMenuCreateProcess . FormBegin
+              $ newLocalStateRef (CreateVDoc (Title "[no title]") (Abstract "[no abstract]") emptyRawContent (group ^. groupID) Nothing) group
+            ]
+          & ibListKey .~ "process_add"
+          & ibSize .~ XXLarge
 
-    br_ []
-    ibutton_ $ emptyIbuttonProps (ButtonImageIcon Svg.Group ColorSchemaBright) ([] :: [GlobalAction])
-      & ibListKey .~ "group"
-      & ibSize .~ XXLarge
+        ibutton_ $ emptyIbuttonProps (ButtonImageIcon Svg.GroupUpdate ColorSchemaDark)
+            [ MainMenuAction . MainMenuActionOpen . MainMenuCreateOrUpdateGroup (Just $ group ^. groupID) . FormBegin
+              $ newLocalStateRef
+                  (CreateGroup
+                    (group ^. groupTitle)
+                    (group ^. groupDesc)
+                    []
+                    []
+                    [(u, (u ^. userID) `elem` (group ^. groupMembers)) | u <- Map.elems users]
+                    Nothing)
+                  group
+            ]
+          & ibListKey .~ "group_update"
+          & ibSize .~ XXLarge
 
-    -- title, abstract
-    br_ [] >> hr_ []
-    p_ . elemText $ group ^. groupTitle
-    br_ []
-    p_ . elemText $ group ^. groupDesc
-    br_ [] >> hr_ []
+    div_ ["className" $= "hr-div"] $ pure ()
 
-    -- buttons for users, processes, create new process, update group
-    span_ ["style" @@= [decl "marginLeft" (Px 50)]] . ibutton_ $ emptyIbuttonProps
-        (ButtonImageIcon Svg.User ColorSchemaDark)
-        [ MainMenuAction . MainMenuActionOpen
-                         . MainMenuGroup MainMenuGroupMembers $ group ^. groupID ]
-      & ibListKey .~ "user"
-      & ibSize .~ XXLarge
-      & ibPressed .~ Just (has _MainMenuGroupProcesses sub)
+    div_ ["className" $= "groupDetailsProcesses"] $ do
+      -- image(s)
+      case group ^. groupImage of
+        Nothing -> do
+          div_ ["className" $= "groupDetailsProcesses__svg-div"] $ do
+            Svg.render ColorSchemaBright def Svg.Group
+        Just (ImageInline img) -> do
+          img_ ["className" $= "groupDetailsProcesses__profile-img", "src" $= cs img, "alt" $= "[group logo]"] $ pure ()
 
-    ibutton_ $ emptyIbuttonProps (ButtonImageIcon Svg.Process ColorSchemaDark)
-        [ MainMenuAction . MainMenuActionOpen
-                         . MainMenuGroup MainMenuGroupProcesses $ group ^. groupID ]
-      & ibListKey .~ "process"
-      & ibSize .~ XXLarge
-      & ibPressed .~ Just (has _MainMenuGroupMembers sub)
+      -- title, abstract
+      div_ ["className" $= "groupDetailsProcesses__description"] $ do
+        div_ ["className" $= "groupDetailsProcesses__description-headline"] $ do
+          elemText $ group ^. groupTitle
+        div_ ["className" $= "groupDetailsProcesses__description-text"] $ do
+          elemText $ group ^. groupDesc
 
-    ibutton_ $ emptyIbuttonProps (ButtonImageIcon Svg.ProcessNew ColorSchemaDark)
-        [ MainMenuAction . MainMenuActionOpen . MainMenuCreateProcess . FormBegin
-          $ newLocalStateRef (CreateVDoc (Title "[no title]") (Abstract "[no abstract]") emptyRawContent (group ^. groupID) Nothing) group
-        ]
-      & ibListKey .~ "process_add"
-      & ibSize .~ XXLarge
+      div_ ["className" $= "hr-2-div"] $ pure ()
 
-    ibutton_ $ emptyIbuttonProps (ButtonImageIcon Svg.GroupUpdate ColorSchemaDark)
-        [ MainMenuAction . MainMenuActionOpen . MainMenuCreateOrUpdateGroup (Just $ group ^. groupID) . FormBegin
-          $ newLocalStateRef
-              (CreateGroup (group ^. groupTitle) (group ^. groupDesc) [] []
-               [(u, (u ^. userID) `elem` (group ^. groupMembers)) | u <- Map.elems users]
-               Nothing{-TODO-})
-              group
-        ]
-      & ibListKey .~ "group_update"
-      & ibSize .~ XXLarge
+      -- sub-sub-tab buttons (users, processes)
+      div_ ["className" $= "groupDetailsProcesses__iconlist"] $ do
+        ibutton_ $ emptyIbuttonProps
+            (ButtonImageIcon Svg.Group ColorSchemaBright)
+            [ShowNotImplementedYet]
+          & ibListKey .~ "subgroups"
+          & ibIndexNum .~ Nothing
+          & ibSize .~ XXXLarge
+          & ibEnabled .~ False
 
-    -- process list
-    br_ [] >> br_ [] >> br_ [] >> br_ [] >> hr_ [] >> br_ []
+        ibutton_ $ emptyIbuttonProps (ButtonImageIcon Svg.Process ColorSchemaDark)
+            [ MainMenuAction . MainMenuActionOpen
+                             . MainMenuGroup MainMenuGroupProcesses $ group ^. groupID ]
+          & ibListKey .~ "process"
+          & ibSize .~ XXXLarge
+          & ibPressed .~ Just (has _MainMenuGroupMembers sub)
 
-    let mkProcProps vid = MainMenuProcessShortProps
-          -- FIXME: use the trick from /docs/prototypes/ApplicativeDo.hs: load process props on
-          -- demand, and when rendering filter for cache misses and just show the list of all
-          -- processes already in the cache.  automatic re-rendering will take care of the rest.
-          --
-          -- FIXME: i think we don't have a rest-api end-point for this either.
-          { _mmprocShrtID          = vid
-          , _mmprocShrtIcon        = ()
-          , _mmprocShrtTitle       = title
-          , _mmprocShrtNumComments = stats ^. editStatsComments
-          , _mmprocShrtNumEdits    = stats ^. editStatsEdits
-          , _mmprocShrtNumUsers    = stats ^. editStatsUsers
-          }
-          where
-            (title, stats) = maybe
-              (cacheMiss (CacheKeyVDoc vid) (Title "loading", mempty) vid)
-              ((^. vdocTitle) &&& (^. vdocStats))
-              $ Map.lookup vid vdocs
+        ibutton_ $ emptyIbuttonProps
+            (ButtonImageIcon Svg.User ColorSchemaDark)
+            [ MainMenuAction . MainMenuActionOpen
+                             . MainMenuGroup MainMenuGroupMembers $ group ^. groupID ]
+          & ibListKey .~ "user"
+          & ibSize .~ XXXLarge
+          & ibPressed .~ Just (has _MainMenuGroupProcesses sub)
 
-        mkMemberProps uid = Map.lookup uid users
+      -- sub-sub-tab buttons (users, processes)
+      case sub of
+        MainMenuGroupProcesses -> do
+          let procs :: [MainMenuProcessShortProps]
+              procs = sortBy (compare `on` view mmprocShrtTitle) (mkProcProps <$> group ^. groupVDocs)
 
-    case sub of
-      MainMenuGroupProcesses -> mainMenuProcessShort_
-                          `mapM_` ( sortBy (compare `on` view mmprocShrtTitle)
-                                  . fmap mkProcProps
-                                  $ group ^. groupVDocs
-                                  )
-      MainMenuGroupMembers -> mapM_ mainMenuMemberShort_
-                            . fmap mkMemberProps $ group ^. groupMembers
+              mkProcProps vid = MainMenuProcessShortProps
+                { _mmprocShrtID          = vid
+                , _mmprocShrtIcon        = ()
+                , _mmprocShrtTitle       = title
+                , _mmprocShrtAbstract    = abstract
+                , _mmprocShrtNumComments = stats ^. editStatsComments
+                , _mmprocShrtNumEdits    = stats ^. editStatsEdits
+                , _mmprocShrtNumUsers    = stats ^. editStatsUsers
+                }
+                where
+                  ((title, abstract), stats) = maybe
+                    (cacheMiss (CacheKeyVDoc vid) ((Title hourglass, Abstract mempty), mempty) vid)
+                    (((^. vdocTitle) &&& (^. vdocAbstract)) &&& (^. vdocStats))
+                    $ Map.lookup vid vdocs
+
+          mainMenuProcessShort_ `mapM_` procs
+
+        MainMenuGroupMembers -> do
+          let members = fmap mkMemberProps $ group ^. groupMembers
+              mkMemberProps uid = Map.lookup uid users
+          mainMenuMemberShort_ `mapM_` members
 
 mainMenuGroup_ :: HasCallStack => (MainMenuGroup, GroupProps) -> ReactElementM eventHandler ()
 mainMenuGroup_ = view_ mainMenuGroup "mainMenuGroup"
@@ -255,7 +288,6 @@ mainMenuGroup_ = view_ mainMenuGroup "mainMenuGroup"
 
 mainMenuMemberShort :: HasCallStack => View '[User]
 mainMenuMemberShort = mkView "MainMenuProcessShort" $ \props -> do
---  let listKey = "member-list-item-" <> (cs . show $ props ^. userID . unID)
   div_ [ onClick $ \_ _ -> simpleHandler . dispatch
                          . MainMenuAction . MainMenuActionOpen
                          $ MainMenuProfile (props ^. userID, FormBegin $ newLocalStateRef (Nothing, Nothing) props)
@@ -278,85 +310,70 @@ mainMenuMemberShort = mkView "MainMenuProcessShort" $ \props -> do
     br_ []
     div_ [] $ do
       elemText $ props ^. userName
-{-
-    br_ []
-    div_ [] $ do
-      ibutton_ $ emptyIbuttonProps "Comment" ([] :: [GlobalAction])
-        & ibListKey .~ (listKey <> "-comments")
-        & ibSize .~ Large
-        & ibDarkBackground .~ True
-        & ibHighlightWhen .~ HighlightNever
-        & ibLabel .~ (cs . show $ props ^. mmprocShrtNumComments)
 
-      ibutton_ $ emptyIbuttonProps "Edit" ([] :: [GlobalAction])
-        & ibListKey .~ (listKey <> "-edits")
-        & ibSize .~ Large
-        & ibDarkBackground .~ True
-        & ibHighlightWhen .~ HighlightNever
-        & ibLabel .~ (cs . show $ props ^. mmprocShrtNumEdits)
-
-      ibutton_ $ emptyIbuttonProps "Group" ([] :: [GlobalAction])
-        & ibListKey .~ (listKey <> "-groups")
-        & ibSize .~ Large
-        & ibDarkBackground .~ True
-        & ibHighlightWhen .~ HighlightNever
-        & ibLabel .~ (cs . show $ props ^. mmprocShrtNumUsers)
--}
 mainMenuMemberShort_ :: HasCallStack => Maybe User -> ReactElementM 'EventHandlerCode ()
-mainMenuMemberShort_ Nothing = "Loading..."
+mainMenuMemberShort_ Nothing = hourglass
 mainMenuMemberShort_ (Just props) = view_ mainMenuMemberShort listKey props
   where
     listKey = "mainMenuMemberShort-" <> (cs . show $ props ^. userID . unID)
 
+
 mainMenuProcessShort :: HasCallStack => View '[MainMenuProcessShortProps]
 mainMenuProcessShort = mkView "MainMenuProcessShort" $ \props -> do
-  let listKey = "process-list-item-" <> (cs . show $ props ^. mmprocShrtID . unID)
-  div_ [ onClick $ \_ _ -> simpleHandler . dispatch
-                         . LoadVDoc $ props ^. mmprocShrtID
-       , "id" $= listKey  -- FUTUREWORK: get rid of this.  at the time of writing this is only
-                          -- used in the acceptance test.
-
-       , "style" @@= [ decl "backgroundColor" (Ident "rgba(84, 99, 122, 1)")
-                     , decl "padding" (Px 50)
-                     , decl "margin" (Px 50)
-                     , decl "borderRadius" (Px 12)
-                     ]
+  div_ [ "className" $= "groupDetailsProcessesDocument"
+       , onClick $ \_ _ -> simpleHandler . dispatch . LoadVDoc $ props ^. mmprocShrtID
        ] $ do
 
     -- image
-    br_ []
-    ibutton_ $ emptyIbuttonProps (ButtonImageIcon Svg.Process ColorSchemaBright) ([] :: [GlobalAction])
-      & ibListKey .~ "process"
-      & ibSize .~ XXLarge
+    div_ ["className" $= "groupDetailsProcessesDocument__column1"] $ do
+      div_ ["className" $= "groupDetailsProcesses__svg-div"] $ do
+        ibutton_ $ emptyIbuttonProps (ButtonImageIcon Svg.Process ColorSchemaBright) ([] :: [GlobalAction])
+          & ibListKey .~ "process"
+          & ibSize .~ XXLarge
 
-    -- title
-    br_ []
-    div_ [] $ do
-      elemText $ props ^. mmprocShrtTitle . unTitle
+    -- title & description
+    div_ ["className" $= "groupDetailsProcessesDocument__column2"] $ do
+      div_ ["className" $= "groupDetailsProcessesDocument__column2-headline"] $ do
+        elemText $ props ^. mmprocShrtTitle . unTitle
+      div_ ["className" $= "groupDetailsProcessesDocument__column2-body"] $ do
+        elemText $ props ^. mmprocShrtAbstract . unAbstract
 
-    -- buttons for processes, users (FUTUREWORK: make those clickable in addition to the entire
-    -- tile.  clicking on 'users' button should get you there directly.)
-    br_ []
-    div_ [] $ do
-      ibutton_ $ emptyIbuttonProps (ButtonImageIcon Svg.Comment ColorSchemaBright) ([] :: [GlobalAction])
-        & ibListKey .~ (listKey <> "-comments")
-        & ibIndexNum .~ Just (props ^. mmprocShrtNumComments)
-        & ibSize .~ Large
+    div_ ["className" $= "groupDetailsProcessesDocument__column3"] $ do
+      div_ ["className" $= "groupDetailsProcessesDocument__column3-vertical-line"] $ pure ()
 
-      ibutton_ $ emptyIbuttonProps (ButtonImageIcon Svg.Edit ColorSchemaBright) ([] :: [GlobalAction])
-        & ibListKey .~ (listKey <> "-edits")
-        & ibIndexNum .~ Just (props ^. mmprocShrtNumEdits)
-        & ibSize .~ Large
+    div_ ["className" $= "groupDetailsProcessesDocument__column4"] $ do
+      -- comments
+      div_ ["className" $= "groupDetailsProcessesDocument__column4-item"] $ do
+        div_ ["className" $= "groupDetailsProcessesDocument__column4-item-icon"] $ do
+          ibutton_ $ emptyIbuttonProps (ButtonImageIcon Svg.Comment ColorSchemaBright) ([] :: [GlobalAction])
+            & ibSize .~ XXLarge
+        div_ ["className" $= "groupDetailsProcessesDocument__column4-item-text"] $ do
+          elemString . show $ props ^. mmprocShrtNumComments
 
-      ibutton_ $ emptyIbuttonProps (ButtonImageIcon Svg.User ColorSchemaBright) ([] :: [GlobalAction])
-        & ibListKey .~ (listKey <> "-users")
-        & ibIndexNum .~ Just (props ^. mmprocShrtNumUsers)
-        & ibSize .~ Large
+        -- FIXME: can we easily compute how many comments / edits are made by the browsing user?
+        -- that would be the next item-icon, item-text pair here.
+
+      -- edits
+      div_ ["className" $= "groupDetailsProcessesDocument__column4-item"] $ do
+        div_ ["className" $= "groupDetailsProcessesDocument__column4-item-icon"] $ do
+          ibutton_ $ emptyIbuttonProps (ButtonImageIcon Svg.Edit ColorSchemaBright) ([] :: [GlobalAction])
+            & ibSize .~ XXLarge
+        div_ ["className" $= "groupDetailsProcessesDocument__column4-item-text"] $ do
+          elemString . show $ props ^. mmprocShrtNumEdits
+
+      -- participants
+      div_ ["className" $= "groupDetailsProcessesDocument__column4-item"] $ do
+        div_ ["className" $= "groupDetailsProcessesDocument__column4-item-icon"] $ do
+          ibutton_ $ emptyIbuttonProps (ButtonImageIcon Svg.User ColorSchemaBright) ([] :: [GlobalAction])
+            & ibSize .~ XXLarge
+        div_ ["className" $= "groupDetailsProcessesDocument__column4-item-text"] $ do
+          elemString . show $ props ^. mmprocShrtNumUsers
 
 mainMenuProcessShort_ :: HasCallStack => MainMenuProcessShortProps -> ReactElementM 'EventHandlerCode ()
 mainMenuProcessShort_ props = view_ mainMenuProcessShort listKey props
   where
     listKey = "mainMenuProcessShort-" <> (cs . show $ props ^. mmprocShrtID . unID)
+
 
 -- | FUTUREWORK: should this be @View '[LocalStateRef CreateGroup]@ or @View '[Maybe (ID Group),
 -- LocalStateRef CreateGroup]@?  (same with 'mainMenuCreateProcess'.)
@@ -443,7 +460,7 @@ mainMenuCreateProcess_ lst = view_ (mainMenuCreateProcess lst) "mainMenuCreatePr
 
 mainMenuProfile :: HasCallStack => Bool -> Lookup User -> LocalStateRef ProfileLocalState -> View '[]
 mainMenuProfile editable user lst = mkPersistentStatefulView "MainMenuProfile" lst Nothing $ \st -> case user of
-  Left _uid -> elemText "Loading..."
+  Left _uid -> hourglass
   Right u -> do
     elemText $ u ^. userName
 

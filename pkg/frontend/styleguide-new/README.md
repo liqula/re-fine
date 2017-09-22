@@ -22,4 +22,4 @@ To see the newly styled pages (from /pkg/frontend):
 
 To generate the SVG files for php:
 
-    scripts/compile-svg.hs pkg/frontend/images/icon pkg/frontend/styleguide-new/svgs/svgs.php
+    scripts/compile-svg.hs pkg/frontend/images/icon pkg/frontend/styleguide-new/includes/svgs/svgs.php

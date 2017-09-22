@@ -24,12 +24,18 @@ nesting may also be useful.
   padding: $dunit * 3;
   position: relative;
   width: $dunit * 152;
-}
 
-.main-content_header {
-  position: relative;
-  width: 100%;
-  height: 11 * $dunit;
+  &__header {
+    position: relative;
+    width: 100%;
+    height: 11 * $dunit;
+    display: flex;
+    justify-content: space-between;
+  }
+
+  &__header-inner {
+    display: flex;
+  }
 }
 
 .mainMenuGroups {
@@ -51,19 +57,8 @@ nesting may also be useful.
   /*background-color: $c_blue_dawn;*/
   border: 0px solid black;
   border-radius: $dunit;
-  z-index: 0;
 
-  &-image_div {
-    position: relative;
-    width: 36 * $dunit;
-    height: 30 * $dunit;
-    border-top-left-radius: $dunit;
-    border-top-right-radius: $dunit;
-    border-width: 0px;
-    z-index: 0;
-  }
-
-  &-image {
+  &__image-div {
     position: relative;
     width: 36 * $dunit;
     height: 30 * $dunit;
@@ -72,7 +67,16 @@ nesting may also be useful.
     border-width: 0px;
   }
 
-  &-svg_div {
+  &__image {
+    position: relative;
+    width: 36 * $dunit;
+    height: 30 * $dunit;
+    border-top-left-radius: $dunit;
+    border-top-right-radius: $dunit;
+    border-width: 0px;
+  }
+
+  &__svg-div {
     position: relative;
     margin-top: 4 * $dunit;
     width: 26 * $dunit;
@@ -81,10 +85,9 @@ nesting may also be useful.
     border-top-right-radius: $dunit;
     border-width: 0px;
     margin-left: 5 * $dunit;
-    z-index: 0;
   }
 
-  &-groupname {
+  &__groupname {
     position: relative;
     margin-top: 1 * $dunit;
     width: 36 * $dunit;
@@ -95,10 +98,9 @@ nesting may also be useful.
     font-size: 3.5 * $dunit;
     font-weight: bold;
     overflow: hidden;
-    z-index: 10;
   }
 
-  &-iconlist {
+  &__iconlist {
     position: relative;
     display: flex;
     justify-content: space-evenly;
@@ -108,6 +110,7 @@ nesting may also be useful.
 /* group detail processes */
 
 .groupDetailsProcesses {
+  // FIXME: wrong name.  this should be re-used for members and sub-groups tabs.
   position: relative;
   width: 150 * $dunit;
   margin: $dunit;
@@ -116,9 +119,21 @@ nesting may also be useful.
   border-radius: $dunit;
   padding-bottom: $dunit;
 
-  // $dunit*0.01 works :)
+  // $dunit*0.01 works :)  // TODO: is this comment still valid?  what does it refer to?
 
-  &_titleimage-div {
+  // TODO: like in group-short, i need both svg and img logo support; title image upload will come later.
+  //   also, the names should be consistent with the names in groupshort.
+  &__svg-div {
+    position: relative;
+    margin-top: 4 * $dunit;
+    width: 26 * $dunit;
+    height: 26 * $dunit;
+    border-radius: $dunit;
+    border-width: 0px;
+    margin-left: 5 * $dunit;
+  }
+
+  &__titleimage-div {
     position: relative;
     border-top-left-radius: $dunit;
     border-top-right-radius: $dunit;
@@ -126,7 +141,7 @@ nesting may also be useful.
     height: 30 * $dunit;
   }
 
-  &_titleimage-img {
+  &__titleimage-img {
     position: relative;
     border-top-left-radius: $dunit;
     border-top-right-radius: $dunit;
@@ -134,7 +149,7 @@ nesting may also be useful.
     height: 30 * $dunit;
   }
 
-  &_profile-img {
+  &__profile-img {
     position: absolute;
     width: 24 * $dunit;
     height: 24 * $dunit;
@@ -143,7 +158,7 @@ nesting may also be useful.
     border-radius: $dunit;
   }
 
-  &_description {
+  &__description {
     position: relative;
     margin-left: 28 * $dunit;
     min-height: 20 * $dunit;
@@ -153,25 +168,34 @@ nesting may also be useful.
       font-size: 4 * $dunit;
       padding-top: 2 * $dunit;
       padding-bottom: 2 * $dunit;
+      width: 120 * $dunit;
     }
 
-    &-text {}
+    &-text {
+      width: 120 * $dunit;
+    }
   }
 
-  &_iconlist {
+  &__iconlist {
     position: relative;
     padding: $dunit;
+    display: flex;
   }
 
-  &_submenu {
+  &__submenu {
     position: relative;
     padding-left: $dunit * 2;
     padding-right: $dunit;
+    display: flex;
+    justify-content: space-between;
   }
 
-  &_submenu-title {
+  &__submenu-title {
     position: relative;
-    float: left;
+  }
+
+  &__submenu-icons {
+    display: flex;
   }
 }
 
@@ -188,7 +212,7 @@ $groupDetailsProcessesDocumentHeight: 30 * $dunit;
   margin-right: $dunit * 2;
   margin-bottom: $dunit * 2;
 
-  &_column1 {
+  &__column1 {
     position: relative;
     width: 24 * $dunit;
     height: $groupDetailsProcessesDocumentHeight;
@@ -204,7 +228,7 @@ $groupDetailsProcessesDocumentHeight: 30 * $dunit;
     }
   }
 
-  &_column2 {
+  &__column2 {
     position: relative;
     width: 92 * $dunit;
     height: $groupDetailsProcessesDocumentHeight;
@@ -225,12 +249,12 @@ $groupDetailsProcessesDocumentHeight: 30 * $dunit;
     }
   }
 
-  &_column3 {
+  &__column3 {
     position: relative;
     width: 4 * $dunit;
     height: $groupDetailsProcessesDocumentHeight;
 
-    &-vertical_line {
+    &-vertical-line {
       position: relative;
       border-left: 1px solid black;
       height: $groupDetailsProcessesDocumentHeight - 6 * $dunit;
@@ -238,7 +262,7 @@ $groupDetailsProcessesDocumentHeight: 30 * $dunit;
     }
   }
 
-  &_column4 {
+  &__column4 {
     position: relative;
     width: 28 * $dunit;
     height: $groupDetailsProcessesDocumentHeight;
@@ -278,6 +302,7 @@ body {
   min-height: 100%;
 }
 
+/*
 .clearboth {
   clear: both;
 }
@@ -289,6 +314,7 @@ body {
 .float-right {
   float: right;
 }
+*/
 
 /* special */
 
@@ -312,6 +338,7 @@ body {
   border-top: 1px solid $c_blue_morning;
 }
 
+/*
 .on_top {
   position: absolute;
   top: 0;
@@ -319,6 +346,7 @@ body {
   bottom: 0;
   right: 0;
 }
+*/
 
 .search-input {
   position: relative;
@@ -331,13 +359,15 @@ body {
   margin-top: $dunit * 2;
 }
 
-.platform-title {  // FIXME: needs tweaking.  also see menu bar where this class is used.
+.platform-title {
+  // FIXME: needs tweaking.  also see menu bar where this class is used.
   background-image: url("../images/liqula_logo.svg");
   height: $dunit * 10;
   margin-left: auto;
   margin-right: auto;
+  top: $dunit;
   position: relative;
-  width: $dunit * 30
+  width: $dunit * 18;
 }
 
 .number-top-right {
@@ -365,22 +395,6 @@ body {
 }
 
 /* general icon classes */
-
-.ibutton_absolute-topleft {
-  position: absolute;
-  left: $dunit * 2;
-  top: $dunit * 2;
-  height: $icon-size-xxlarge;  // FIXME: this follows from the button props
-  width: $icon-size-xxlarge;
-}
-
-.ibutton_absolute-topright {
-  position: absolute;
-  right: $dunit * 2;
-  top: $dunit * 2;
-  height: $icon-size-xxlarge;  // FIXME: this follows from the button props
-  width: $icon-size-xxlarge;
-}
 
 .ibutton_xxxlarge {
   position: relative;
@@ -412,37 +426,18 @@ body {
   width: $icon-size-medium;
 }
 
-
-/* test */
-
-/* commented out to make this compile with /pkg/frontend/webpack*.config.js
-.svg-button-myself {
-  background: url(../images/testuser.svg) $dunit $dunit/#{$dunit * 4} ($dunit * 4) no-repeat;
-  background-color: $c_blue_morning;
-  border-radius: $icon-size-xxlarge * 0.5;
-  cursor: pointer;
-}
+/* the following 2 definitions must come after the definitions of the button classes
+   because "absolute" should override the "relative" property of the button size class
 */
 
-.icon-daniel_test1 {
-  background-image: url("../images/daniel_test1.svg");
+.ibutton_absolute-topleft {
+  position: absolute;
+  left: $dunit * 2;
+  top: $dunit * 2;
 }
 
-.icon-daniel_test2 {
-  background-image: url("../images/daniel_test2.svg");
+.ibutton_absolute-topright {
+  position: absolute;
+  right: $dunit * 2;
+  top: $dunit * 2;
 }
-
-.icon-daniel_test3 {
-  background-image: url("../images/daniel_user.svg");
-}
-
-/* commented out to make this compile with /pkg/frontend/webpack*.config.js
-.test-icon {
-  background-image: url(../images/00_joker_dark.svg);
-}
-
-.test-icon2 {
-  position: relative;
-  background-image: url(../images/00_joker_bright.svg);
-}
-*/

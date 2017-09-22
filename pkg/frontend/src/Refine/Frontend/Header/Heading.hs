@@ -8,7 +8,6 @@ module Refine.Frontend.Header.Heading
   , mainHeaderToolbar_
 
   -- * exported for testing only:
-  , topMenuBar_
   , toolbarWrapper_
   ) where
 #include "import_frontend.hs"
@@ -16,59 +15,24 @@ module Refine.Frontend.Header.Heading
 import           Language.Css.Syntax
 
 import           Refine.Common.Types
+import           Refine.Frontend.Access
 import           Refine.Frontend.Document.Types
-import           Refine.Frontend.Header.DocumentHeader
 import           Refine.Frontend.Header.DiffToolbar (diffToolbar_)
-import           Refine.Frontend.Header.EditToolbar (editToolbar_, wipeDocumentState)
 import           Refine.Frontend.Header.DiscussionToolbar
+import           Refine.Frontend.Header.DocumentHeader
+import           Refine.Frontend.Header.EditToolbar (editToolbar_, wipeDocumentState)
 import           Refine.Frontend.Header.Toolbar ( CommentToolbarExtensionProps(..), EditToolbarExtensionProps(..),
                                                   toolbar_, commentToolbarExtension_, editToolbarExtension_, indexToolbarExtension_ )
-import           Refine.Frontend.Access
 import           Refine.Frontend.Header.Types
 import           Refine.Frontend.Icon.Svg
 import           Refine.Frontend.Login.Status
 import           Refine.Frontend.Login.Types
 import           Refine.Frontend.MainMenu.Types
+import           Refine.Frontend.MainMenu.Component (topMenuBar)
 import           Refine.Frontend.Screen.Types
 import           Refine.Frontend.Store()
 import           Refine.Frontend.Store.Types
 import           Refine.Frontend.Util
-
-
-topMenuBar :: HasCallStack => View '[TopMenuBarProps]
-topMenuBar = mkView "TopMenuBar" $ \props ->
-  div_ [ classNamesAny [("c-mainmenu", True)]
-       , "style" @@= [decl "pointerEvents" (Ident "none")]
-       , "id" $= "top-menubar"
-       ] $ do
-    topMenuBarLeft_ props
-    topMenuBarRight_ props
-
-topMenuBar_ :: HasCallStack => TopMenuBarProps -> ReactElementM eventHandler ()
-topMenuBar_ = view_ topMenuBar "TopMenuBar_"
-
-topMenuBarLeft :: View '[TopMenuBarProps]
-topMenuBarLeft = mkView "TopMenuBarLeft" $ \(TopMenuBarProps _currentUser) -> do
-    button_ [ "aria-controls" $= "bs-navbar"
-            , "aria-expanded" $= "false"
-            , "className" $= "c-mainmenu__menu-button"
-            , "type" $= "button"
-            , "style" @@= [decl "pointerEvents" (Ident "all")]
-            , onClick $ \_ _ -> simpleHandler . dispatch . MainMenuAction $ MainMenuActionOpen defaultMainMenuTab
-            ] $ do
-      span_ ["className" $= "sr-only"] "Navigation an/aus"
-      span_ ["className" $= "c-mainmenu__icon-bar"] ""
-      span_ ["className" $= "c-mainmenu__icon-bar"] ""
-      span_ ["className" $= "c-mainmenu__icon-bar"] ""
-
-    span_ ["className" $= "c-mainmenu__menu-button-label"] "MENU"
-
-topMenuBarLeft_ :: TopMenuBarProps -> ReactElementM eventHandler ()
-topMenuBarLeft_ = view_ topMenuBarLeft "TopMenuBarLeft_"
-
-topMenuBarRight_ :: TopMenuBarProps -> ReactElementM eventHandler ()
-topMenuBarRight_ (TopMenuBarProps cu) = do
-    loginStatusButton_ ColorSchemaDark Nothing cu
 
 
 -- | Note that if @toolbarItems_@ is a component ('View') rather than a 'ReactElementM', css styling
@@ -82,7 +46,7 @@ toolbarWrapper_ toolbarItems_ = do
           toolbarItems_
 
 mainHeader :: HasCallStack => React.ReactView MainHeaderProps
-mainHeader = React.defineLifecycleView "HeaderSizeCapture" () React.lifecycleConfig
+mainHeader = React.defineLifecycleView "MainHeader" () React.lifecycleConfig
      -- the render function inside a Lifecycle view does not update the children passed to it when the state changes
      -- (see react-flux issue #29), therefore we move everything inside the Lifecylce view.
    { React.lRender = mainHeaderRender
@@ -92,17 +56,9 @@ mainHeader = React.defineLifecycleView "HeaderSizeCapture" () React.lifecycleCon
 
 mainHeaderRender :: HasCallStack => () -> MainHeaderProps -> ReactElementM eventHandler ()
 mainHeaderRender () (title, abstract, topmenuprops) = do
-  let mainMenuPart_ = do
-        -- in the past, the following needed to be siblings because of the z-index handling.  not sure that's still the case.
-        div_ ["className" $= "c-mainmenu__bg" {-, "role" $= "navigation" -}] mempty
-        {- header_ ["role" $= "banner"] $ do -}
-        topMenuBar_ topmenuprops
-
-      headerPart_ = documentHeader_ $ DocumentHeaderProps title abstract
-
   div_ ["className" $= "c-fullheader"] $ do
-      mainMenuPart_
-      headerPart_
+    view_ topMenuBar "topMenuBar" topmenuprops
+    documentHeader_ $ DocumentHeaderProps title abstract
 
 mainHeader_ :: HasCallStack => MainHeaderProps -> ReactElementM eventHandler ()
 mainHeader_ props = React.viewWithSKey mainHeader "mainHeader" props mempty
@@ -143,7 +99,7 @@ mkMainHeaderProps :: AccessState -> GlobalState_ WipedDocumentState -> MainHeade
 mkMainHeaderProps as wiped = (title, abstract, props)
   where
     cvdoc = fromMaybe (error "mkMainHeaderProps: no vdoc!") $ wiped ^? gsCompositeVDoc . _Just . _Just
-    props = TopMenuBarProps (cacheLookup' wiped <$> (as ^. accLoginState . lsCurrentUser))
+    props = TopMenuBarProps Nothing (cacheLookup' wiped <$> (as ^. accLoginState . lsCurrentUser))
 
     title = cvdoc ^. compositeVDoc . vdocTitle
     abstract = cvdoc ^. compositeVDoc . vdocAbstract

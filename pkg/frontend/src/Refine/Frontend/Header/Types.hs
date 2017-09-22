@@ -6,6 +6,7 @@ module Refine.Frontend.Header.Types where
 
 import Refine.Common.Types
 import Refine.Frontend.Login.Types
+import Refine.Frontend.MainMenu.Types
 import Refine.Frontend.Types
 
 
@@ -47,10 +48,6 @@ newtype AddLinkFormState = AddLinkFormState
 
 
 type MainHeaderProps = (Title, Abstract, TopMenuBarProps)
-
-newtype TopMenuBarProps = TopMenuBarProps
-  { _currentUser :: CurrentUser (Lookup User)
-  } deriving (Eq, Generic)
 
 data MainHeaderToolbarProps = MainHeaderToolbarProps
   { _mainHeaderToolbarPropsDocumentState     :: WipedDocumentState
@@ -135,7 +132,7 @@ data DiscussionToolbarProps = DiscussionToolbarProps
   deriving (Show, Eq, Generic)
 
 makeRefineTypes [ ''HeaderAction, ''ToolbarExtensionStatus, ''HeaderState, ''AddLinkFormState
-                , ''DiffToolbarProps, ''TopMenuBarProps, ''EditIndex, ''IndexItem
+                , ''DiffToolbarProps, ''EditIndex, ''IndexItem
                 , ''DiscussionToolbarProps, ''EditToolbarProps, ''EditIsInitial
                 , ''MainHeaderToolbarProps, ''WipedDocumentState
                 ]

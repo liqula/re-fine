@@ -82,8 +82,19 @@ newtype File = File JSVal deriving (FromJSVal)
 instance Eq File where _ == _ = False
 instance NFData File where rnf _ = ()
 
-type GroupProps = (Maybe Group, Map (ID VDoc) VDoc, Map (ID User) User)
-type GroupsProps = ([Group], Map (ID VDoc) VDoc, Map (ID User) User)
+data GroupProps = GroupProps
+  { _groupPropsGroup     :: Maybe Group
+  , _groupPropsProcesses :: Map (ID VDoc) VDoc
+  , _groupPropsMembers   :: Map (ID User) User
+  }
+  deriving (Eq, Show, Generic)
+
+data GroupsProps = GroupsProps
+  { _groupsPropsGroups       :: [Group]
+  , _groupsPropsAllProcesses :: Map (ID VDoc) VDoc
+  , _groupsPropsAllMembers   :: Map (ID User) User
+  }
+  deriving (Eq, Show, Generic)
 
 -- | FUTUREWORK: it may be nicer after all to have different types for action, state, and props
 -- here.  but for now it should work.
@@ -127,8 +138,8 @@ data MainMenuProps tab = MainMenuProps
   }
   deriving (Eq)
 
-data TopMenuBarInMainMenuProps = TopMenuBarInMainMenuProps
-  { _tmbimmpMainMenuTab    :: MainMenuTabProps
+data TopMenuBarProps = TopMenuBarProps
+  { _tmbimmpMainMenuTab    :: Maybe MainMenuTabProps  -- ^ 'Nothing' iff main menu is closed.
   , _tmbimmpCurrentUser    :: CurrentUser (Lookup User)
   }
   deriving (Eq)
@@ -137,6 +148,7 @@ data MainMenuProcessShortProps = MainMenuProcessShortProps
   { _mmprocShrtID          :: ID VDoc
   , _mmprocShrtIcon        :: ()  -- FIXME
   , _mmprocShrtTitle       :: Title
+  , _mmprocShrtAbstract    :: Abstract
   , _mmprocShrtNumComments :: Int
   , _mmprocShrtNumEdits    :: Int
   , _mmprocShrtNumUsers    :: Int
@@ -146,4 +158,5 @@ data MainMenuProcessShortProps = MainMenuProcessShortProps
 
 makeRefineTypes [ ''MainMenuAction, ''MainMenuErrors, ''MainMenuState
                 , ''MainMenu, ''MainMenuTab, ''MainMenuGroup, ''MainMenuSubTabLogin, ''MainMenuProcessShortProps
+                , ''GroupProps, ''GroupsProps
                 ]

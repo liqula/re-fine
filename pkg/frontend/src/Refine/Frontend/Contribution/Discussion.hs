@@ -26,7 +26,7 @@ import           Refine.Frontend.Util
 
 discussion :: HasCallStack => View '[DiscussionProps]
 discussion = mkView "Discussion" $ \props -> case props ^. discPropsDiscussion of
-  Left _ -> "Loading..."
+  Left _ -> hourglass
   Right (_range, disc) -> do
     aboutText_ ( props ^. discPropsAboutText
                , ContribIDDiscussion False $ disc ^. discussionMetaID . miID

@@ -5,7 +5,6 @@
 
 module Refine.Frontend.Icon.Types
   ( ReactListKey
-  , Align(..)
   , Svg.ColorSchema(..)
   , Svg.ButtonState(..)
   , Svg.ButtonRollOver(..)
@@ -19,7 +18,6 @@ module Refine.Frontend.Icon.Types
   , ibIndexNum
   , ibEnabled
   , ibSize
-  , ibAlign
   , IbuttonState(..)
   , ibuttonMouseOver
   , ibuttonState
@@ -63,9 +61,6 @@ import           Refine.Frontend.Util
 
 -- * icon buttons
 
-data Align = AlignRight | AlignLeft
-  deriving (Eq, Show, Generic)
-
 data ButtonImage
   = ButtonImageIcon Svg.Icon Svg.ColorSchema  -- ^ inlined icon
   | ButtonImageInline ImageInline  -- ^ "data:image/..."
@@ -80,7 +75,6 @@ data IbuttonProps onclick = IbuttonProps
   , _ibIndexNum         :: Maybe Int -- ^ the number in the small black circle in the upper right corner of the button.
   , _ibEnabled          :: Bool
   , _ibSize             :: IconSize
-  , _ibAlign            :: Align
   }
   deriving (Eq, Show, Generic)
 

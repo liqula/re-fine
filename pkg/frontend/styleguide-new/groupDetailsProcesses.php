@@ -8,35 +8,35 @@ include "includes/svgs/svgs1.php";
 <?php include "includes/page-header-main.php"; ?>
 
 		<div class="groupDetailsProcesses">
-			<div class="groupDetailsProcesses_titleimage-div">
-				<img class="groupDetailsProcesses_titleimage-img" src="testbild.png" alt="">
+			<div class="groupDetailsProcesses__titleimage-div">
+				<img class="groupDetailsProcesses__titleimage-img" src="testbild.png" alt="">
 			</div>
-			<img class="groupDetailsProcesses_profile-img" src="testbild.png" alt="">
+			<img class="groupDetailsProcesses__profile-img" src="testbild.png" alt="">
 		
-			<div class="groupDetailsProcesses_description">
-				<div class="groupDetailsProcesses_description-headline">
+			<div class="groupDetailsProcesses__description">
+				<div class="groupDetailsProcesses__description-headline">
 				Das ist eine supertolle Gruppe
 				</div>
-				<div class="groupDetailsProcesses_description-text">
+				<div class="groupDetailsProcesses__description-text">
 					Or alis ped ma cum es eium qui si solor autasped et est recae volupta consequi debis abor suntus. Liquidus, nos mo corpore acipidus.Berum unt plia alit voluptat laborio. Ari cumendi aturesciusam quo et quiae. Or alis ped ma cum es eium qui si solor autasped et est recae volupta consequi debis abor suntus. Liquidus, nos mo corpore acipidus. Berum unt plia alit voluptat laborio. Ari cumendi aturesciusam quo et quiae. Or alis ped ma cum es eium qui si solor autasped et est recae volupta consequi debis abor suntus.
 				</div>
 			</div>
 			<div class="hr-2-div"></div>
-			<div class="groupDetailsProcesses_iconlist">
-				<?= iconWithNumber('ibutton_xxxlarge', 'svgDanielUser', ['c_fill_interaction_yellow', ' c_fill_note_bubble'], '12', ['margin1',"float-left"]) ?>
-				<?= iconWithNumber('ibutton_xxxlarge', 'svgDanielUser', ['c_fill_interaction_yellow', ' c_fill_note_bubble'], '12', ['margin1',"float-left"]) ?>
-				<?= iconWithNumber('ibutton_xxxlarge', 'svgDanielUser', ['c_fill_interaction_yellow', ' c_fill_note_bubble'], '12', ['margin1',"float-left"]) ?>
-				<div class="clearboth"></div>
+			<div class="groupDetailsProcesses__iconlist">
+				<?= iconWithNumber('ibutton_xxxlarge', 'svgDanielUser', ['c_fill_interaction_yellow', ' c_fill_note_bubble'], '12', ['margin1']) ?>
+				<?= iconWithNumber('ibutton_xxxlarge', 'svgDanielUser', ['c_fill_interaction_yellow', ' c_fill_note_bubble'], '12', ['margin1']) ?>
+				<?= iconWithNumber('ibutton_xxxlarge', 'svgDanielUser', ['c_fill_interaction_yellow', ' c_fill_note_bubble'], '12', ['margin1']) ?>
 			</div>
 
 
-			<div class="groupDetailsProcesses_submenu">
-				<div class="groupDetailsProcesses_submenu-title">
+			<div class="groupDetailsProcesses__submenu">
+				<div class="groupDetailsProcesses__submenu-title">
 					Dokumente der Gruppe (css ist eine Ausgeburt der Hölle)
 				</div>
-				<div class="test-icon ibutton_xlarge margin1 float-right"></div>
-				<div class="test-icon ibutton_xlarge margin1 float-right"></div>
-				<div class="clearboth"></div>
+				<div class="groupDetailsProcesses__submenu-icons">
+					<?= icon('ibutton_xlarge', 'svgDanielUser', ['c_fill_interaction_yellow', ' c_fill_note_bubble'], ['margin1']) ?>
+					<?= icon('ibutton_xlarge', 'svgDanielUser', ['c_fill_interaction_yellow', ' c_fill_note_bubble'], ['margin1']) ?>
+				</div>
 			</div>
 
 			<?php groupDetailsProcessesDocument(); ?>

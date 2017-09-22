@@ -25,10 +25,10 @@ import           Refine.Frontend.Header.EditToolbar
 import           Refine.Frontend.Header.Heading
 import           Refine.Frontend.Header.Types as HT
 import           Refine.Frontend.Login.Types as LG
-import           Refine.Frontend.MainMenu.Component (mainMenu_)
+import           Refine.Frontend.MainMenu.Component (mainMenu)
 import           Refine.Frontend.MainMenu.Types
 import           Refine.Frontend.Screen.Types as SC
-import           Refine.Frontend.Screen.WindowSize (windowSize_, WindowSizeProps(..))
+import           Refine.Frontend.Screen.WindowSize (trackWindowSize)
 import           Refine.Frontend.Store.Types as RS
 import           Refine.Frontend.Test.Debug
 import           Refine.Frontend.Types
@@ -50,9 +50,9 @@ wholeScreen = React.defineLifecycleView "WholeScreen" () React.lifecycleConfig
   { React.lRender = \() (gs, as) ->
      case gs ^? gsMainMenuState . mmState . mainMenuOpenTab of
       Nothing  -> mainScreen_ (gs, as)
-      Just tab -> mainMenu_ $ MainMenuProps
+      Just tab -> view_ mainMenu "mainMenu" $ MainMenuProps
                             (mapMainMenuTab
-                              (const (groups, vdocs, users))
+                              (const (GroupsProps groups vdocs users))
                               groupFromCache
                               (flip (,) users)
                               id
@@ -62,12 +62,14 @@ wholeScreen = React.defineLifecycleView "WholeScreen" () React.lifecycleConfig
                             (gs ^. gsMainMenuState . mmErrors)
                             (cacheLookup' gs <$> (as ^. accLoginState . lsCurrentUser))
         where
-          groupFromCache :: ID Group -> (Maybe Group, Map (ID VDoc) VDoc, Map (ID User) User)
-          groupFromCache gid = (cacheLookup gs gid, vdocs, users)
+          groupFromCache :: ID Group -> GroupProps
+          groupFromCache gid = GroupProps (cacheLookup gs gid) vdocs users
+
           groups :: [Group]
           groups = mapMaybe (cacheLookup gs) . Set.elems
                  . fromMaybe (cacheMiss CacheKeyGroupIds mempty tab)
                  $ gs ^. gsServerCache . scGroupIds
+
           vdocs :: Map (ID VDoc) VDoc
           vdocs = gs ^. gsServerCache . scVDocs
 
@@ -86,16 +88,16 @@ wholeScreen = React.defineLifecycleView "WholeScreen" () React.lifecycleConfig
 mainScreen :: HasCallStack => View' '[(GlobalState, AccessState)]
 mainScreen = mkView' "MainScreen" $ \(rs, as) -> case rs ^. gsCompositeVDoc of
   Nothing -> error "mainScreen: no gsVDoc"
-  Just Nothing -> "Loading..."
+  Just Nothing -> hourglass
   Just (Just vdoc) -> do
     let __ :: Translations = rs ^. RS.gsTranslations . unTrans
                                 -- FIXME: I think this could be done more nicely.
 
     div_ ["key" $= "maindiv" {-FIXME: seems not to work as expected, we still have a warning-}] $ do
-      windowSize_ (WindowSizeProps (rs ^. gsScreenState . SC.ssWindowSize)) mempty
-      do
+          React.view trackWindowSize (rs ^. gsScreenState . SC.ssWindowSize) mempty
+
           let rswiped = wipeDocumentState as rs
-          mainHeader_ (mkMainHeaderProps as rswiped)
+          div_ ["className" $= "c_bg_blue_dark"] $ mainHeader_ (mkMainHeaderProps as rswiped)
 
           -- components that are visible only sometimes:
           case rs ^. RS.gsContributionState . RS.csActiveDialog of
