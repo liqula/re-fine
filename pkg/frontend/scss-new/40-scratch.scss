@@ -490,7 +490,7 @@ $discussionSidebarWidth: 40 * $dunit;
 
 .discussion-sidebar {
     position: relative;
-    width: $discussionSidebarWidth - (2*$dunit);
+    width: $discussionSidebarWidth - (0*$dunit);
     background-color: $c_discussion_dark;
     padding-bottom: 4*$dunit;
 
@@ -508,8 +508,9 @@ $discussionSidebarWidth: 40 * $dunit;
 
     &__preview {
       position: relative;
-      width: $discussionSidebarWidth - (2*$dunit);
+      width: $discussionSidebarWidth - (3*$dunit);
       padding-bottom: 2*$dunit;
+
 
       &-inner {
         position: relative;
