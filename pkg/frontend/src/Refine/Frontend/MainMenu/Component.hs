@@ -90,7 +90,7 @@ burgerButton_ = do
 
 mainMenu :: HasCallStack => View '[MainMenuProps MainMenuTabProps]
 mainMenu = mkView "MainMenu" $ \(MainMenuProps currentTab menuErrors currentUser) -> do
-  div_ ["className" $= "body-container"] $ do
+  div_ ["className" $= "body-container c_bg_blue_dark"] $ do
       view_ topMenuBar "topMenuBar" (TopMenuBarProps (Just currentTab) currentUser)
       div_ ["className" $= "main-content"] $ do
         case currentTab of
@@ -403,6 +403,7 @@ mainMenuCreateGroup mid (lst, allusers)
     ibutton_ $ emptyIbuttonProps
       (ButtonImageIcon Svg.Save ColorSchemaDark)
       [MainMenuAction . MainMenuActionOpen . MainMenuCreateOrUpdateGroup mid $ FormComplete st]
+      & ibListKey .~ "1"
       & ibSize .~ XXLarge
       & ibEnabled .~ not (ST.null desc || ST.null title)
 
@@ -412,6 +413,7 @@ mainMenuCreateGroup mid (lst, allusers)
       [ MainMenuAction . MainMenuActionOpen $
           maybe (MainMenuGroups ()) (MainMenuGroup MainMenuGroupProcesses) mid
       ]
+      & ibListKey .~ "2"
       & ibSize .~ XXLarge
   where
     addUsers :: CreateGroup_ [(User, Bool)] -> CreateGroup_ [(User, Bool)]
@@ -515,12 +517,14 @@ renderCreateOrUpdateProcess (cloneLens -> toTitle) (cloneLens -> toAbstract) sav
       [save $ FormComplete st]
       & ibEnabled .~ (not . ST.null $ st ^. toTitle . unTitle)
       & ibSize .~ XXLarge
+      & ibListKey .~ "1"
 
     -- FIXME: align right
     ibutton_ $ emptyIbuttonProps
       (ButtonImageIcon Svg.Close ColorSchemaDark)
       [cancel]
       & ibSize .~ XXLarge
+      & ibListKey .~ "2"
 
 
 mainMenuLoginTab :: HasCallStack => View '[MainMenuProps MainMenuSubTabLogin]

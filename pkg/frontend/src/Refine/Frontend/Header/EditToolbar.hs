@@ -105,56 +105,69 @@ editToolbar :: View' '[EditToolbarProps]
 editToolbar = mkView' "editToolbar" $ \ep -> do
   let props icon acts = emptyIbuttonProps icon acts & ibSize .~ XXLarge
 
-  ibutton_ $ props (ButtonImageIcon Svg.Close ColorSchemaEdit)
-    [DocumentAction DocumentCancelSave, DocumentAction UpdateDocumentStateView]
+  div_ ["className" $= "main-content__header"] $ do
+    div_ ["className" $= "main-content__header-inner"] $ do
+      ibutton_ $ props (ButtonImageIcon Svg.Close ColorSchemaEdit)
+        [DocumentAction DocumentCancelSave, DocumentAction UpdateDocumentStateView]
+        & ibListKey .~ "1"
 
-  div_ ["className" $= "c-vdoc-toolbar__separator"] ""
+      div_ ["className" $= "c-vdoc-toolbar__separator"] ""
 
-  ibutton_ $ props (ButtonImageIcon Svg.EditToolbarH1 ColorSchemaDark) [DocumentToggleBlockType Header1]
-  ibutton_ $ props (ButtonImageIcon Svg.EditToolbarH2 ColorSchemaDark) [DocumentToggleBlockType Header2]
-  ibutton_ $ props (ButtonImageIcon Svg.EditToolbarH3 ColorSchemaDark) [DocumentToggleBlockType Header3]
+      ibutton_ $ props (ButtonImageIcon Svg.EditToolbarH1 ColorSchemaDark) [DocumentToggleBlockType Header1]
+        & ibListKey .~ "2"
+      ibutton_ $ props (ButtonImageIcon Svg.EditToolbarH2 ColorSchemaDark) [DocumentToggleBlockType Header2]
+        & ibListKey .~ "3"
+      ibutton_ $ props (ButtonImageIcon Svg.EditToolbarH3 ColorSchemaDark) [DocumentToggleBlockType Header3]
+        & ibListKey .~ "4"
 
-  div_ ["className" $= "c-vdoc-toolbar__separator"] ""
+      div_ ["className" $= "c-vdoc-toolbar__separator"] ""
 
-  ibutton_ $ props (ButtonImageIcon Svg.EditToolbarBold ColorSchemaDark) [DocumentToggleStyle Bold]
-  ibutton_ $ props (ButtonImageIcon Svg.EditToolbarItalic ColorSchemaDark) [DocumentToggleStyle Italic]
+      ibutton_ $ props (ButtonImageIcon Svg.EditToolbarBold ColorSchemaDark) [DocumentToggleStyle Bold]
+        & ibListKey .~ "5"
+      ibutton_ $ props (ButtonImageIcon Svg.EditToolbarItalic ColorSchemaDark) [DocumentToggleStyle Italic]
+        & ibListKey .~ "6"
 
-  div_ ["className" $= "c-vdoc-toolbar__separator"] ""
+      div_ ["className" $= "c-vdoc-toolbar__separator"] ""
 
-  ibutton_ $ props (ButtonImageIcon Svg.EditToolbarBullets ColorSchemaDark) [DocumentToggleBlockType BulletPoint]
-  ibutton_ $ props (ButtonImageIcon Svg.EditToolbarNumbers ColorSchemaDark) [DocumentToggleBlockType EnumPoint]
+      ibutton_ $ props (ButtonImageIcon Svg.EditToolbarBullets ColorSchemaDark) [DocumentToggleBlockType BulletPoint]
+        & ibListKey .~ "7"
+      ibutton_ $ props (ButtonImageIcon Svg.EditToolbarNumbers ColorSchemaDark) [DocumentToggleBlockType EnumPoint]
+        & ibListKey .~ "8"
 
-{- FIXME: #452
-  div_ ["className" $= "c-vdoc-toolbar__separator"] ""
+    {- FIXME: #452
+      div_ ["className" $= "c-vdoc-toolbar__separator"] ""
 
-  let props :: IbuttonProps [GlobalAction]
-      props = props "Edit_toolbar_link" onclick
-        & ibListKey      .~ "link"
-        & ibLabel        .~ case ep ^. editToolbarPropsLinkEditor of
-            LinkButtonDisabled -> "links"
-            LinkButtonDeletes  -> "delete link"
-            LinkButtonAdds _   -> "add link"
-        & ibEnabled      .~ case ep ^. editToolbarPropsLinkEditor of
-            LinkButtonDisabled -> False
-            _                  -> True
-        & ibSize         .~ XXLarge
+      let props :: IbuttonProps [GlobalAction]
+          props = props "Edit_toolbar_link" onclick
+            & ibListKey      .~ "link"
+            & ibLabel        .~ case ep ^. editToolbarPropsLinkEditor of
+                LinkButtonDisabled -> "links"
+                LinkButtonDeletes  -> "delete link"
+                LinkButtonAdds _   -> "add link"
+            & ibEnabled      .~ case ep ^. editToolbarPropsLinkEditor of
+                LinkButtonDisabled -> False
+                _                  -> True
+            & ibSize         .~ XXLarge
 
-      onclick = case ep ^. editToolbarPropsLinkEditor of
-        LinkButtonDisabled -> []
-        LinkButtonDeletes  -> [DocumentRemoveLink]
-        LinkButtonAdds l   -> [HeaderAction $ OpenEditToolbarLinkEditor l]
+          onclick = case ep ^. editToolbarPropsLinkEditor of
+            LinkButtonDisabled -> []
+            LinkButtonDeletes  -> [DocumentRemoveLink]
+            LinkButtonAdds l   -> [HeaderAction $ OpenEditToolbarLinkEditor l]
 
-   in ibutton_ props
--}
+       in ibutton_ props
+    -}
 
-  div_ ["className" $= "c-vdoc-toolbar__separator"] ""
+      div_ ["className" $= "c-vdoc-toolbar__separator"] ""
 
-  ibutton_ $ props (ButtonImageIcon Svg.EditToolbarUndo ColorSchemaDark) [DocumentUndo]
-  ibutton_ $ props (ButtonImageIcon Svg.EditToolbarRedo ColorSchemaDark) [DocumentRedo]
+      ibutton_ $ props (ButtonImageIcon Svg.EditToolbarUndo ColorSchemaDark) [DocumentUndo]
+        & ibListKey .~ "9"
+      ibutton_ $ props (ButtonImageIcon Svg.EditToolbarRedo ColorSchemaDark) [DocumentRedo]
+        & ibListKey .~ "10"
 
-  div_ ["className" $= "c-vdoc-toolbar__separator"] ""
+      div_ ["className" $= "c-vdoc-toolbar__separator"] ""
 
-  ibutton_ $ props (ButtonImageIcon Svg.Save ColorSchemaDark) [DocumentRequestSave $ ep ^. editToolbarPropsInitial]
+      ibutton_ $ props (ButtonImageIcon Svg.Save ColorSchemaDark) [DocumentRequestSave $ ep ^. editToolbarPropsInitial]
+        & ibListKey .~ "11"
 
 editToolbar_ :: HasCallStack => EditToolbarProps -> ReactElementM eventHandler ()
 editToolbar_ = view_' editToolbar "editToolbar_"

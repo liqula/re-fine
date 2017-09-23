@@ -33,35 +33,43 @@ toolbar_ vdoc = do
 
   let props icon acts = emptyIbuttonProps icon acts & ibSize .~ XXLarge
 
-  ibutton_ $ props (ButtonImageIcon Svg.IndexDesktop ColorSchemaDark) [HeaderAction ToggleIndexToolbarExtension]
+  div_ ["className" $= "main-content__header"] $ do
+    div_ ["className" $= "main-content__header-inner"] $ do
+      ibutton_ $ props (ButtonImageIcon Svg.IndexDesktop ColorSchemaDark) [HeaderAction ToggleIndexToolbarExtension]
 
-  div_ ["className" $= "c-vdoc-toolbar__separator"] ""
+      div_ ["className" $= "c-vdoc-toolbar__separator"] ""
 
-  -- FIXME: #358
-  -- guardAccess_ "new-comment" (AP.createComments vdoc) . ...
-  ibutton_ $ props (ButtonImageIcon Svg.CommentNew ColorSchemaDark)
-    [LoginGuardStash [HeaderAction ToggleCommentToolbarExtension]]
-  ibutton_ $ props (ButtonImageIcon Svg.EditNew ColorSchemaDark)
-    [LoginGuardStash [HeaderAction StartEdit]]
+      -- FIXME: #358
+      -- guardAccess_ "new-comment" (AP.createComments vdoc) . ...
+      ibutton_ $ props (ButtonImageIcon Svg.CommentNew ColorSchemaDark)
+        [LoginGuardStash [HeaderAction ToggleCommentToolbarExtension]]
+        & ibListKey .~ "1"
+      ibutton_ $ props (ButtonImageIcon Svg.EditNew ColorSchemaDark)
+        [LoginGuardStash [HeaderAction StartEdit]]
+        & ibListKey .~ "2"
 
-  div_ ["className" $= "c-vdoc-toolbar__separator"] ""
+      div_ ["className" $= "c-vdoc-toolbar__separator"] ""
 
-  ibutton_ $ props (ButtonImageIcon Svg.Comment ColorSchemaDark)
-    (ContributionAction <$> [SetBubbleFilter Nothing, SetBubblePositioning BubblePositioningAbsolute])
+      ibutton_ $ props (ButtonImageIcon Svg.Comment ColorSchemaDark)
+        (ContributionAction <$> [SetBubbleFilter Nothing, SetBubblePositioning BubblePositioningAbsolute])
+        & ibListKey .~ "3"
 
-  ibutton_ $ props (ButtonImageIcon Svg.EditView ColorSchemaDark)
-    (ContributionAction <$> [SetBubbleFilter Nothing, SetBubblePositioning BubblePositioningAbsolute])
+      ibutton_ $ props (ButtonImageIcon Svg.EditView ColorSchemaDark)
+        (ContributionAction <$> [SetBubbleFilter Nothing, SetBubblePositioning BubblePositioningAbsolute])
+        & ibListKey .~ "4"
 
-  div_ ["className" $= "c-vdoc-toolbar__separator"] ""
+      div_ ["className" $= "c-vdoc-toolbar__separator"] ""
 
-  -- FIXME: show this button only to process creator.
-  ibutton_ $ props (ButtonImageIcon Svg.ProcessUpdate ColorSchemaDark)
-    [MainMenuAction . MainMenuActionOpen . MainMenuUpdateProcess (vdoc ^. vdocID) . FormBegin $
-      newLocalStateRef (UpdateVDoc (vdoc ^. vdocTitle) (vdoc ^. vdocAbstract)) vdoc]
+      -- FIXME: show this button only to process creator.
+      ibutton_ $ props (ButtonImageIcon Svg.ProcessUpdate ColorSchemaDark)
+        [MainMenuAction . MainMenuActionOpen . MainMenuUpdateProcess (vdoc ^. vdocID) . FormBegin $
+          newLocalStateRef (UpdateVDoc (vdoc ^. vdocTitle) (vdoc ^. vdocAbstract)) vdoc]
+        & ibListKey .~ "5"
 
-  -- FIXME: align right.
-  ibutton_ $ props (ButtonImageIcon Svg.Reader ColorSchemaDark)
-    [HeaderAction ToggleReadOnly]
+      -- FIXME: align right.
+      ibutton_ $ props (ButtonImageIcon Svg.Reader ColorSchemaDark)
+        [HeaderAction ToggleReadOnly]
+        & ibListKey .~ "6"
 
 
 newtype CommentToolbarExtensionProps = CommentToolbarExtensionProps
@@ -79,6 +87,7 @@ commentToolbarExtension = mkView "CommentToolbarExtension" $ \case
       (ButtonImageIcon Svg.Comment ColorSchemaDark)
       [HeaderAction StartTextSpecificComment]
       & ibSize .~ XLarge
+      & ibListKey .~ "1"
 
     div_ ["className" $= "c-vdoc-toolbar__separator"] ""
 
@@ -86,6 +95,7 @@ commentToolbarExtension = mkView "CommentToolbarExtension" $ \case
       (ButtonImageIcon Svg.Comment ColorSchemaDark)
       [ContributionAction ShowCommentEditor]
       & ibSize .~ XLarge
+      & ibListKey .~ "2"
 
   (CommentToolbarExtensionProps _) -> mempty
   where

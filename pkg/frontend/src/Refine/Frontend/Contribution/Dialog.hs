@@ -326,7 +326,6 @@ editInput (einfo, estate) = mkPersistentStatefulView "EditInput" (einfo ^. editI
 
     hr_ []
 
-    -- TODO: align right.
     ibutton_ $ emptyIbuttonProps (ButtonImageIcon Svg.Save ColorSchemaBright)
       [ DocumentAction . DocumentSave $ FormComplete (EditInfo desc (fromJust mkind) rst, estate)
       , DocumentAction UpdateDocumentStateView
