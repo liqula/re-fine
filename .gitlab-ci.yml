@@ -6,11 +6,12 @@ variables:
   DISPLAY: ":1"
 
 build:
+  # (try `./build setup && ./build clean && ./build` here
+  # if you suspect interference from earlier ci runs.)
+  # NOTE: the brackets and `|| exit 1` seems redundant, but without that if `time ./build` fails gitlab won't notice.
   script:
-    - if ./scripts/run-accept-on-ci.sh ask; then true; else export TEST_ARGS=--skip=@SLOW; fi; time ./build setup && time ./build
-      # (try `./build setup && ./build clean && ./build` here
-      # if you suspect interference from earlier ci runs.)
-    - if ./scripts/run-accept-on-ci.sh ask; then time ./build accept; else true; fi
+    - (if ./scripts/run-accept-on-ci.sh ask; then true; else export TEST_ARGS=--skip=@SLOW; fi; time ./build setup && time ./build) || exit 1
+    - (if ./scripts/run-accept-on-ci.sh ask; then time ./build accept; else true; fi) || exit 1
 
 # deploy_staging:
 #   stage: deploy

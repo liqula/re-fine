@@ -23,7 +23,7 @@ flag ghc-warn-error
   default: True
 
 flag ghc-O2
-  default: False
+  default: True
 
 flag build-refine-frontend
   default: True

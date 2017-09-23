@@ -14,7 +14,7 @@ cd `dirname $0`
 export PATH=$HOME/.local/bin:$HOME/bin:$PATH
 
 date
-ulimit -a
+#ulimit -a  # this is too noisy.
 
 function assert_os_package() {
     if [ "`uname`" == "Linux" ]; then
@@ -33,11 +33,13 @@ function assert_cmd() {
 
 assert_cmd node
 assert_cmd npm
-assert_cmd cabal
-# REMARKS
+# REMARKS on node, npm:
 # - node should be 6.x.x or higher.
 # - npm comes with node, so no extra version constraint here.
 # - on debian, the name for the node executable is nodejs, don't let that confuse you!
+
+assert_cmd cabal
+assert_cmd nix-build
 
 RESOLVER=lts-8.11
 

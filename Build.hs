@@ -32,6 +32,10 @@ pkgPrelude  = "pkg/prelude"
 
 -- * actions
 
+nixShell :: String -> Action ()
+nixShell act = command_ [Cwd pkgFrontend, Shell] "nix-shell"
+  ["--attr", "refine-frontend.env", "build.nix", "--run", show act]
+
 stackTest :: FilePath -> Action ()
 stackTest package = do
   command_ [Cwd package] "stack" ["setup"]
@@ -83,7 +87,6 @@ main = shakeArgs refineOptions $ do
     command_ [Cwd pkgPrelude]  "stack" ["setup"]
     command_ [Cwd pkgCommon]   "stack" ["setup"]
     command_ [Cwd pkgBackend]  "stack" ["setup"]
-    command_ [Cwd pkgFrontend] "stack" ["setup"]
 
   phony "test-prelude" $ do
     stackTest pkgPrelude
@@ -94,13 +97,23 @@ main = shakeArgs refineOptions $ do
   phony "test-backend" $ do
     stackTest pkgBackend
 
+  phony "test-frontend-warmup" $ do
+    command_ [Cwd pkgFrontend] "hspec-discover" ["test/", "", "test/Spec.hs", "--module-name=Spec"]
+    -- usually, you just have one line in test/Spec.hs that does this implicitly:
+    --
+    -- >>> {-# OPTIONS_GHC -F -pgmF hspec-discover -optF --module-name=Spec #-}
+    --
+    -- however, this has proven not very reliable in combination with stack, nix, ghcjs, and all the
+    -- other build tools we're using.  see #278 for more details.
+    -- (note that the second argument is not used by hspec-discover.  i think it's just there to
+    -- accomodate ghc if called via `-pgmF`.
+
   phony "test-frontend" $ do
-    need ["build-frontend-npm"]
-    stackTest pkgFrontend
+    need ["build-frontend", "test-frontend-warmup"]
+    nixShell "cabal configure --ghcjs && cabal test --test-options=\"$TEST_ARGS\""
 
   phony "accept" $ do
     need ["build-frontend", "build-backend"]
-    command_ [Cwd pkgFrontend] "npm" ["run", "build"]
     command_ [Cwd "accept"] "stack" ["build", "--fast"]
     command_ [Cwd "accept"] "stack" ["exec", "--", "selenium", "install"]
     command_ [Cwd "accept"] "stack" ["exec", "--", "selenium", "stop"]
@@ -125,8 +138,14 @@ main = shakeArgs refineOptions $ do
 
   phony "build-frontend" $ do
     need ["build-frontend-npm", "build-frontend-icons", "build-frontend-trans"]
-    stackBuildFast pkgFrontend
+    command_ [Cwd pkgFrontend] "nix-build" ["build.nix"]
+      -- FIXME: it would be nice if we could pass the cabal flag ghc-O2=False here.
     command_ [Cwd pkgFrontend] "make" []
+
+  phony "build-frontend-optimize" $ do
+    need ["build-frontend-npm", "build-frontend-icons", "build-frontend-trans"]
+    command_ [Cwd pkgFrontend] "nix-build" ["build.nix"]
+    command_ [Cwd pkgFrontend] "make" ["optimize"]
 
   phony "build-frontend-npm" $ do  -- if this fails, check #40.
     command_ [Cwd pkgFrontend] "node" ["--version"]
@@ -152,9 +171,7 @@ main = shakeArgs refineOptions $ do
   phony "build-optimal" $ do
     need ["clean"]
     stackBuildOptimal pkgBackend
-    need ["build-frontend-npm"]
-    stackBuildOptimal pkgFrontend
-    command_ [Cwd pkgFrontend] "make" ["optimize"]
+    need ["build-frontend-optimize"]
 
   phony "hlint-prelude" $ do
     hlintPackage pkgPrelude
