@@ -19,11 +19,11 @@ license-file:   LICENSE
 build-type:     Simple
 cabal-version:  >= 1.10
 
--- (`stack build --ghc-options -Wwarn` does not override the
--- ghc-options set in the cabal targets below, so we work with a flag
--- instead.)
 flag ghc-warn-error
   default: True
+
+flag ghc-O2
+  default: False
 
 flag build-refine-frontend
   default: True
@@ -42,9 +42,13 @@ library
       src
   include-dirs:
       src
-  ghc-options: -j -Wall -Wno-redundant-constraints -Wno-unused-imports -O0
+  ghc-options: -j -Wall -Wno-redundant-constraints -Wno-unused-imports
   if flag(ghc-warn-error)
       ghc-options: -Werror
+  if flag(ghc-O2)
+      ghc-options: -O2
+  else
+      ghc-options: -O0
 
   if impl(ghcjs)
     build-depends: ghcjs-base
