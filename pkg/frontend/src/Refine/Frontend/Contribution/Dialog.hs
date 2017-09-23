@@ -275,22 +275,12 @@ commentInput lst = mkPersistentStatefulView "CommentInput" lst Nothing $ \st ->
           elemString "Step 3: "
           span_ ["className" $= "bold"] "finish"
 
-      let enableOrDisable props = if ST.null stext || isNothing smkind
-            then props
-              & iconButtonPropsDisabled     .~ True
-            else props
-              & iconButtonPropsDisabled     .~ False
-              & iconButtonPropsOnClick      .~
+      ibutton_ $ emptyIbuttonProps (ButtonImageIcon Svg.Save ColorSchemaBright)
                     [ ContributionAction $ SubmitComment (CommentInfo stext (fromJust smkind))
                     , ContributionAction ClearRange
                     , ContributionAction HideCommentEditor
                     ]
-
-      iconButton_ $ defaultIconButtonProps @[GlobalAction]
-          & iconButtonPropsIconProps    .~ IconProps "c-vdoc-overlay-content" False ("icon-Share", "dark") Large
-          & iconButtonPropsElementName  .~ "submit"
-          & iconButtonPropsLabel        .~ "submit"
-          & enableOrDisable
+        & ibEnabled .~ not (ST.null stext || isNothing smkind)
 
 commentInput_ :: HasCallStack => LocalStateRef CommentInputState -> ReactElementM eventHandler ()
 commentInput_ lst = view_ (commentInput lst) "commentInput_"
@@ -336,26 +326,14 @@ editInput (einfo, estate) = mkPersistentStatefulView "EditInput" (einfo ^. editI
 
     hr_ []
 
-    let enableOrDisable props = if ST.null desc || isNothing mkind
-          then props
-            & iconButtonPropsDisabled     .~ True
-          else props
-            & iconButtonPropsDisabled     .~ False
-            & iconButtonPropsOnClick      .~ [ DocumentAction . DocumentSave $ FormComplete (EditInfo desc (fromJust mkind) rst, estate)
-                                             , DocumentAction UpdateDocumentStateView
-                                             , ContributionAction ClearRange
-                                             ]
-
-    -- FIXME: make new button, like in 'commentInput_' above.  we
-    -- don't have to save this in global state until the 'editInput_'
-    -- dialog is closed again without save or cancel.
-    iconButton_ $ defaultIconButtonProps @[GlobalAction]
-            & iconButtonPropsListKey      .~ "save"
-            & iconButtonPropsIconProps    .~ IconProps "c-vdoc-toolbar" True ("icon-Save", "bright") XXLarge
-            & iconButtonPropsElementName  .~ "btn-index"
-            & iconButtonPropsLabel        .~ "save"
-            & iconButtonPropsAlignRight   .~ True
-            & enableOrDisable
+    -- TODO: align right.
+    ibutton_ $ emptyIbuttonProps (ButtonImageIcon Svg.Save ColorSchemaBright)
+      [ DocumentAction . DocumentSave $ FormComplete (EditInfo desc (fromJust mkind) rst, estate)
+      , DocumentAction UpdateDocumentStateView
+      , ContributionAction ClearRange
+      ]
+      & ibEnabled .~ not (ST.null desc || isNothing mkind)
+      & ibSize .~ XXLarge
 
 editInput_ :: HasCallStack => (EditInfo (Maybe EditKind), EditorState) -> ReactElementM eventHandler ()
 editInput_ st = view_ (editInput st) "editInput_"

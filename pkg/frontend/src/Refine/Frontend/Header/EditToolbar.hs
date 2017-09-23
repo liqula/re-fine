@@ -98,69 +98,37 @@ wipeDocumentState as gs = const getWipedDocumentState <$> gs
 -- (this is not a good place for this instance, but it avoids import cycles, and the class is
 -- deprecated anyway.  when refactoring Icon.hs, we need to think about how to do this better, see
 -- #439.)
-instance IconButtonPropsOnClick [EditorStoreAction] where
-  runIconButtonPropsOnClick _ _ = mconcat . fmap dispatch
-  defaultOnClick = assert False $ error "defaultOnClick is deprecated."
+instance IbuttonOnClick [EditorStoreAction] 'EventHandlerCode where
+  runIbuttonOnClick _ _ = mconcat . fmap dispatch
 
 editToolbar :: View' '[EditToolbarProps]
 editToolbar = mkView' "editToolbar" $ \ep -> do
-  let editButton icon = defaultIconButtonProps @[EditorStoreAction]
-        & iconButtonPropsIconProps    .~ IconProps "c-vdoc-toolbar" True ("icon-" <> icon, "dark") XXLarge
-        & iconButtonPropsElementName  .~ "btn-index"
+  let props icon acts = emptyIbuttonProps icon acts & ibSize .~ XXLarge
 
-  let props :: IbuttonProps [GlobalAction]
-      props = emptyIbuttonProps (ButtonImageIcon Svg.Close ColorSchemaEdit)
-                                [DocumentAction DocumentCancelSave, DocumentAction UpdateDocumentStateView]
-        & ibListKey      .~ "cancel"
-        & ibSize         .~ XXLarge
-   in ibutton_ props
+  ibutton_ $ props (ButtonImageIcon Svg.Close ColorSchemaEdit)
+    [DocumentAction DocumentCancelSave, DocumentAction UpdateDocumentStateView]
 
   div_ ["className" $= "c-vdoc-toolbar__separator"] ""
 
-  iconButton_ $ editButton "Edit_toolbar_h1"
-    & iconButtonPropsListKey      .~ "h1"
-    & iconButtonPropsLabel        .~ "header 1"
-    & iconButtonPropsOnClick      .~ [DocumentToggleBlockType Header1]
-
-  iconButton_ $ editButton "Edit_toolbar_h2"
-    & iconButtonPropsListKey      .~ "h2"
-    & iconButtonPropsLabel        .~ "header 2"
-    & iconButtonPropsOnClick      .~ [DocumentToggleBlockType Header2]
-
-  iconButton_ $ editButton "Edit_toolbar_h3"
-    & iconButtonPropsListKey      .~ "h3"
-    & iconButtonPropsLabel        .~ "header 3"
-    & iconButtonPropsOnClick      .~ [DocumentToggleBlockType Header3]
+  ibutton_ $ props (ButtonImageIcon Svg.EditToolbarH1 ColorSchemaDark) [DocumentToggleBlockType Header1]
+  ibutton_ $ props (ButtonImageIcon Svg.EditToolbarH2 ColorSchemaDark) [DocumentToggleBlockType Header2]
+  ibutton_ $ props (ButtonImageIcon Svg.EditToolbarH3 ColorSchemaDark) [DocumentToggleBlockType Header3]
 
   div_ ["className" $= "c-vdoc-toolbar__separator"] ""
 
-  iconButton_ $ editButton "Edit_toolbar_bold"
-    & iconButtonPropsListKey      .~ "bold"
-    & iconButtonPropsLabel        .~ "bold"
-    & iconButtonPropsOnClick      .~ [DocumentToggleStyle Bold]
-
-  iconButton_ $ editButton "Edit_toolbar_italic"
-    & iconButtonPropsListKey      .~ "italic"
-    & iconButtonPropsLabel        .~ "italic"
-    & iconButtonPropsOnClick      .~ [DocumentToggleStyle Italic]
+  ibutton_ $ props (ButtonImageIcon Svg.EditToolbarBold ColorSchemaDark) [DocumentToggleStyle Bold]
+  ibutton_ $ props (ButtonImageIcon Svg.EditToolbarItalic ColorSchemaDark) [DocumentToggleStyle Italic]
 
   div_ ["className" $= "c-vdoc-toolbar__separator"] ""
 
-  iconButton_ $ editButton "Edit_toolbar_bullets"
-    & iconButtonPropsListKey      .~ "bullets"
-    & iconButtonPropsLabel        .~ "bullets"
-    & iconButtonPropsOnClick      .~ [DocumentToggleBlockType BulletPoint]
-
-  iconButton_ $ editButton "Edit_toolbar_numbers"
-    & iconButtonPropsListKey      .~ "numbers"
-    & iconButtonPropsLabel        .~ "numbers"
-    & iconButtonPropsOnClick      .~ [DocumentToggleBlockType EnumPoint]
+  ibutton_ $ props (ButtonImageIcon Svg.EditToolbarBullets ColorSchemaDark) [DocumentToggleBlockType BulletPoint]
+  ibutton_ $ props (ButtonImageIcon Svg.EditToolbarNumbers ColorSchemaDark) [DocumentToggleBlockType EnumPoint]
 
 {- FIXME: #452
   div_ ["className" $= "c-vdoc-toolbar__separator"] ""
 
   let props :: IbuttonProps [GlobalAction]
-      props = emptyIbuttonProps "Edit_toolbar_link" onclick
+      props = props "Edit_toolbar_link" onclick
         & ibListKey      .~ "link"
         & ibLabel        .~ case ep ^. editToolbarPropsLinkEditor of
             LinkButtonDisabled -> "links"
@@ -181,22 +149,12 @@ editToolbar = mkView' "editToolbar" $ \ep -> do
 
   div_ ["className" $= "c-vdoc-toolbar__separator"] ""
 
-  iconButton_ $ editButton "Edit_toolbar_undo"
-    & iconButtonPropsListKey      .~ "undo"
-    & iconButtonPropsLabel        .~ "undo"
-    & iconButtonPropsOnClick      .~ [DocumentUndo]
-
-  iconButton_ $ editButton "Edit_toolbar_redo"
-    & iconButtonPropsListKey      .~ "redo"
-    & iconButtonPropsLabel        .~ "redo"
-    & iconButtonPropsOnClick      .~ [DocumentRedo]
+  ibutton_ $ props (ButtonImageIcon Svg.EditToolbarUndo ColorSchemaDark) [DocumentUndo]
+  ibutton_ $ props (ButtonImageIcon Svg.EditToolbarRedo ColorSchemaDark) [DocumentRedo]
 
   div_ ["className" $= "c-vdoc-toolbar__separator"] ""
 
-  iconButton_ $ editButton "Save"
-    & iconButtonPropsListKey      .~ "save"
-    & iconButtonPropsLabel        .~ "save"
-    & iconButtonPropsOnClick      .~ [DocumentRequestSave $ ep ^. editToolbarPropsInitial]
+  ibutton_ $ props (ButtonImageIcon Svg.Save ColorSchemaDark) [DocumentRequestSave $ ep ^. editToolbarPropsInitial]
 
 editToolbar_ :: HasCallStack => EditToolbarProps -> ReactElementM eventHandler ()
 editToolbar_ = view_' editToolbar "editToolbar_"

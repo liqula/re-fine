@@ -17,12 +17,10 @@ import Refine.Frontend.Store.Types
 diffToolbar_ :: HasCallStack => DiffToolbarProps -> ReactElementM eventHandler ()
 diffToolbar_ props = do
 
-  iconButton_ $ defaultIconButtonProps @[GlobalAction]
-    & iconButtonPropsListKey      .~ "index"
-    & iconButtonPropsIconProps    .~ IconProps "c-vdoc-toolbar" True ("icon-Index_desktop", "dark") XXLarge
-    & iconButtonPropsElementName  .~ "btn-index"
-    & iconButtonPropsLabel        .~ "index"
-    & iconButtonPropsOnClick      .~ [HeaderAction ToggleIndexToolbarExtension]
+  ibutton_ $ emptyIbuttonProps
+    (ButtonImageIcon Svg.IndexDesktop ColorSchemaDark)
+    [HeaderAction ToggleIndexToolbarExtension]
+    & ibSize .~ XXLarge
 
   let EditIndex alledits thisedit = props ^. diffToolbarIndex
   span_ . cs $ "Edit " <> show (thisedit + 1) <> " of " <> show alledits

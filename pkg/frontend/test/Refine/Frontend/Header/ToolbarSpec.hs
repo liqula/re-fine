@@ -47,4 +47,4 @@ spec = do
       wrapper <- shallow . commentToolbarExtension_ $ CommentToolbarExtensionProps CommentToolbarExtensionWithoutRange
       annotation <- find wrapper (StringSelector ".c-vdoc-toolbar-extension__annotation")
       EZ.lengthOf annotation `shouldReturn` 1
-      EZ.lengthOfIO (find annotation (StringSelector "IconButton")) `shouldReturn` 2
+      EZ.lengthOfIO (find annotation (StringSelector "Ibutton")) `shouldReturn` 2

@@ -399,31 +399,20 @@ mainMenuCreateGroup mid (lst, allusers)
         elemText $ user ^. userName <> " <" <> (user ^. userEmail) <> ">"
     hr_ []
 
-    let enableOrDisable props = if ST.null desc || ST.null title
-          then props
-            & iconButtonPropsDisabled     .~ True
-          else props
-            & iconButtonPropsDisabled     .~ False
-            & iconButtonPropsOnClick      .~ [MainMenuAction . MainMenuActionOpen . MainMenuCreateOrUpdateGroup mid $ FormComplete st]
+    -- FIXME: align right
+    ibutton_ $ emptyIbuttonProps
+      (ButtonImageIcon Svg.Save ColorSchemaDark)
+      [MainMenuAction . MainMenuActionOpen . MainMenuCreateOrUpdateGroup mid $ FormComplete st]
+      & ibSize .~ XXLarge
+      & ibEnabled .~ not (ST.null desc || ST.null title)
 
-    iconButton_ $ defaultIconButtonProps @[GlobalAction]
-            & iconButtonPropsListKey      .~ "save"
-            & iconButtonPropsIconProps    .~ IconProps "c-vdoc-toolbar" True ("icon-Save", "dark") XXLarge
-            & iconButtonPropsElementName  .~ "btn-index"
-            & iconButtonPropsLabel        .~ maybe "save" (const "update") mid
-            & iconButtonPropsAlignRight   .~ True
-            & enableOrDisable
-
-    iconButton_ $ defaultIconButtonProps @[GlobalAction]
-            & iconButtonPropsListKey      .~ "cancel"
-            & iconButtonPropsIconProps    .~ IconProps "c-vdoc-toolbar" True ("icon-Close", "dark") XXLarge
-            & iconButtonPropsElementName  .~ "btn-index"
-            & iconButtonPropsLabel        .~ "cancel"
-            & iconButtonPropsAlignRight   .~ True
-            & iconButtonPropsDisabled     .~ False
-            & iconButtonPropsOnClick      .~ [ MainMenuAction . MainMenuActionOpen $
-                                               maybe (MainMenuGroups ()) (MainMenuGroup MainMenuGroupProcesses) mid
-                                             ]
+    -- FIXME: align right
+    ibutton_ $ emptyIbuttonProps
+      (ButtonImageIcon Svg.Close ColorSchemaDark)
+      [ MainMenuAction . MainMenuActionOpen $
+          maybe (MainMenuGroups ()) (MainMenuGroup MainMenuGroupProcesses) mid
+      ]
+      & ibSize .~ XXLarge
   where
     addUsers :: CreateGroup_ [(User, Bool)] -> CreateGroup_ [(User, Bool)]
     addUsers cg = cg & createGroupMembers %~ flip (foldr f) (Map.elems allusers)
@@ -520,29 +509,18 @@ renderCreateOrUpdateProcess (cloneLens -> toTitle) (cloneLens -> toAbstract) sav
     contributionDialogTextForm (toAbstract . unAbstract) st 2 "abstract"
     hr_ []
 
-    let enableOrDisable props = if ST.null (st ^. toTitle . unTitle)
-          then props
-            & iconButtonPropsDisabled     .~ True
-          else props
-            & iconButtonPropsDisabled     .~ False
-            & iconButtonPropsOnClick      .~ [save $ FormComplete st]
+    -- FIXME: align right
+    ibutton_ $ emptyIbuttonProps
+      (ButtonImageIcon Svg.Save ColorSchemaDark)
+      [save $ FormComplete st]
+      & ibEnabled .~ (not . ST.null $ st ^. toTitle . unTitle)
+      & ibSize .~ XXLarge
 
-    iconButton_ $ defaultIconButtonProps @[GlobalAction]
-            & iconButtonPropsListKey      .~ "save"
-            & iconButtonPropsIconProps    .~ IconProps "c-vdoc-toolbar" True ("icon-Save", "dark") XXLarge
-            & iconButtonPropsElementName  .~ "btn-index"
-            & iconButtonPropsLabel        .~ "save"
-            & iconButtonPropsAlignRight   .~ True
-            & enableOrDisable
-
-    iconButton_ $ defaultIconButtonProps @[GlobalAction]
-            & iconButtonPropsListKey      .~ "cancel"
-            & iconButtonPropsIconProps    .~ IconProps "c-vdoc-toolbar" True ("icon-Close", "dark") XXLarge
-            & iconButtonPropsElementName  .~ "btn-index"
-            & iconButtonPropsLabel        .~ "cancel"
-            & iconButtonPropsAlignRight   .~ True
-            & iconButtonPropsDisabled     .~ False
-            & iconButtonPropsOnClick      .~ [cancel]
+    -- FIXME: align right
+    ibutton_ $ emptyIbuttonProps
+      (ButtonImageIcon Svg.Close ColorSchemaDark)
+      [cancel]
+      & ibSize .~ XXLarge
 
 
 mainMenuLoginTab :: HasCallStack => View '[MainMenuProps MainMenuSubTabLogin]
