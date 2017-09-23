@@ -8,6 +8,7 @@ module Refine.Frontend.Icon.Types
   , Svg.ColorSchema(..)
   , Svg.ButtonState(..)
   , Svg.ButtonRollOver(..)
+
   , ButtonImage(..)
   , IbuttonProps(..)
   , ibListKey
@@ -21,31 +22,8 @@ module Refine.Frontend.Icon.Types
   , IbuttonState(..)
   , ibuttonMouseOver
   , ibuttonState
-
   , IbuttonOnClick(..)
-
   , IconSize(..), iconSizeCls
-
-  , IconDescription
-
-  , IconProps(..)
-  , iconPropsBlockName
-  , iconPropsHighlight
-  , iconPropsDesc
-  , iconPropsSize
-
-  , IconButtonPropsWithHandler(..)
-  , iconButtonPropsListKey
-  , iconButtonPropsIconProps
-  , iconButtonPropsElementName
-  , iconButtonPropsModuleName
-  , iconButtonPropsLabel
-  , iconButtonPropsDisabled
-  , iconButtonPropsPosition
-  , iconButtonPropsAlignRight
-  , iconButtonPropsOnClick
-  , iconButtonPropsOnClickMods
-  , iconButtonPropsExtraClasses
   ) where
 #include "import_frontend.hs"
 
@@ -81,6 +59,9 @@ data IbuttonProps onclick = IbuttonProps
 data IbuttonState st = IbuttonState { _ibuttonMouseOver :: Bool, _ibuttonState :: st }
   deriving (Eq, Ord, Generic)
 
+
+-- * click events
+
 class (Typeable onclick, Eq onclick) => IbuttonOnClick onclick handler where
   runIbuttonOnClick :: Event -> MouseEvent -> onclick -> EventHandlerType handler
 
@@ -103,72 +84,9 @@ iconSizeCls XXLarge  = "ibutton_xxlarge"
 iconSizeCls XXXLarge = "ibutton_xxxlarge"
 
 
--- * outdated
-
--- FUTUREWORK: the rest of this module should be removed and everything ported to the ibutton_
--- component above.  this may take a few more steps, though.
-
-
-
-
-sizePx :: HasCallStack => IconSize -> Px
-sizePx = Px . sizeInt
-
-sizeInt :: HasCallStack => IconSize -> Int
-sizeInt Medium  = 14
-sizeInt Large   = 20
-sizeInt XLarge  = 26
-sizeInt XXLarge = 32
-sizeInt XXXLarge  = 45
-
-instance Css IconSize where
-  css s = [ decl "backgroundSize" (Percentage 100)
-          , decl "width" (sizePx s)
-          , decl "height" (sizePx s)
-          ]
-
--- ** icon
-
-data IconProps = IconProps
-  { _iconPropsBlockName :: JSString
-  , _iconPropsHighlight :: Bool
-  , _iconPropsDesc      :: IconDescription
-  , _iconPropsSize      :: IconSize
-  }
-  deriving (Eq)
-
-type IconDescription = (JSString, JSString)
-
-instance Default IconProps where
-  def = IconProps
-    { _iconPropsBlockName = ""
-    , _iconPropsHighlight = False
-    , _iconPropsDesc      = ("", "")
-    , _iconPropsSize      = Large
-    }
-
-
--- ** icon button
-
-data IconButtonPropsWithHandler onclick = IconButtonProps
-  { _iconButtonPropsListKey      :: ReactListKey  -- TODO: remove this and refactor the places where it is set using inlined view_ calls.
-  , _iconButtonPropsIconProps    :: IconProps
-  , _iconButtonPropsElementName  :: JSString
-  , _iconButtonPropsModuleName   :: JSString
-  , _iconButtonPropsLabel        :: JSString
-  , _iconButtonPropsDisabled     :: Bool  -- FIXME: make this 'enabled'
-  , _iconButtonPropsPosition     :: Maybe Int
-  , _iconButtonPropsAlignRight   :: Bool
-  , _iconButtonPropsOnClick      :: onclick
-  , _iconButtonPropsOnClickMods  :: [EventModification]
-  , _iconButtonPropsExtraClasses :: [JSString]
-  }
-  deriving (Eq)
-
-
 -- * TH instances
 
 deriveClasses
   [ ([''IbuttonState], allClass)
-  , ([''IconProps, ''IbuttonProps, ''IconButtonPropsWithHandler], [''Lens'])
+  , ([''IbuttonProps], [''Lens'])
   ]

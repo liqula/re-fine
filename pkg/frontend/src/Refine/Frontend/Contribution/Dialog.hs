@@ -3,7 +3,13 @@
 
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
-module Refine.Frontend.Contribution.Dialog where
+module Refine.Frontend.Contribution.Dialog
+  ( commentInput_
+  , addComment_
+  , addEdit_
+  , contributionDialogTextFormInner
+  , contributionDialogTextForm
+  ) where
 #include "import_frontend.hs"
 
 import           Language.Css.Syntax
@@ -49,14 +55,6 @@ dialogStyles = [ -- Style "display" ("block" :: String)
 addCommentDialogStyles :: HasCallStack => [Decl]
 addCommentDialogStyles = [decl "backgroundColor" (Ident "rgba(219, 204, 221, 1)")] <> dialogStyles
 
--- is vdoc_overlay_content__comment in CSS
-
-showNoteDialogStyles :: HasCallStack => [Decl]
-showNoteDialogStyles = [decl "backgroundColor" (Ident "rgba(237, 237, 192, 1)")] <> dialogStyles
-
-showDiscussionDialogStyles :: HasCallStack => [Decl]
-showDiscussionDialogStyles = [decl "backgroundColor" (Ident "rgba(215, 233, 255, 1)")] <> dialogStyles
-
 overlayStyles :: HasCallStack => [Decl]
 overlayStyles =
   [ zindex ZIxOverlay
@@ -85,8 +83,6 @@ addContributionDialogFrame title mrange windowWidth child =
              , "overlayStyles" @@= overlayStyles
              , "titleStyle" @@= [decl "margin" (Px 0)]
              ]  $ do
-
-      icon_ (IconProps "c-vdoc-overlay-content" False ("icon-New_Comment", "dark") XLarge)
 
       span_ [ "className" $= "c-vdoc-overlay-content__title"
             , "style" @@=
@@ -131,101 +127,6 @@ contributionDialogTextFormInner width height stateLens st' = do
 
 
 -- * comments
-
-showComment :: HasCallStack => View '[CommentDisplayProps]
-showComment = mkView "ShowComment" $ \props ->
-  let extraStyles = [ decl "top" (Px $ props ^. cdpTopOffset . unOffsetFromDocumentTop + 5)
-                    , decl "left" (Px . leftFor $ props ^. cdpWindowWidth)
-                    , decl "height" (Px 0)
-                    , decl "minHeight" (Px 100)
-                    ]
-  in skylight_ ["isVisible" &= True
-           , React.on "onCloseClicked"   $ \_ -> simpleHandler $ dispatch (ContributionAction HideContributionDialog)
-           , React.on "onOverlayClicked" $ \_ -> simpleHandler $ dispatch (ContributionAction HideContributionDialog)
-           , "dialogStyles" @@= ((props ^. cdpContentStyle) <> extraStyles)
-           , "overlayStyles" @@= overlayStyles
-           , "closeButtonStyle" @@= [decl "top" (Px 0), decl "bottom" (Px 0)]
-           , "titleStyle" @@= [decl "margin" (Px 0)]
-           ] $ do
-    -- div_ ["className" $= "c-vdoc-overlay-content c-vdoc-overlay-content--comment"] $ do
-
-        div_ ["style" @@= [decl "marginLeft" (Percentage 96)]] $ do             -- FIXME: How to do this properly?
-          icon_ (IconProps "c-vdoc-overlay-content" False (props ^. cdpIconStyle) XLarge)
-
-        div_ ["className" $= "c-vdoc-overlay-content__copy"] $ elemText (props ^. cdpCommentText)
-
-        -- edit/comment user meta data -->
-        div_ ["className" $= "c-vdoc-overlay-meta"] $ do
-            span_ ["className" $= "c-vdoc-overlay-meta__user-avatar"] $ do
-                icon_ (IconProps "c-vdoc-overlay-meta" False ("icon-User", "bright") Medium)
-            span_ ["className" $= "c-vdoc-overlay-meta__user"] $ elemCS (props ^. cdpUserName)
-            span_ ["className" $= "c-vdoc-overlay-meta__date"] $ elemCS (props ^. cdpCreationDate) -- or what is this?
-        -- END: edit/comment user meta data -->
-
-        -- vote buttons -->
-        div_ ["className" $= "c-vdoc-overlay-votes"] $ do
-
-            ibutton_ $ emptyIbuttonProps (ButtonImageIcon Svg.VoteNegative ColorSchemaBright)
-                         [ContributionAction $ ToggleVoteOnContribution (ContribIDDiscussion True $ props ^. cdpNoteId) Yeay]
-                     & ibListKey .~ "vote_up"
-                     & ibSize .~ XLarge
-                     & ibIndexNum .~ Map.lookup Yeay (props ^. cdpVotes)
-
-            ibutton_ $ emptyIbuttonProps (ButtonImageIcon Svg.VoteNegative ColorSchemaBright)
-                         [ContributionAction $ ToggleVoteOnContribution (ContribIDDiscussion True $ props ^. cdpNoteId) Nay]
-                     & ibListKey .~ "vote_down"
-                     & ibSize .~ XLarge
-                     & ibIndexNum .~ Map.lookup Nay (props ^. cdpVotes)
-        -- END: vote buttons -->
-
-        div_ ["style" @@= [decl "marginBottom" (Px 20)]] "" -- make some space for the close button
-
-showComment_ :: HasCallStack => CommentDisplayProps -> ReactElementM eventHandler ()
-showComment_ = view_ showComment "showComment_"
-
-
-showNoteProps :: HasCallStack => Map.Map (ID Discussion) Discussion -> GlobalState -> Maybe ShowNoteProps
-showNoteProps notes rs = case (maybeNote, maybeOffset) of
-  (Just note, Just offset) -> Just $ ShowNoteProps note offset
-                                     (rs ^. gsScreenState . ssWindowWidth)
-                                     ((^. userName) <$> (rs ^. gsServerCache . scUsers))
-
-  (Just note, Nothing)     -> err "note" note "offset" Nothing
-  (Nothing,   Just offset) -> err "offset" offset "note" Nothing
-  _                        -> Nothing
-  where
-    maybeContribID = rs ^. gsContributionState . csDisplayedContributionID
-    maybeNoteID :: Maybe (ID Discussion) = getDiscussionID =<< maybeContribID
-    maybeNote = (`Map.lookup` notes) =<< maybeNoteID
-    maybeOffset = do
-      nid <- maybeNoteID
-      rs ^? gsContributionState . csAllVerticalSpanBounds . allVerticalSpanBounds
-          . at (MarkContribution (ContribIDDiscussion True nid) 0) . _Just . verticalSpanBoundsBottom
-
-    err haveT haveV missT = gracefulError (unwords ["showNoteProps: we have a", haveT, show haveV, "but no", missT])
-
-
-showNote :: HasCallStack => View '[ShowNoteProps]
-showNote = mkView "ShowNote" $ \case
-  ShowNoteProps note top windowWidth1 usernames ->
-    let commentText1  = (note ^. noteText)
-        iconStyle1    = ("icon-Note", "dark")
-        user          = note ^. discussionMetaID . miMeta . metaCreatedBy
-        userName1 = case user of
-          UserID i -> cs . fromMaybe (cacheMiss (CacheKeyUser i) (cs $ show i) i) $ Map.lookup i usernames
-          _ -> cs $ show user
-        votes = votesToCount $ note ^. discussionVotes
-        creationDate1 = showTime $ note ^. discussionMetaID . miMeta . metaCreatedAt
-    in showComment_ $ CommentDisplayProps commentText1 iconStyle1 userName1 creationDate1
-                                          showNoteDialogStyles top windowWidth1
-                                          (note ^. discussionID)
-                                          votes
-  where
-    showTime (Timestamp t) = cs $ formatTime defaultTimeLocale "%F %T" t
-
-showNote_ :: HasCallStack => ShowNoteProps -> ReactElementM eventHandler ()
-showNote_ = view_ showNote "showNote_"
-
 
 addComment :: HasCallStack => Translations -> View '[AddContributionProps (LocalStateRef CommentInputState)]
 addComment __ = mkView "AddComment" $ \props -> addContributionDialogFrame

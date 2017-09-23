@@ -210,7 +210,6 @@ data QuickCreateShowState =
 
 data CommentDisplayProps = CommentDisplayProps
   { _cdpCommentText  :: CommentText
-  , _cdpIconStyle    :: IconDescription
   , _cdpUserName     :: JSString
   , _cdpCreationDate :: JSString
   , _cdpContentStyle :: [Decl]
