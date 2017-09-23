@@ -211,26 +211,26 @@ mainMenuGroup = mkView "mainMenuGroup" $ \case
 
     div_ ["className" $= "hr-div"] $ pure ()
 
-    div_ ["className" $= "groupDetailsProcesses"] $ do
+    div_ ["className" $= "groupDetails"] $ do
       -- image(s)
       case group ^. groupImage of
         Nothing -> do
-          div_ ["className" $= "groupDetailsProcesses__svg-div"] $ do
+          div_ ["className" $= "groupDetails__svg-div"] $ do
             Svg.render ColorSchemaBright def Svg.Group
         Just (ImageInline img) -> do
-          img_ ["className" $= "groupDetailsProcesses__profile-img", "src" $= cs img, "alt" $= "[group logo]"] $ pure ()
+          img_ ["className" $= "groupDetails__profile-img", "src" $= cs img, "alt" $= "[group logo]"] $ pure ()
 
       -- title, abstract
-      div_ ["className" $= "groupDetailsProcesses__description"] $ do
-        div_ ["className" $= "groupDetailsProcesses__description-headline"] $ do
+      div_ ["className" $= "groupDetails__description"] $ do
+        div_ ["className" $= "groupDetails__description-headline"] $ do
           elemText $ group ^. groupTitle
-        div_ ["className" $= "groupDetailsProcesses__description-text"] $ do
+        div_ ["className" $= "groupDetails__description-text"] $ do
           elemText $ group ^. groupDesc
 
       div_ ["className" $= "hr-2-div"] $ pure ()
 
       -- sub-sub-tab buttons (users, processes)
-      div_ ["className" $= "groupDetailsProcesses__iconlist"] $ do
+      div_ ["className" $= "groupDetails__iconlist"] $ do
         ibutton_ $ emptyIbuttonProps
             (ButtonImageIcon Svg.Group ColorSchemaBright)
             [ShowNotImplementedYet]
@@ -320,53 +320,53 @@ mainMenuMemberShort_ (Just props) = view_ mainMenuMemberShort listKey props
 
 mainMenuProcessShort :: HasCallStack => View '[MainMenuProcessShortProps]
 mainMenuProcessShort = mkView "MainMenuProcessShort" $ \props -> do
-  div_ [ "className" $= "groupDetailsProcessesDocument"
+  div_ [ "className" $= "groupDetailsDocument"
        , onClick $ \_ _ -> simpleHandler . dispatch . LoadVDoc $ props ^. mmprocShrtID
        ] $ do
 
     -- image
-    div_ ["className" $= "groupDetailsProcessesDocument__column1"] $ do
-      div_ ["className" $= "groupDetailsProcesses__svg-div"] $ do
+    div_ ["className" $= "groupDetailsDocument__column1"] $ do
+      div_ ["className" $= "groupDetails__svg-div"] $ do
         ibutton_ $ emptyIbuttonProps (ButtonImageIcon Svg.Process ColorSchemaBright) ([] :: [GlobalAction])
           & ibListKey .~ "process"
           & ibSize .~ XXLarge
 
     -- title & description
-    div_ ["className" $= "groupDetailsProcessesDocument__column2"] $ do
-      div_ ["className" $= "groupDetailsProcessesDocument__column2-headline"] $ do
+    div_ ["className" $= "groupDetailsDocument__column2"] $ do
+      div_ ["className" $= "groupDetailsDocument__column2-headline"] $ do
         elemText $ props ^. mmprocShrtTitle . unTitle
-      div_ ["className" $= "groupDetailsProcessesDocument__column2-body"] $ do
+      div_ ["className" $= "groupDetailsDocument__column2-body"] $ do
         elemText $ props ^. mmprocShrtAbstract . unAbstract
 
-    div_ ["className" $= "groupDetailsProcessesDocument__column3"] $ do
-      div_ ["className" $= "groupDetailsProcessesDocument__column3-vertical-line"] $ pure ()
+    div_ ["className" $= "groupDetailsDocument__column3"] $ do
+      div_ ["className" $= "groupDetailsDocument__column3-vertical-line"] $ pure ()
 
-    div_ ["className" $= "groupDetailsProcessesDocument__column4"] $ do
+    div_ ["className" $= "groupDetailsDocument__column4"] $ do
       -- comments
-      div_ ["className" $= "groupDetailsProcessesDocument__column4-item"] $ do
-        div_ ["className" $= "groupDetailsProcessesDocument__column4-item-icon"] $ do
+      div_ ["className" $= "groupDetailsDocument__column4-item"] $ do
+        div_ ["className" $= "groupDetailsDocument__column4-item-icon"] $ do
           ibutton_ $ emptyIbuttonProps (ButtonImageIcon Svg.Comment ColorSchemaBright) ([] :: [GlobalAction])
             & ibSize .~ XXLarge
-        div_ ["className" $= "groupDetailsProcessesDocument__column4-item-text"] $ do
+        div_ ["className" $= "groupDetailsDocument__column4-item-text"] $ do
           elemString . show $ props ^. mmprocShrtNumComments
 
         -- FIXME: can we easily compute how many comments / edits are made by the browsing user?
         -- that would be the next item-icon, item-text pair here.
 
       -- edits
-      div_ ["className" $= "groupDetailsProcessesDocument__column4-item"] $ do
-        div_ ["className" $= "groupDetailsProcessesDocument__column4-item-icon"] $ do
+      div_ ["className" $= "groupDetailsDocument__column4-item"] $ do
+        div_ ["className" $= "groupDetailsDocument__column4-item-icon"] $ do
           ibutton_ $ emptyIbuttonProps (ButtonImageIcon Svg.Edit ColorSchemaBright) ([] :: [GlobalAction])
             & ibSize .~ XXLarge
-        div_ ["className" $= "groupDetailsProcessesDocument__column4-item-text"] $ do
+        div_ ["className" $= "groupDetailsDocument__column4-item-text"] $ do
           elemString . show $ props ^. mmprocShrtNumEdits
 
       -- participants
-      div_ ["className" $= "groupDetailsProcessesDocument__column4-item"] $ do
-        div_ ["className" $= "groupDetailsProcessesDocument__column4-item-icon"] $ do
+      div_ ["className" $= "groupDetailsDocument__column4-item"] $ do
+        div_ ["className" $= "groupDetailsDocument__column4-item-icon"] $ do
           ibutton_ $ emptyIbuttonProps (ButtonImageIcon Svg.User ColorSchemaBright) ([] :: [GlobalAction])
             & ibSize .~ XXLarge
-        div_ ["className" $= "groupDetailsProcessesDocument__column4-item-text"] $ do
+        div_ ["className" $= "groupDetailsDocument__column4-item-text"] $ do
           elemString . show $ props ^. mmprocShrtNumUsers
 
 mainMenuProcessShort_ :: HasCallStack => MainMenuProcessShortProps -> ReactElementM 'EventHandlerCode ()
