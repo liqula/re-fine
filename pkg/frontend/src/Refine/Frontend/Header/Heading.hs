@@ -38,9 +38,7 @@ import           Refine.Frontend.Util
 -- | Note that if @toolbarItems_@ is a component ('View') rather than a 'ReactElementM', css styling
 -- mysteriously breaks.
 toolbarWrapper_ :: ReactElementM eventHandler () -> ReactElementM eventHandler ()
-toolbarWrapper_ toolbarItems_ =
-  header_ ["className" $= "row row-align-middle c-vdoc-toolbar"] $
-    toolbarItems_
+toolbarWrapper_ = header_ ["className" $= "row row-align-middle c-vdoc-toolbar"]
 
 mainHeader :: HasCallStack => React.ReactView MainHeaderProps
 mainHeader = React.defineLifecycleView "MainHeader" () React.lifecycleConfig
