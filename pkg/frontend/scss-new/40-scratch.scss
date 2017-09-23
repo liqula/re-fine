@@ -20,7 +20,6 @@ nesting may also be useful.
   border-radius: $dunit;
   margin-left: auto;
   margin-right: auto;
-  margin-bottom: $dunit * 4;
   padding: $dunit * 3;
   position: relative;
   width: $dunit * 152;
@@ -109,7 +108,7 @@ nesting may also be useful.
 
 /* group detail processes */
 
-.groupDetailsProcesses {
+.groupDetails {
   // FIXME: wrong name.  this should be re-used for members and sub-groups tabs.
   position: relative;
   width: 150 * $dunit;
@@ -119,18 +118,14 @@ nesting may also be useful.
   border-radius: $dunit;
   padding-bottom: $dunit;
 
-  // $dunit*0.01 works :)  // TODO: is this comment still valid?  what does it refer to?
-
   // TODO: like in group-short, i need both svg and img logo support; title image upload will come later.
   //   also, the names should be consistent with the names in groupshort.
   &__svg-div {
-    position: relative;
-    margin-top: 4 * $dunit;
-    width: 26 * $dunit;
-    height: 26 * $dunit;
-    border-radius: $dunit;
-    border-width: 0px;
-    margin-left: 5 * $dunit;
+    position: absolute;
+    width: 24 * $dunit;
+    height: 24 * $dunit;
+    left: 2*$dunit;
+    top: 2*$dunit;
   }
 
   &__titleimage-div {
@@ -161,7 +156,7 @@ nesting may also be useful.
   &__description {
     position: relative;
     margin-left: 28 * $dunit;
-    min-height: 20 * $dunit;
+    min-height: 24 * $dunit;
     padding-bottom: 4 * $dunit;
 
     &-headline {
@@ -388,10 +383,8 @@ body {
   position: relative;
   width: 100%;
   min-width: 156 * $dunit;
-  background-color: $c_blue_dark;
   min-height: 100%;
   height: 100%;
-  padding-bottom: $dunit * 4;
 }
 
 /* general icon classes */
@@ -441,3 +434,118 @@ body {
   right: $dunit * 2;
   top: $dunit * 2;
 }
+
+/* discussion */
+
+$discussionSidebarWidth: 40 * $dunit;
+
+.discussion-header {
+    position: relative;
+    width: 100%;
+    height: 8 * $dunit;
+    background-color: $c_green_background;
+    display: flex;
+    justify-content: space-between;
+
+    &__inner {
+      display: flex;
+    }
+
+    &__column1 {
+      display: flex;
+      justify-content: space-between;
+      width: $discussionSidebarWidth;
+    }
+
+    &__column2 {
+      display: flex;
+      justify-content: space-between;
+    }
+    &__column2-spacer {
+      position: relative;
+      width: $dunit;
+      margin-top: $dunit*2;
+      margin-bottom: $dunit*2;
+      border-left: 1px solid $c_discussion_dark;
+    }
+
+    &__column3 {
+      display: flex;
+      justify-content: space-between;
+    }
+
+    &__column4 {
+      display: flex;
+      justify-content: flex-end;
+      width: 40*$dunit;
+    }
+}
+
+.discussion-sidebar-container {
+  position: relative;
+  width: $discussionSidebarWidth;
+  height: 500px;
+  overflow: scroll;
+}
+
+.discussion-sidebar {
+    position: relative;
+    width: $discussionSidebarWidth - (0*$dunit);
+    background-color: $c_discussion_dark;
+    padding-bottom: 4*$dunit;
+
+    &__titlebar {
+      display: flex;
+      justify-content: space-between;
+
+      &-title {
+
+      }
+      &-icon {
+
+      }
+    }
+
+    &__preview {
+      position: relative;
+      width: $discussionSidebarWidth - (3*$dunit);
+      padding-bottom: 2*$dunit;
+
+
+      &-inner {
+        position: relative;
+        border-radius: 2*$dunit;
+        background-color: $c_note_bubble;
+        padding: 2*$dunit;
+        margin: $dunit;
+        margin-left: 4*$dunit;
+        overflow: hidden;
+        z-index: 0;
+        height: 15*$dunit;
+      }
+
+      &-inner-text {
+        font-size: 2*$dunit;
+        overflow: hidden;
+        height: 14*$dunit;
+      }
+
+      &-inner-bottom {
+        position: absolute;
+        left: 0;
+        bottom: 0;
+        height: $dunit;
+        width: 100%;
+        background-color: red;
+      }
+      &-icon {
+        position: absolute;
+        top: -(2*$dunit);
+        left: 2*$dunit;
+        width: $icon-size-xlarge;
+        height: $icon-size-xlarge;
+        z-index: 1;
+      }
+    }
+}
+
