@@ -13,6 +13,7 @@ import           Refine.Frontend.Contribution.Types
 import           Refine.Frontend.Document.Types
 import           Refine.Frontend.Header.Types
 import           Refine.Frontend.Icon
+import qualified Refine.Frontend.Icon.Svg as Svg
 import           Refine.Frontend.MainMenu.Types
 import           Refine.Frontend.Store.Types
 import           Refine.Frontend.Types
@@ -30,77 +31,45 @@ toolbar_ vdoc = do
         , "className" $= "c-toolbar-menu-label-hidden"
         ] "MENU"
 
-  let toolbarButton = defaultIconButtonProps @[GlobalAction]
+  let props icon acts = emptyIbuttonProps icon acts & ibSize .~ XXLarge
 
-  iconButton_ $ toolbarButton
-    & iconButtonPropsListKey      .~ "index"
-    & iconButtonPropsIconProps    .~ IconProps "c-vdoc-toolbar" True ("icon-Index_desktop", "dark") XXLarge
-    & iconButtonPropsElementName  .~ "btn-index"
-    & iconButtonPropsLabel        .~ "index"
-    & iconButtonPropsOnClick      .~ [HeaderAction ToggleIndexToolbarExtension]
+  div_ ["className" $= "main-content__header"] $ do
+    div_ ["className" $= "main-content__header-inner"] $ do
+      ibutton_ $ props (ButtonImageIcon Svg.IndexDesktop ColorSchemaDark) [HeaderAction ToggleIndexToolbarExtension]
 
-  div_ ["className" $= "c-vdoc-toolbar__separator"] ""
+      div_ ["className" $= "c-vdoc-toolbar__separator"] ""
 
-  -- FIXME: #358
-  -- guardAccess_ "new-comment" (AP.createComments vdoc) . ...
-  iconButton_ $ defaultIconButtonProps @[AccessAction]
-    & iconButtonPropsListKey      .~ "new-comment"
-    & iconButtonPropsIconProps    .~ IconProps "c-vdoc-toolbar" True ("icon-New_Comment", "dark") XXLarge
-    & iconButtonPropsElementName  .~ "btn-add-annotation"  -- RENAME
-    & iconButtonPropsLabel        .~ "new comment"
-    & iconButtonPropsOnClick      .~ [LoginGuardStash [HeaderAction ToggleCommentToolbarExtension]]
-    & iconButtonPropsOnClickMods  .~ [StopPropagation]
+      -- FIXME: #358
+      -- guardAccess_ "new-comment" (AP.createComments vdoc) . ...
+      ibutton_ $ props (ButtonImageIcon Svg.CommentNew ColorSchemaDark)
+        [LoginGuardStash [HeaderAction ToggleCommentToolbarExtension]]
+        & ibListKey .~ "1"
+      ibutton_ $ props (ButtonImageIcon Svg.EditNew ColorSchemaDark)
+        [LoginGuardStash [HeaderAction StartEdit]]
+        & ibListKey .~ "2"
 
-  iconButton_ $ defaultIconButtonProps @[AccessAction]
-    & iconButtonPropsListKey      .~ "new-edit"
-    & iconButtonPropsIconProps    .~ IconProps "c-vdoc-toolbar" True ("icon-New_Edit", "dark") XXLarge
-    & iconButtonPropsElementName  .~ "bt-add-modification"  -- RENAME: edit
-    & iconButtonPropsLabel        .~ "new edit"
-    & iconButtonPropsOnClick      .~ [LoginGuardStash [HeaderAction StartEdit]]
-    & iconButtonPropsOnClickMods  .~ [StopPropagation]
+      div_ ["className" $= "c-vdoc-toolbar__separator"] ""
 
-  div_ ["className" $= "c-vdoc-toolbar__separator"] ""
+      ibutton_ $ props (ButtonImageIcon Svg.Comment ColorSchemaDark)
+        (ContributionAction <$> [SetBubbleFilter Nothing, SetBubblePositioning BubblePositioningAbsolute])
+        & ibListKey .~ "3"
 
-  iconButton_ $ toolbarButton
-    & iconButtonPropsListKey      .~ "all-comments"
-    & iconButtonPropsIconProps    .~ IconProps "c-vdoc-toolbar" True ("icon-Comment", "dark") XXLarge
-    & iconButtonPropsElementName  .~ "all-annotations"   -- RENAME: annotation => comment
-    & iconButtonPropsLabel        .~ "all comments"
-    & iconButtonPropsOnClickMods  .~ [StopPropagation]
-    & iconButtonPropsOnClick      .~ (ContributionAction <$> [ SetBubbleFilter Nothing
-                                                             , SetBubblePositioning BubblePositioningAbsolute
-                                                             ])
+      ibutton_ $ props (ButtonImageIcon Svg.EditView ColorSchemaDark)
+        (ContributionAction <$> [SetBubbleFilter Nothing, SetBubblePositioning BubblePositioningAbsolute])
+        & ibListKey .~ "4"
 
-  iconButton_ $ toolbarButton
-    & iconButtonPropsListKey      .~ "all-edits"
-    & iconButtonPropsIconProps    .~ IconProps "c-vdoc-toolbar" True ("icon-Edit_view", "dark") XXLarge
-    & iconButtonPropsElementName  .~ "all-modifications"  -- RENAME: edit
-    & iconButtonPropsLabel        .~ "all edits"
-    & iconButtonPropsOnClickMods  .~ [StopPropagation]
-    & iconButtonPropsOnClick      .~ (ContributionAction <$> [ SetBubbleFilter Nothing
-                                                             , SetBubblePositioning BubblePositioningAbsolute
-                                                             ])
+      div_ ["className" $= "c-vdoc-toolbar__separator"] ""
 
-  div_ ["className" $= "c-vdoc-toolbar__separator"] ""
+      -- FIXME: show this button only to process creator.
+      ibutton_ $ props (ButtonImageIcon Svg.ProcessUpdate ColorSchemaDark)
+        [MainMenuAction . MainMenuActionOpen . MainMenuUpdateProcess (vdoc ^. vdocID) . FormBegin $
+          newLocalStateRef (UpdateVDoc (vdoc ^. vdocTitle) (vdoc ^. vdocAbstract)) vdoc]
+        & ibListKey .~ "5"
 
-  iconButton_ $ toolbarButton  -- FIXME: show this button only to process creator.
-    & iconButtonPropsListKey      .~ "update-process"
-    & iconButtonPropsIconProps    .~ IconProps "c-vdoc-toolbar" True ("icon-Process_update", "dark") XXLarge
-    & iconButtonPropsLabel        .~ "update process"
-    & iconButtonPropsOnClickMods  .~ [StopPropagation]
-    & iconButtonPropsOnClick      .~ [ MainMenuAction . MainMenuActionOpen . MainMenuUpdateProcess (vdoc ^. vdocID) . FormBegin $
-                                       newLocalStateRef (UpdateVDoc (vdoc ^. vdocTitle) (vdoc ^. vdocAbstract)) vdoc
-                                     ]
-
-
-  iconButton_ $ toolbarButton
-    & iconButtonPropsListKey      .~ "read-only"
-    & iconButtonPropsIconProps    .~ IconProps "c-vdoc-toolbar" True ("icon-Reader", "dark") XXLarge
-    & iconButtonPropsElementName  .~ "btn-read-mode"
-    & iconButtonPropsLabel        .~ "read mode"
-    & iconButtonPropsOnClick      .~ [HeaderAction ToggleReadOnly]
-    & iconButtonPropsOnClickMods  .~ [StopPropagation]
-    & iconButtonPropsAlignRight   .~ True
+      -- FIXME: align right.
+      ibutton_ $ props (ButtonImageIcon Svg.Reader ColorSchemaDark)
+        [HeaderAction ToggleReadOnly]
+        & ibListKey .~ "6"
 
 
 newtype CommentToolbarExtensionProps = CommentToolbarExtensionProps
@@ -114,23 +83,19 @@ commentToolbarExtension = mkView "CommentToolbarExtension" $ \case
     div_ "Please select the text you would like to comment on"
 
   (CommentToolbarExtensionProps CommentToolbarExtensionWithoutRange) -> frame $ do
-    iconButton_ $ defaultIconButtonProps @[GlobalAction]
-      & iconButtonPropsListKey      .~ "comment-range"
-      & iconButtonPropsIconProps    .~ IconProps "c-vdoc-toolbar-extension" True ("icon-Comment", "dark") Large
-      & iconButtonPropsElementName  .~ "btn-new-ann-text" -- RENAME: ann => comment
-      & iconButtonPropsLabel        .~ "text-specific comment"
-      & iconButtonPropsOnClick      .~ [HeaderAction StartTextSpecificComment]
-      & iconButtonPropsOnClickMods  .~ [StopPropagation]
+    ibutton_ $ emptyIbuttonProps
+      (ButtonImageIcon Svg.Comment ColorSchemaDark)
+      [HeaderAction StartTextSpecificComment]
+      & ibSize .~ XLarge
+      & ibListKey .~ "1"
 
     div_ ["className" $= "c-vdoc-toolbar__separator"] ""
 
-    iconButton_ $ defaultIconButtonProps @[GlobalAction]
-      & iconButtonPropsListKey      .~ "comment-all"
-      & iconButtonPropsIconProps    .~ IconProps "c-vdoc-toolbar-extension" True ("icon-Comment", "dark") Large
-      & iconButtonPropsElementName  .~ "btn-new-ann-doc"  -- RENAME: ann => comment
-      & iconButtonPropsLabel        .~ "general comment"
-      & iconButtonPropsOnClick      .~ [ContributionAction ShowCommentEditor]
-      & iconButtonPropsOnClickMods  .~ [StopPropagation]
+    ibutton_ $ emptyIbuttonProps
+      (ButtonImageIcon Svg.Comment ColorSchemaDark)
+      [ContributionAction ShowCommentEditor]
+      & ibSize .~ XLarge
+      & ibListKey .~ "2"
 
   (CommentToolbarExtensionProps _) -> mempty
   where
@@ -144,7 +109,6 @@ commentToolbarExtension = mkView "CommentToolbarExtension" $ \case
                            , ("c-vdoc-toolbar-extension--expanded", True) ]
                ]
             children
-
 
 commentToolbarExtension_ :: HasCallStack => CommentToolbarExtensionProps -> ReactElementM eventHandler ()
 commentToolbarExtension_ = view_ commentToolbarExtension "commentToolbarExtension_"
@@ -226,14 +190,11 @@ indexToolbarExtension :: View '[IndexToolbarProps]
 indexToolbarExtension = mkView "IndexToolbarExtension" $ \case
   Nothing -> mempty
   Just is -> frame . forM_ (zip [0 :: Int ..] is) $ \(i, item) -> do
-    iconButton_
-      $ defaultIconButtonProps @[GlobalAction]
-      & iconButtonPropsListKey      .~ ("index-" <> cs (show i))
-      & iconButtonPropsElementName  .~ ("index-heading-" <> cs (show i))
-      & iconButtonPropsLabel        .~ cs (item ^. indexItemTitle)
-      & iconButtonPropsOnClick      .~ [HeaderAction . ScrollToBlockKey $ item ^. indexItemBlockKey]
-      & iconButtonPropsOnClickMods  .~ [StopPropagation]
-    br_ []
+    ul_ $ do
+      li_ . a_ [ "key" $= cs (show i)
+               , onClick $ \_ _ -> simpleHandler . dispatch . HeaderAction . ScrollToBlockKey $ item ^. indexItemBlockKey
+               ]
+        $ elemText (item ^. indexItemTitle)
   where
     frame :: ReactElementM eventHandler () -> ReactElementM eventHandler ()
     frame children = div_ ["className" $= "row row-align-middle c-vdoc-toolbar-extension"] $ do

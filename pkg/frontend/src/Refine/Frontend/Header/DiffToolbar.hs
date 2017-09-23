@@ -17,57 +17,62 @@ import Refine.Frontend.Store.Types
 diffToolbar_ :: HasCallStack => DiffToolbarProps -> ReactElementM eventHandler ()
 diffToolbar_ props = do
 
-  iconButton_ $ defaultIconButtonProps @[GlobalAction]
-    & iconButtonPropsListKey      .~ "index"
-    & iconButtonPropsIconProps    .~ IconProps "c-vdoc-toolbar" True ("icon-Index_desktop", "dark") XXLarge
-    & iconButtonPropsElementName  .~ "btn-index"
-    & iconButtonPropsLabel        .~ "index"
-    & iconButtonPropsOnClick      .~ [HeaderAction ToggleIndexToolbarExtension]
-
-  let EditIndex alledits thisedit = props ^. diffToolbarIndex
-  span_ . cs $ "Edit " <> show (thisedit + 1) <> " of " <> show alledits
-                       <> ", " <> show (props ^. diffToolbarEditKind)
-
-  div_ ["className" $= "c-vdoc-toolbar__separator"] ""
-
-  ibutton_ $ emptyIbuttonProps (ButtonImageIcon Svg.Close ColorSchemaDark) [ContributionAction HideContributionDialog]
-    & ibListKey .~ "0"
+  ibutton_ $ emptyIbuttonProps
+    (ButtonImageIcon Svg.IndexDesktop ColorSchemaDark)
+    [HeaderAction ToggleIndexToolbarExtension]
     & ibSize .~ XXLarge
 
-  div_ ["className" $= "c-vdoc-toolbar__separator"] ""
+  div_ ["className" $= "main-content__header"] $ do
+    div_ ["className" $= "main-content__header-inner"] $ do
+      let EditIndex alledits thisedit = props ^. diffToolbarIndex
+      span_ . cs $ "Edit " <> show (thisedit + 1) <> " of " <> show alledits
+                           <> ", " <> show (props ^. diffToolbarEditKind)
 
-  let voteAction v = LoginGuardStash
-        [ContributionAction $ ToggleVoteOnContribution
-                                (ContribIDEdit $ props ^. diffToolbarPropsEditID) v]
+      div_ ["className" $= "c-vdoc-toolbar__separator"] ""
 
-  ibutton_ $ emptyIbuttonProps (ButtonImageIcon Svg.VotePositive ColorSchemaDark) [voteAction Yeay]
-    & ibListKey .~ "1"
-    & ibIndexNum .~ Map.lookup Yeay (props ^. diffToolbarPropsVotes)
-    & ibSize .~ XXLarge
-
-  ibutton_ $ emptyIbuttonProps (ButtonImageIcon Svg.VoteNegative ColorSchemaDark) [voteAction Nay]
-    & ibListKey .~ "2"
-    & ibIndexNum .~ Map.lookup Nay (props ^. diffToolbarPropsVotes)
-    & ibSize .~ XXLarge
-
-  ibutton_ $ emptyIbuttonProps (ButtonImageIcon ArrowUp ColorSchemaDark) [HeaderAction ScrollToPageTop]
-    & ibListKey .~ "3"
-    & ibSize .~ XXLarge
-
-  let img = if props ^. diffToolbarCollapsed then Svg.DiffExpand else Svg.DiffCollapse
-   in ibutton_ $ emptyIbuttonProps (ButtonImageIcon img ColorSchemaDark) [DocumentAction ToggleCollapseDiff]
-        & ibListKey .~ "4"
+      ibutton_ $ emptyIbuttonProps (ButtonImageIcon Svg.Close ColorSchemaDark) [ContributionAction HideContributionDialog]
+        & ibListKey .~ "0"
         & ibSize .~ XXLarge
 
-  div_ ["className" $= "c-vdoc-toolbar__separator"] ""
+      div_ ["className" $= "c-vdoc-toolbar__separator"] ""
 
-  when (props ^. diffToolbarEditable) $ do
-    ibutton_ $ emptyIbuttonProps (ButtonImageIcon Svg.Edit ColorSchemaDark) [HeaderAction StartEdit]
-      & ibListKey .~ "5"
-      & ibSize .~ XXLarge
+      let voteAction v = LoginGuardStash
+            [ContributionAction $ ToggleVoteOnContribution
+                                    (ContribIDEdit $ props ^. diffToolbarPropsEditID) v]
 
-    div_ ["className" $= "c-vdoc-toolbar__separator"] ""
+      ibutton_ $ emptyIbuttonProps (ButtonImageIcon Svg.VotePositive ColorSchemaDark) [voteAction Yeay]
+        & ibListKey .~ "1"
+        & ibIndexNum .~ Map.lookup Yeay (props ^. diffToolbarPropsVotes)
+        & ibSize .~ XXLarge
 
-  ibutton_ $ emptyIbuttonProps (ButtonImageIcon Svg.DiffDetails ColorSchemaDark) [ShowNotImplementedYet]
-    & ibListKey .~ "6"
-    & ibSize .~ XXLarge
+      ibutton_ $ emptyIbuttonProps (ButtonImageIcon Svg.VoteNegative ColorSchemaDark) [voteAction Nay]
+        & ibListKey .~ "2"
+        & ibIndexNum .~ Map.lookup Nay (props ^. diffToolbarPropsVotes)
+        & ibSize .~ XXLarge
+
+      ibutton_ $ emptyIbuttonProps (ButtonImageIcon ArrowUp ColorSchemaDark) [HeaderAction ScrollToPageTop]
+        & ibListKey .~ "3"
+        & ibSize .~ XXLarge
+
+      let img = if props ^. diffToolbarCollapsed then Svg.DiffExpand else Svg.DiffCollapse
+       in ibutton_ $ emptyIbuttonProps (ButtonImageIcon img ColorSchemaDark) [DocumentAction ToggleCollapseDiff]
+            & ibListKey .~ "4"
+            & ibSize .~ XXLarge
+
+      div_ ["className" $= "c-vdoc-toolbar__separator"] ""
+
+      when (props ^. diffToolbarEditable) $ do
+        ibutton_ $ emptyIbuttonProps (ButtonImageIcon Svg.Edit ColorSchemaDark) [HeaderAction StartEdit]
+          & ibListKey .~ "5"
+          & ibSize .~ XXLarge
+
+        div_ ["className" $= "c-vdoc-toolbar__separator"] ""
+
+      ibutton_ $ emptyIbuttonProps (ButtonImageIcon Svg.DiffDetails ColorSchemaDark) [ShowNotImplementedYet]
+        & ibListKey .~ "6"
+        & ibSize .~ XXLarge
+
+    div_ ["className" $= "main-content__header-inner"] $ do
+      let EditIndex alledits thisedit = props ^. diffToolbarIndex
+      span_ . cs $ "Edit " <> show (thisedit + 1) <> " of " <> show alledits
+                           <> ", " <> show (props ^. diffToolbarEditKind)

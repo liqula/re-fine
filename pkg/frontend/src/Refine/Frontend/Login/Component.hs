@@ -8,6 +8,7 @@ import           Language.Css.Syntax
 
 import           Refine.Common.Types.Prelude
 import           Refine.Frontend.Icon
+import qualified Refine.Frontend.Icon.Svg as Svg
 import           Refine.Frontend.Types
 import           Refine.Frontend.Login.Types
 import qualified Refine.Frontend.Store.Types as RS
@@ -113,12 +114,11 @@ login errors = mkStatefulView "Login" (LoginForm "" "" errors) $ \curState ->
       inputField "login-username" "text"     "Username" loginFormUsername >> br_ []
       inputField "login-password" "password" "Password" loginFormPassword >> br_ []
 
-      iconButton_ $ defaultIconButtonProps @[RS.AccessAction]
-        & iconButtonPropsIconProps    .~ IconProps "c-vdoc-overlay-content" True ("icon-Share", "dark") Large
-        & iconButtonPropsElementName  .~ "submit"
-        & iconButtonPropsLabel        .~ "submit"
-        & iconButtonPropsDisabled     .~ invalidLoginForm curState
-        & iconButtonPropsOnClick      .~ [RS.Login . (Login <$> _loginFormUsername <*> _loginFormPassword) $ curState]
+      ibutton_ $ emptyIbuttonProps
+        (ButtonImageIcon Svg.Save ColorSchemaDark)
+        -- TODO: create new svg file for this.  open issue, put it on the list of icons to be fixed.
+        [RS.Login . (Login <$> _loginFormUsername <*> _loginFormPassword) $ curState]
+        & ibEnabled .~ not (invalidLoginForm curState)
 
 login_ :: HasCallStack => FormError -> ReactElementM eventHandler ()
 login_ errors = view_ (login errors) "login_"
@@ -136,12 +136,9 @@ logout = mkView "Logout" $ do
     form_ [ "target" $= "#"
           , "action" $= "POST" ] $ do
 
-      iconButton_ $ defaultIconButtonProps @[RS.AccessAction]
-        & iconButtonPropsIconProps    .~ IconProps "c-vdoc-overlay-content" True ("icon-Share", "dark") Large
-        & iconButtonPropsElementName  .~ "submit"
-        & iconButtonPropsLabel        .~ "logout"
-        & iconButtonPropsDisabled     .~ False
-        & iconButtonPropsOnClick      .~ [RS.Logout]
+      ibutton_ $ emptyIbuttonProps
+        (ButtonImageIcon Svg.Save ColorSchemaDark)
+        [RS.Logout]
 
 logout_ :: HasCallStack => ReactElementM eventHandler ()
 logout_ = view_ logout "logout_"
@@ -171,18 +168,17 @@ registration errors = mkStatefulView "Registration" (RegistrationForm "" "" "" "
       inputFieldWithKey "registration-agree" "checkbox" "" "checked" registrationFormAgree
       "I agree with the terms of use." >> br_ []
 
-      iconButton_ $ defaultIconButtonProps @[RS.GlobalAction]
-        & iconButtonPropsIconProps    .~ IconProps "c-vdoc-overlay-content" True ("icon-Share", "dark") Large
-        & iconButtonPropsElementName  .~ "submit"
-        & iconButtonPropsLabel        .~ "submit"
-        & iconButtonPropsDisabled     .~ invalidRegistrationForm curState
-        & iconButtonPropsOnClick      .~ [RS.CreateUser
-                                              . (CreateUser <$> _registrationFormUsername
-                                                            <*> _registrationFormEmail1
-                                                            <*> _registrationFormPassword
-                                                            <*> pure Nothing
-                                                            <*> pure "")
-                                              $ curState]
+      ibutton_ $ emptyIbuttonProps
+        (ButtonImageIcon Svg.Save ColorSchemaDark)
+        [RS.CreateUser
+          . (CreateUser
+              <$> _registrationFormUsername
+              <*> _registrationFormEmail1
+              <*> _registrationFormPassword
+              <*> pure Nothing
+              <*> pure "")
+          $ curState]
+        & ibEnabled .~ not (invalidRegistrationForm curState)
 
 registration_ :: HasCallStack => FormError -> ReactElementM eventHandler ()
 registration_ errors = view_ (registration errors) "registration_"

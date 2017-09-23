@@ -10,6 +10,7 @@ import Refine.Frontend.Access
 import Refine.Frontend.Contribution.Types
 import Refine.Frontend.Header.Types
 import Refine.Frontend.Icon
+import Refine.Frontend.Icon.Svg as Svg
 import Refine.Frontend.Screen.Calculations
 import Refine.Frontend.Screen.Types
 import Refine.Frontend.Store()
@@ -18,29 +19,24 @@ import Refine.Frontend.Types
 
 
 quickCreate :: HasCallStack => View '[QuickCreateProps]
-quickCreate = mkView "QuickCreateButton" $ \props ->
+quickCreate = mkView "QuickCreateButton" $ \props -> do
     case (props ^. quickCreateRange, props ^. quickCreateShowState) of
-        (Just range, QuickCreateShown) ->
-            iconButton_ $ defaultIconButtonProps @QuickCreateSide
-              & iconButtonPropsIconProps    .~ IconProps (renderQuickCreateSide (props ^. quickCreateSide))
-                                                         True ("icon-New_Comment", "bright") XXLarge
-              & iconButtonPropsPosition     .~ Just (mkQuickCreateOffset range (props ^. quickCreateScreenState))
-              & iconButtonPropsOnClick      .~ (props ^. quickCreateSide)
-        _ -> mempty
---    // quickCreate annotation ui events  -- RENAME: annotation => comment
---    ann.addEventListener('mousedown', quickCreateOverlay);
---    Hammer.on(ann, 'tap', quickCreateOverlay);
+        (Just range, QuickCreateShown) -> do
+          let pos = mkQuickCreateOffset range (props ^. quickCreateScreenState)
+          div_ ["style" @= object ["top" Aeson..= pos]] $ do
+            let img = case props ^. quickCreateSide of
+                  QuickCreateComment -> Svg.CommentNew
+                  QuickCreateEdit    -> Svg.EditNew
+            ibutton_ $ emptyIbuttonProps
+              (ButtonImageIcon img ColorSchemaDark)
+              (props ^. quickCreateSide)
+              & ibSize .~ XXXLarge
+        _ -> pure ()
 
-quickCreate_ :: HasCallStack => QuickCreateProps -> ReactElementM eventHandler ()
-quickCreate_ = view_ quickCreate "quickCreate_"
-
-
-instance IconButtonPropsOnClick QuickCreateSide where
-  runIconButtonPropsOnClick _ _ = dispatch . \case
+instance IbuttonOnClick QuickCreateSide 'EventHandlerCode where
+  runIbuttonOnClick _ _ = dispatch . \case
     QuickCreateComment -> LoginGuardStash [ContributionAction ShowCommentEditor]
     QuickCreateEdit    -> LoginGuardStash [HeaderAction StartEdit]
-  defaultOnClick = QuickCreateComment
-
 
 mkQuickCreateOffset :: HasCallStack => SelectionStateWithPx -> ScreenState -> Int
 mkQuickCreateOffset range screenState =
