@@ -68,7 +68,8 @@ class (Typeable onclick, Eq onclick) => IbuttonOnClick onclick handler where
 
 -- * icon sizes
 
-data IconSize  -- FIXME: eliminate duplication between this and the corresponding scss variables.
+-- | FUTUREWORK: eliminate duplication between this and the corresponding scss variables.
+data IconSize
   = Medium
   | Large
   | XLarge
