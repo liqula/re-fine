@@ -1,41 +1,11 @@
-{ nixpkgs ? import ./nixpkgs
-, compiler ? "ghcjsHEAD"
-}:
-
 let
-  react-hs-repo = import ./react-hs;
-  config = {
-    packageOverrides = pkgs: rec {
-      haskell = pkgs.haskell // {
-        packages = pkgs.haskell.packages // {
-          "${compiler}" = pkgs.haskell.packages."${compiler}".override {
-            overrides = haskellPackagesNew: haskellPackagesOld: rec {
+  pkgs = import ./nixpkgs { };
+  pkg = path: deps: pkgs.haskell.lib.dontHaddock ( pkgs.haskell.packages.ghcjsHEAD.callPackage path deps );
 
-              react-hs = pkgs.haskell.lib.dontHaddock (
-                haskellPackagesNew.callPackage "${react-hs-repo}/react-hs/default.nix" { }
-              );
+  react-hs        = pkg "${import ./react-hs}/react-hs/default.nix" { };
+  refine-prelude  = pkg ../prelude/default.nix { };
+  refine-common   = pkg ../common/default.nix { inherit refine-prelude; };
+  refine-frontend = pkg ./default.nix { inherit refine-prelude refine-common react-hs; };
 
-              refine-prelude = pkgs.haskell.lib.dontHaddock (
-                haskellPackagesNew.callPackage ../prelude/default.nix { }
-              );
+in refine-frontend
 
-              refine-common = pkgs.haskell.lib.dontHaddock (
-                haskellPackagesNew.callPackage ../common/default.nix { inherit refine-prelude; }
-              );
-
-              refine-frontend = pkgs.haskell.lib.dontHaddock (
-                haskellPackagesNew.callPackage ./default.nix { inherit react-hs refine-prelude refine-common; }
-              );
-
-            };
-          };
-        };
-      };
-    };
-  };
-
-  pkgs = nixpkgs { inherit config; };
-
-in
-  { refine-frontend = pkgs.haskell.packages.${compiler}.refine-frontend;
-  }
