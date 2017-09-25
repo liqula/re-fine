@@ -35,6 +35,10 @@ nesting may also be useful.
   &__header-inner {
     display: flex;
   }
+
+  &__header-label {
+    line-height: 8 * $dunit;
+  }
 }
 
 .mainMenuGroups {
@@ -177,6 +181,7 @@ nesting may also be useful.
     display: flex;
   }
 
+  // Todo: rename 'submenu' classes to more general names 
   &__submenu {
     position: relative;
     padding-left: $dunit * 2;
@@ -187,6 +192,7 @@ nesting may also be useful.
 
   &__submenu-title {
     position: relative;
+    line-height: 6*$dunit;
   }
 
   &__submenu-icons {
