@@ -20,6 +20,21 @@ function dashboardItem() {
 	</div>
 <?php }
 
+function dashboardItemSVG() {
+?>
+	<div class="dashboard-item c_bg_blue_dawn"> 
+		<div class="dashboard-item__svg-div">
+			<?php svgDanielUser('c_fill_blue_night', ' c_fill_note_bubble'); ?>
+		</div>
+		<div class="dashboard-item__groupname">Super Groupname</div>
+		<div class="dashboard-item__iconlist">
+			<?= iconWithNumber('ibutton_xxlarge', 'svgDanielUser', ['c_fill_blue_night', ' c_fill_note_bubble'], '12') ?>
+			<?= iconWithNumber('ibutton_xxlarge', 'svgDanielUser', ['c_fill_blue_night', ' c_fill_note_bubble'], '12') ?>
+			<?= iconWithNumber('ibutton_xxlarge', 'svgDanielUser', ['c_fill_blue_night', ' c_fill_note_bubble'], '12') ?>
+		</div>
+	</div>
+<?php }
+
 ?>
 <?php include "includes/page-header-main.php"; ?>
 <div class="body-container c_bg_blue_dark">
@@ -56,11 +71,11 @@ function dashboardItem() {
 
 		<div class="dashboard-item-list-container">
 			<?php dashboardItem(); ?>
+			<?php dashboardItemSVG(); ?>
 			<?php dashboardItem(); ?>
 			<?php dashboardItem(); ?>
 			<?php dashboardItem(); ?>
-			<?php dashboardItem(); ?>
-			<?php dashboardItem(); ?>
+			<?php dashboardItemSVG(); ?>
 			<?php dashboardItem(); ?>
 		</div>
 		

@@ -68,12 +68,13 @@ nesting may also be useful.
     border-top-left-radius: $dunit;
     border-top-right-radius: $dunit;
     border-width: 0px;
+    overflow: hidden;
   }
 
   &__image {
     position: relative;
     width: 36 * $dunit;
-    height: 30 * $dunit;
+    //height: 30 * $dunit;
     border-top-left-radius: $dunit;
     border-top-right-radius: $dunit;
     border-width: 0px;
@@ -705,12 +706,13 @@ $discussion-thread-item-width: 160 * $dunit;
     border-top-left-radius: $dunit;
     border-top-right-radius: $dunit;
     border-width: 0px;
+    overflow: hidden;
   }
 
   &__image {
     position: relative;
     width: 24 * $dunit;
-    height: 12 * $dunit;
+    //height: 12 * $dunit;
     border-top-left-radius: $dunit;
     border-top-right-radius: $dunit;
     border-width: 0px;
@@ -718,13 +720,13 @@ $discussion-thread-item-width: 160 * $dunit;
 
   &__svg-div {
     position: relative;
-    margin-top: 4 * $dunit;
-    width: 24 * $dunit;
-    height: 12 * $dunit;
+    width: 10 * $dunit;
+    height: 10 * $dunit;
     border-top-left-radius: $dunit;
     border-top-right-radius: $dunit;
     border-width: 0px;
-    margin-left: 5 * $dunit;
+    margin-left: 7 * $dunit;
+    margin-top: 2 * $dunit;
   }
 
   &__groupname {
