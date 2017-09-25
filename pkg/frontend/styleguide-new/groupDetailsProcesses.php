@@ -44,9 +44,9 @@ include "includes/svgs/svgs1.php";
 				</div>
 			</div>
 
-			<?php groupDetailsProcessesDocument(); ?>
-			<?php groupDetailsProcessesDocument(); ?>
-			<?php groupDetailsProcessesDocument(); ?>
-			<?php groupDetailsProcessesDocument(); ?>
+			<?php groupDetailsDocument(); ?>
+			<?php groupDetailsDocument(); ?>
+			<?php groupDetailsDocument(); ?>
+			<?php groupDetailsDocument(); ?>
 		</div>
 <?php include "includes/page-footer-main.php"; ?>

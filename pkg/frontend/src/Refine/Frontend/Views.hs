@@ -170,7 +170,7 @@ leftAside = mkView "LeftAside" $ \props ->
               <> (discussionToProtoBubble props <$> filter (not . (^. discussionIsNote)) (props ^. asideDiscussions))
     stackBubble BubbleLeft props `mapM_` protos
 
-    quickCreate_ $ QuickCreateProps QuickCreateComment
+    view_ quickCreate "quickCreate" $ QuickCreateProps QuickCreateComment
         (props ^. asideQuickCreateShow)
         (props ^. asideCurrentRange)
         (props ^. asideScreenState)
@@ -186,7 +186,7 @@ rightAside = mkView "RightAside" $ \props ->
                   (editToProtoBubbles props =<< (props ^. asideEdits))
     stackBubble BubbleRight props `mapM_` protos
 
-    quickCreate_ $ QuickCreateProps QuickCreateEdit
+    view_ quickCreate "quickCreate" $ QuickCreateProps QuickCreateEdit
       (props ^. asideQuickCreateShow)
       (props ^. asideCurrentRange)
       (props ^. asideScreenState)

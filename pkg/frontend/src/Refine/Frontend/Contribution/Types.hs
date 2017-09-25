@@ -199,10 +199,6 @@ data QuickCreateProps = QuickCreateProps
 data QuickCreateSide = QuickCreateComment | QuickCreateEdit
   deriving (Show, Eq, Generic)
 
-renderQuickCreateSide :: HasCallStack => QuickCreateSide -> JSString
-renderQuickCreateSide QuickCreateComment = "o-add-annotation"
-renderQuickCreateSide QuickCreateEdit    = "o-add-modification"
-
 data QuickCreateShowState =
     QuickCreateShown     -- ^ visible
   | QuickCreateNotShown  -- ^ will be visible when user selects a range
@@ -214,7 +210,6 @@ data QuickCreateShowState =
 
 data CommentDisplayProps = CommentDisplayProps
   { _cdpCommentText  :: CommentText
-  , _cdpIconStyle    :: IconDescription
   , _cdpUserName     :: JSString
   , _cdpCreationDate :: JSString
   , _cdpContentStyle :: [Decl]

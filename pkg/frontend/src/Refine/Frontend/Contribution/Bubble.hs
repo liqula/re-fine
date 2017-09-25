@@ -16,6 +16,7 @@ import           Web.HttpApiData (toUrlPiece)
 import           Refine.Common.Types
 import           Refine.Frontend.Contribution.Types
 import           Refine.Frontend.Icon
+import qualified Refine.Frontend.Icon.Svg as Svg
 import           Refine.Frontend.Screen.Calculations
 import           Refine.Frontend.Screen.Types
 import           Refine.Frontend.Store()
@@ -37,12 +38,6 @@ bubble children = mkView "Bubble" $ \props -> do
           NoStack (ContribIDDiscussion False _, _) -> Left "o-snippet--discussion"
           NoStack (ContribIDEdit _, _)             -> Left "o-snippet--edit"
           Stack _                                  -> Right bubbleStackStyles
-
-      iconSty = case props ^. bubblePropsContributionIds of
-          NoStack (ContribIDDiscussion True  _, _) -> ("icon-Note", "dark")
-          NoStack (ContribIDDiscussion False _, _) -> ("icon-Discussion", "bright")
-          NoStack (ContribIDEdit _, _)             -> ("icon-Edit", "dark")
-          Stack _                                  -> ("icon-Stack", "dark")
 
       clickActions = case props ^. bubblePropsContributionIds of
           NoStack (cid, _)
@@ -75,7 +70,11 @@ bubble children = mkView "Bubble" $ \props -> do
 
   div_ attrs $ do
     div_ ["className" $= cs ("o-snippet__icon-bg o-snippet__icon-bg--" <> show (props ^. bubblePropsIconSide))] $ do  -- RENAME: snippet => bubble
-      icon_ (IconProps "o-snippet" False iconSty Medium)  -- RENAME: snippet => bubble
+      let img = case props ^. bubblePropsContributionIds of
+            NoStack (ContribIDDiscussion _ _, _) -> Svg.Discussion
+            NoStack (ContribIDEdit _, _)         -> Svg.Edit
+            Stack _                              -> Svg.Edit  -- TODO: new svg icon 'Stack'.
+      ibutton_ $ emptyIbuttonProps (ButtonImageIcon img ColorSchemaDark) ([] :: [GlobalAction]) & ibSize .~ Medium
     div_ ["className" $= "o-snippet__content"]  -- RENAME: snippet => bubble
       children
 

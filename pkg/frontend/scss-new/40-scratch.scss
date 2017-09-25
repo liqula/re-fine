@@ -194,13 +194,13 @@ nesting may also be useful.
   }
 }
 
-$groupDetailsProcessesDocumentHeight: 30 * $dunit;
+$groupDetailsDocumentHeight: 30 * $dunit;
 
-.groupDetailsProcessesDocument {
+.groupDetailsDocument {
   position: relative;
   display: flex;
   width: 146 * $dunit;
-  height: $groupDetailsProcessesDocumentHeight;
+  height: $groupDetailsDocumentHeight;
   background-color: $c_blue_morning;
   border-radius: $dunit;
   margin-left: $dunit * 2;
@@ -210,14 +210,14 @@ $groupDetailsProcessesDocumentHeight: 30 * $dunit;
   &__column1 {
     position: relative;
     width: 24 * $dunit;
-    height: $groupDetailsProcessesDocumentHeight;
+    height: $groupDetailsDocumentHeight;
     border-top-left-radius: $dunit;
     border-bottom-left-radius: $dunit;
 
     &-image {
       position: relative;
       width: 24 * $dunit;
-      height: $groupDetailsProcessesDocumentHeight;
+      height: $groupDetailsDocumentHeight;
       border-top-left-radius: $dunit;
       border-bottom-left-radius: $dunit;
     }
@@ -226,7 +226,7 @@ $groupDetailsProcessesDocumentHeight: 30 * $dunit;
   &__column2 {
     position: relative;
     width: 92 * $dunit;
-    height: $groupDetailsProcessesDocumentHeight;
+    height: $groupDetailsDocumentHeight;
 
     &-headline {
       padding: $dunit;
@@ -239,7 +239,7 @@ $groupDetailsProcessesDocumentHeight: 30 * $dunit;
     &-body {
       padding: $dunit;
       position: relative;
-      height: $groupDetailsProcessesDocumentHeight - 12 * $dunit;
+      height: $groupDetailsDocumentHeight - 12 * $dunit;
       overflow: hidden;
     }
   }
@@ -247,12 +247,12 @@ $groupDetailsProcessesDocumentHeight: 30 * $dunit;
   &__column3 {
     position: relative;
     width: 4 * $dunit;
-    height: $groupDetailsProcessesDocumentHeight;
+    height: $groupDetailsDocumentHeight;
 
     &-vertical-line {
       position: relative;
       border-left: 1px solid black;
-      height: $groupDetailsProcessesDocumentHeight - 6 * $dunit;
+      height: $groupDetailsDocumentHeight - 6 * $dunit;
       margin-top: 3 * $dunit;
     }
   }
@@ -260,7 +260,7 @@ $groupDetailsProcessesDocumentHeight: 30 * $dunit;
   &__column4 {
     position: relative;
     width: 28 * $dunit;
-    height: $groupDetailsProcessesDocumentHeight;
+    height: $groupDetailsDocumentHeight;
     border-top-right-radius: $dunit;
     border-bottom-right-radius: $dunit;
     margin-top: $dunit;
@@ -629,5 +629,4 @@ $discussion-thread-item-width: 160 * $dunit;
   }
 
 }
-
 
