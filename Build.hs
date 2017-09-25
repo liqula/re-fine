@@ -34,7 +34,7 @@ pkgPrelude  = "pkg/prelude"
 
 nixShell :: String -> Action ()
 nixShell act = command_ [Cwd pkgFrontend, Shell] "nix-shell"
-  ["--attr", "refine-frontend.env", "build.nix", "--run", show act]
+  ["--attr", "env", "build.nix", "--run", show act]
 
 stackTest :: FilePath -> Action ()
 stackTest package = do
@@ -138,13 +138,12 @@ main = shakeArgs refineOptions $ do
 
   phony "build-frontend" $ do
     need ["build-frontend-npm", "build-frontend-icons", "build-frontend-trans"]
-    command_ [Cwd pkgFrontend] "nix-build" ["build.nix"]
-      -- FIXME: it would be nice if we could pass the cabal flag ghc-O2=False here.
+    nixShell "cabal configure --ghcjs -f -ghc-O2 && cabal build"
     command_ [Cwd pkgFrontend] "make" []
 
   phony "build-frontend-optimize" $ do
     need ["build-frontend-npm", "build-frontend-icons", "build-frontend-trans"]
-    command_ [Cwd pkgFrontend] "nix-build" ["build.nix"]
+    nixShell "cabal configure --ghcjs && cabal build"
     command_ [Cwd pkgFrontend] "make" ["optimize"]
 
   phony "build-frontend-npm" $ do  -- if this fails, check #40.
