@@ -9,3 +9,8 @@ let
 
 in refine-frontend
 
+
+# further reading:
+#
+# https://github.com/Gabriel439/haskell-nix
+# https://nixos.org/nix/manual
