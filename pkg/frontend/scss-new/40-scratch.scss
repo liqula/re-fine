@@ -294,13 +294,15 @@ $groupDetailsDocumentHeight: 30 * $dunit;
 /* general */
 
 html {
-  min-height: 100%;
+  //min-height: 100%;
+  height: 100%;
 }
 
 body {
   padding: 0px;
   margin: 0px;
-  min-height: 100%;
+  height: 100%;
+  //min-height: 100%;
 }
 
 /*
@@ -349,6 +351,17 @@ body {
 }
 */
 
+.body-container {
+  position: relative;
+  width: 100%;
+  min-width: 156 * $dunit;
+  min-height: 100%;
+  //height: 100%;
+  height: auto !important;
+  padding-bottom: 2*$dunit;
+  box-sizing: border-box;
+}
+
 .search-input {
   position: relative;
   width: $dunit * 24;
@@ -383,14 +396,6 @@ body {
   line-height: 3 * $dunit;
   text-align: center;
   font-size: 2 * $dunit;
-}
-
-.body-container {
-  position: relative;
-  width: 100%;
-  min-width: 156 * $dunit;
-  min-height: 100%;
-  height: 100%;
 }
 
 /* general icon classes */
@@ -681,3 +686,72 @@ $discussion-thread-item-width: 160 * $dunit;
   }
 }
 
+.dashboard-item {
+  position: relative;
+  margin: $dunit;
+  width: 24 * $dunit;
+  min-width: 24 * $dunit;
+  height: 24 * $dunit;
+  min-height: 24 * $dunit;
+
+  /*background-color: $c_blue_dawn;*/
+  border: 0px solid black;
+  border-radius: $dunit;
+
+  &__image-div {
+    position: relative;
+    width: 24 * $dunit;
+    height: 12 * $dunit;
+    border-top-left-radius: $dunit;
+    border-top-right-radius: $dunit;
+    border-width: 0px;
+  }
+
+  &__image {
+    position: relative;
+    width: 24 * $dunit;
+    height: 12 * $dunit;
+    border-top-left-radius: $dunit;
+    border-top-right-radius: $dunit;
+    border-width: 0px;
+  }
+
+  &__svg-div {
+    position: relative;
+    margin-top: 4 * $dunit;
+    width: 24 * $dunit;
+    height: 12 * $dunit;
+    border-top-left-radius: $dunit;
+    border-top-right-radius: $dunit;
+    border-width: 0px;
+    margin-left: 5 * $dunit;
+  }
+
+  &__groupname {
+    position: relative;
+    margin-top: 0 * $dunit;
+    width: 24 * $dunit;
+    height: 4 * $dunit;
+    margin-bottom: 0.75 * $dunit;
+    line-height: 4 * $dunit;
+    text-align: center;
+    font-size: 2 * $dunit;
+    font-weight: bold;
+    overflow: hidden;
+  }
+
+  &__iconlist {
+    position: relative;
+    display: flex;
+    justify-content: space-evenly;
+  }
+}
+
+.dashboard-item-list-container {
+  display: flex;
+  height: 28 * $dunit;
+  width: 150*$dunit;  
+  overflow: scroll;
+  margin-bottom: 2*$dunit;
+  margin-left: $dunit;
+}

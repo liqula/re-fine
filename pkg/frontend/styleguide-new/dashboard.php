@@ -4,6 +4,22 @@ include "includes/common.php";
 include "includes/svgs/daniel_user.php";
 include "includes/svgs/daniel_test2.php";
 include "includes/svgs/svgs1.php";
+
+function dashboardItem() {
+?>
+	<div class="dashboard-item c_bg_blue_dawn"> 
+		<div class="dashboard-item__image-div">
+			<img class="dashboard-item__image" src="testbild.png" alt="" >
+		</div>
+		<div class="dashboard-item__groupname">Super Groupname</div>
+		<div class="dashboard-item__iconlist">
+			<?= iconWithNumber('ibutton_xxlarge', 'svgDanielUser', ['c_fill_blue_night', ' c_fill_note_bubble'], '12') ?>
+			<?= iconWithNumber('ibutton_xxlarge', 'svgDanielUser', ['c_fill_blue_night', ' c_fill_note_bubble'], '12') ?>
+			<?= iconWithNumber('ibutton_xxlarge', 'svgDanielUser', ['c_fill_blue_night', ' c_fill_note_bubble'], '12') ?>
+		</div>
+	</div>
+<?php }
+
 ?>
 <?php include "includes/page-header-main.php"; ?>
 <div class="body-container c_bg_blue_dark">
@@ -38,12 +54,37 @@ include "includes/svgs/svgs1.php";
 			</div>
 		</div>
 
-		<div class="mainMenuGroups">
+		<div class="dashboard-item-list-container">
+			<?php dashboardItem(); ?>
+			<?php dashboardItem(); ?>
+			<?php dashboardItem(); ?>
+			<?php dashboardItem(); ?>
+			<?php dashboardItem(); ?>
+			<?php dashboardItem(); ?>
+			<?php dashboardItem(); ?>
+		</div>
+		
+		<div class="hr-div"></div>
 
-			<?php mainMenuGroupsSmall(example_mainMenuGroupsSmall('c_bg_blue_dawn', 'testbild.png',       NULL,                                                      'Stadtentwicklungspolitik der SPD', 'svgDanielUser', ["c_fill_yes_color", "c_fill_interaction_yellow"],         '12', 'svg_info',     ["c_fill_interaction_yellow", "c_fill_yes_color"], '99', 'svgDanielUser', ["c_fill_yes_color", "c_fill_interaction_yellow"], '77')); ?>
-			<?php mainMenuGroupsSmall(example_mainMenuGroupsSmall('c_bg_blue_dawn', 'testbild2.jpg',      NULL,                                                      'Initiative für eine grüne Stadt', 'svgDanielUser', ["c_fill_yes_color", "c_fill_interaction_yellow"],         '12', 'svg_info', ["c_fill_yes_color", "c_fill_interaction_yellow"], '99', 'svgDanielUser', ["c_fill_yes_color", "c_fill_interaction_yellow"], '77')); ?>
-			<?php mainMenuGroupsSmall(example_mainMenuGroupsSmall('c_bg_blue_dawn', 'svgDanielUser',      ['c_fill_interaction_yellow', 'c_fill_note_bubble'],  'Initiative für eine grüne Stadt und so weiter und so fort', 'svgDanielUser', ["c_fill_yes_color", "c_fill_interaction_yellow"],         '12', 'svg_info',      ["c_fill_yes_color", "c_fill_interaction_yellow"], '99', 'svgDanielUser', ["c_fill_yes_color", "c_fill_interaction_yellow"], '77')); ?>
-			<?php mainMenuGroupsSmall(example_mainMenuGroupsSmall('c_bg_blue_dawn', 'testbild-error.png', NULL,                                                      'Initiative für eine grüne Stadt', 'svgDanielUser', ["c_fill_interaction_orange", "c_fill_interaction_yellow"], '12', 'svg_info', ["c_fill_yes_color", "c_fill_interaction_yellow"], '99', 'svgDanielUser', ["c_fill_yes_color", "c_fill_interaction_yellow"], '77')); ?>
-			<?php mainMenuGroupsSmall(example_mainMenuGroupsSmall('c_bg_blue_dawn', 'testbild.png',       NULL,                                                      'Initiative für eine grüne Stadthsajkdhasjkdhaskjdhasjk', 'svgDanielUser', ["c_fill_yes_color", "c_fill_interaction_yellow"],         '12', 'svg_edit_new',  ["c_fill_yes_color", "c_fill_interaction_yellow", "c_fill_note_bubble"], '99', 'svgDanielUser', ["c_fill_yes_color", "c_fill_interaction_yellow"], '77')); ?>
+		<!-- TODO: rename css classes to more general names -->
+		<div class="groupDetails__submenu">
+			<div class="groupDetails__submenu-title">
+				Dokumente der Gruppe (css ist eine Ausgeburt der Hölle)
+			</div>
+			<div class="groupDetails__submenu-icons">
+				<?= icon('ibutton_xlarge', 'svgDanielUser', ['c_fill_interaction_yellow', ' c_fill_note_bubble'], ['margin1']) ?>
+				<?= icon('ibutton_xlarge', 'svgDanielUser', ['c_fill_interaction_yellow', ' c_fill_note_bubble'], ['margin1']) ?>
+			</div>
+		</div>
 
-		</div>			
+		<div class="dashboard-item-list-container">
+			<?php dashboardItem(); ?>
+			<?php dashboardItem(); ?>
+			<?php dashboardItem(); ?>
+			<?php dashboardItem(); ?>
+			<?php dashboardItem(); ?>
+			<?php dashboardItem(); ?>
+			<?php dashboardItem(); ?>
+		</div>
+	</div>
+</div>
