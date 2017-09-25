@@ -481,10 +481,17 @@ $discussionSidebarWidth: 40 * $dunit;
     }
 }
 
+.discussion-pagecontent {
+  position: relative;
+  height: 500px;
+  display: flex;
+
+}
+
 .discussion-sidebar-container {
   position: relative;
-  width: $discussionSidebarWidth;
-  height: 500px;
+  width: $discussionSidebarWidth + (8*$dunit);
+  height: 100%;
   overflow: scroll;
 }
 
@@ -548,4 +555,79 @@ $discussionSidebarWidth: 40 * $dunit;
       }
     }
 }
+
+.discussion-thread-container {
+  position: relative;
+  height: 100%;
+  overflow: scroll;
+  background-color: yellow;
+  width: 100%;
+  padding-left: 2*$dunit;
+  padding-top: 2*$dunit;
+  box-sizing: border-box;
+
+  &__inner {
+    padding: 2*$dunit;
+    border-radius: 2*$dunit;
+    background-color: red;
+    display: inline-block;
+    margin-bottom: 2*$dunit;
+  }
+}
+
+$discussion-thread-item-width: 160 * $dunit;
+
+.discussion-thread-item-root {
+  position: relative;
+  //padding-top: 2*$dunit;
+} 
+
+.discussion-thread-item-child {
+  position: relative;
+  padding: 0*$dunit;
+  display: flex;
+  padding-top: 2*$dunit;
+
+  &__icon-column {
+    width: 4*$dunit;
+    padding-right: 2*$dunit;
+  }
+  &__node-column {
+
+  }
+} 
+
+.discussion-thread-item {
+  position: relative;
+  width: $discussion-thread-item-width;
+  background-color: $c_note_bubble;
+  border-radius: 2*$dunit;
+
+  &__header {
+    display: flex;
+    justify-content: space-between;
+  }
+
+  &__header-inner {
+    display: flex;
+
+  }
+
+  &__body {
+    padding-left: 4 * $dunit;
+    padding-right: 4 * $dunit;
+  }
+
+  &__footer {
+    display: flex;
+    justify-content: space-between;
+  }
+
+  &__footer-inner {
+    display: flex;
+
+  }
+
+}
+
 
