@@ -492,14 +492,14 @@ $discussionSidebarWidth: 40 * $dunit;
 
 .discussion-sidebar-container {
   position: relative;
-  width: $discussionSidebarWidth + (8*$dunit);
+  width: $discussionSidebarWidth + (9*$dunit);
   height: 100%;
   overflow: scroll;
 }
 
 .discussion-sidebar {
     position: relative;
-    width: $discussionSidebarWidth - (0*$dunit);
+    width: $discussionSidebarWidth;
     background-color: $c_discussion_background;
     padding-bottom: 4*$dunit;
 
@@ -519,7 +519,7 @@ $discussionSidebarWidth: 40 * $dunit;
       position: relative;
       width: $discussionSidebarWidth - (3*$dunit);
       padding-bottom: 2*$dunit;
-
+      padding-left: 3*$dunit;
 
       &-inner {
         position: relative;
@@ -527,7 +527,7 @@ $discussionSidebarWidth: 40 * $dunit;
         background-color: $c_discussion_bubble;
         padding: 2*$dunit;
         margin: $dunit;
-        margin-left: 4*$dunit;
+        //margin-left: 4*$dunit;
         overflow: hidden;
         z-index: 0;
         height: 15*$dunit;
@@ -564,11 +564,16 @@ $discussionSidebarWidth: 40 * $dunit;
   overflow: scroll;
   //background-color: yellow;
   width: 100%;
-  padding-left: 2*$dunit;
+  padding-left: 0*$dunit;
   padding-top: 2*$dunit;
   box-sizing: border-box;
 
-  &__inner {
+  &__text {
+    padding: 2*$dunit;
+    width: 140 * $dunit;
+  }
+
+  &__tree {
     padding: 2*$dunit;
     border-radius: 2*$dunit;
     background-color: $c_discussion_background;

@@ -118,7 +118,11 @@ function discussionThreadItem () {
 		</div>
 
 		<div class="discussion-thread-container">
-			<div class="discussion-thread-container__inner">
+			<div class="discussion-thread-container__text">
+			lore isum lore isum lore isum lore isum lore isum lore isum lore isum lore isum lore isum lore isum lore isum lore isum lore isum lore isum lore isum lore isum lore isum lore isum lore isum lore isum lore isum lore isum lore isum lore isum lore isum lore isum lore isum lore isum lore isum lore isum lore isum lore isum lore isum lore isum lore isum lore isum 
+			lore isum lore isum lore isum lore isum lore isum lore isum lore isum lore isum lore isum lore isum lore isum lore isum lore isum lore isum lore isum lore isum lore isum lore isum lore isum lore isum lore isum lore isum lore isum lore isum lore isum lore isum lore isum lore isum lore isum lore isum lore isum lore isum lore isum lore isum lore isum lore isum 
+			</div>
+			<div class="discussion-thread-container__tree">
 				<div class="discussion-thread-item-root">
 					<?php discussionThreadItem(); ?>
 					<div class="discussion-thread-item-child">
