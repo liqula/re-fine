@@ -20,6 +20,36 @@ function discussionThreadItem () {
 	<div class="discussion-thread-item__body">
 		lore ipsum lore ipsum lore ipsum lore ipsum lore ipsum lore ipsum lore ipsum lore ipsum lore ipsum 
 		lore ipsum lore ipsum lore ipsum lore ipsum lore ipsum lore ipsum lore ipsum lore ipsum lore ipsum 
+	</div>
+	<div class="discussion-thread-item__footer">
+		<div class="discussion-thread-item__footer-inner">
+				<?= icon('ibutton_large', 'svgDanielUser', ['c_fill_interaction_yellow', 'c_fill_blue_dawn'], ['margin1']) ?>
+				<?= icon('ibutton_large', 'svgDanielUser', ['c_fill_interaction_yellow', 'c_fill_blue_dawn'], ['margin1']) ?>
+		</div>
+		<div class="discussion-thread-item__footer-inner">
+				<?= icon('ibutton_large', 'svgDanielUser', ['c_fill_interaction_yellow', 'c_fill_blue_dawn'], ['margin1']) ?>
+				<?= icon('ibutton_large', 'svgDanielUser', ['c_fill_interaction_yellow', 'c_fill_blue_dawn'], ['margin1']) ?>
+		</div>
+	</div>
+</div>
+<?php }
+
+function discussionThreadItemForm () {
+?>
+<div class="discussion-thread-item">
+	<div class="discussion-thread-item__header">
+		<div class="discussion-thread-item__header-inner">
+				<?= icon('ibutton_large', 'svgDanielUser', ['c_fill_interaction_yellow', 'c_fill_blue_dawn'], ['margin1']) ?>
+				<?= icon('ibutton_large', 'svgDanielUser', ['c_fill_interaction_yellow', 'c_fill_blue_dawn'], ['margin1']) ?>
+		</div>
+		<div class="discussion-thread-item__header-inner">
+				<?= icon('ibutton_large', 'svgDanielUser', ['c_fill_interaction_yellow', 'c_fill_blue_dawn'], ['margin1']) ?>
+				<?= icon('ibutton_large', 'svgDanielUser', ['c_fill_interaction_yellow', 'c_fill_blue_dawn'], ['margin1']) ?>
+		</div>
+	</div>
+	<div class="discussion-thread-item__body">
+		lore ipsum lore ipsum lore ipsum lore ipsum lore ipsum lore ipsum lore ipsum lore ipsum lore ipsum 
+		lore ipsum lore ipsum lore ipsum lore ipsum lore ipsum lore ipsum lore ipsum lore ipsum lore ipsum 
 		lore ipsum lore ipsum lore ipsum lore ipsum lore ipsum lore ipsum lore ipsum lore ipsum lore ipsum 
 		lore ipsum lore ipsum lore ipsum lore ipsum lore ipsum lore ipsum lore ipsum lore ipsum lore ipsum 
 		lore ipsum lore ipsum lore ipsum lore ipsum lore ipsum lore ipsum lore ipsum lore ipsum lore ipsum 
@@ -35,9 +65,21 @@ function discussionThreadItem () {
 				<?= icon('ibutton_large', 'svgDanielUser', ['c_fill_interaction_yellow', 'c_fill_blue_dawn'], ['margin1']) ?>
 		</div>
 	</div>
+	<div class="discussion-thread-item__form-header">
+		<?= icon('ibutton_large', 'svgDanielUser', ['c_fill_interaction_yellow', 'c_fill_blue_dawn'], ['margin1']) ?>
+		<?= icon('ibutton_large', 'svgDanielUser', ['c_fill_interaction_yellow', 'c_fill_blue_dawn'], ['margin1']) ?>
+	</div>
+	<div class="discussion-thread-item__form-horizontal-line"></div>
+	<div class="discussion-thread-item__form-body">
+		<textarea class="discussion-thread-item__form-body-input"></textarea>
+		<div class="discussion-thread-item__form-body-button">
+			<?= icon('ibutton_xxlarge', 'svgDanielUser', ['c_fill_interaction_yellow', 'c_fill_blue_dawn'], ['margin1']) ?>
+		</div>
+	</div>
+
+
 </div>
 <?php }
-
 
 
 
@@ -162,7 +204,7 @@ function discussionThreadItem () {
 							<?php svgDanielUser('c_fill_interaction_yellow', 'c_fill_blue_dawn'); ?>
 						</div>
 						<div class="discussion-thread-item-child__node-column">
-							<?php discussionThreadItem(); ?>
+							<?php discussionThreadItemForm(); ?>
 							<div class="discussion-thread-item-child">
 								<div class="discussion-thread-item-child__icon-column">
 									<?php svgDanielUser('c_fill_interaction_yellow', 'c_fill_blue_dawn'); ?>

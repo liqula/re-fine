@@ -613,6 +613,8 @@ $discussion-thread-item-width: 160 * $dunit;
   &__header {
     display: flex;
     justify-content: space-between;
+    padding-left: 2 * $dunit;
+    padding-right: 2 * $dunit;
   }
 
   &__header-inner {
@@ -628,12 +630,48 @@ $discussion-thread-item-width: 160 * $dunit;
   &__footer {
     display: flex;
     justify-content: space-between;
+    padding-left: 3 * $dunit;
+    padding-right: 3 * $dunit;
   }
 
   &__footer-inner {
     display: flex;
-
   }
 
+  &__form-header {
+    display: flex;
+    padding-left: 3 * $dunit;
+    padding-right: 3 * $dunit;
+  }
+
+  &__form-horizontal-line {
+    margin-left: 4*$dunit;
+    margin-right: 4*$dunit;
+    border-top: 1px solid $c_blue_dawn;    
+  }
+
+  &__form-body {
+    display: flex;
+    padding: 4*$dunit;
+    min-height: 20*$dunit;
+  }
+  
+  &__form-body-input {
+    border-radius: 2*$dunit;
+    border: 1px solid red;
+    width: $discussion-thread-item-width - (18 * $dunit);
+    min-width: $discussion-thread-item-width - (18 * $dunit);
+    max-width: $discussion-thread-item-width - (18 * $dunit);
+  }
+
+  &__form-body-button {
+    display: flex;
+    //vertical-align: middle;
+    width: 8 * $dunit;
+    //height: 100%;
+    align-items: center;
+    padding-left: 2*$dunit;
+    padding-right: 2*$dunit;
+  }
 }
 
