@@ -10,6 +10,7 @@ import Refine.Common.Types.Prelude
 import Refine.Common.Types.Translation
 import Refine.Common.Types.Vote
 
+-- | FUTUREWORK: this is used both for Rest or WebSockets; more to a more appropriate module.
 data ApiError
   = ApiUnknownError ST
   | ApiVDocVersionError
@@ -18,7 +19,8 @@ data ApiError
   | ApiUserNotLoggedIn
   | ApiUserCreationError ApiErrorCreateUser
   | ApiCsrfError ST
-  | ApiSessionError
+  | ApiSessionTimedout
+  | ApiSessionInvalid
   | ApiSanityCheckError ST
   | ApiUserHandleError ST
   | ApiL10ParseErrors [ST]
