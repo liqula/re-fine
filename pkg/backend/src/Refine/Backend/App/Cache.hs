@@ -15,15 +15,16 @@ module Refine.Backend.App.Cache  -- FIXME: rename to WebSocket.  this is the onl
 #include "import_backend.hs"
 
 import           Control.Concurrent
-import           Network.Wai (Middleware)
-import           System.IO.Unsafe
-import           Network.WebSockets
-import           Network.Wai.Handler.WebSockets
 import qualified "cryptonite" Crypto.Hash as CRT
 import qualified Crypto.Random.Entropy as CRT
+import           Network.Wai.Handler.WebSockets
+import           Network.Wai (Middleware)
+import           Network.WebSockets
+import           System.IO.Unsafe
+import           System.Timeout
 
 import Refine.Common.Types
-import Refine.Common.Rest (ApiError)
+import Refine.Common.Rest (ApiError(..))
 import Refine.Backend.App.Comment     as App
 import Refine.Backend.App.Core        as App
 import Refine.Backend.App.Group       as App
@@ -33,6 +34,12 @@ import {-# SOURCE #-} Refine.Backend.App.Translation as App (getTranslations)
 import Refine.Backend.Config
 import Refine.Backend.Database
 import Refine.Backend.Logger
+
+
+-- TODO: we need an extra timeout mechanism here: every session that has not been touched in 30
+-- minutes should be verified.  if no user is logged in or the login session is invalid, call
+-- 'celeteWsConn'.  (this is garbage collection, not correctness or security; things should work
+-- without if we have infinite memory.)
 
 
 type WebSocketMVar = MVar (Map WSSessionId WebSocketSession)
@@ -69,8 +76,24 @@ openWsConn cfg conn = do
     let cmap' = Map.insert i ((conn, appState), mempty) cmap
     pure (cmap', i)
 
-closeWsConn :: WSSessionId -> IO ()
-closeWsConn n = do
+-- | see 'sendClose' docs.  FUTUREWORK: the websockets protocol seems overly complicated here; isn't
+-- letting the connection die more efficient for both cooperating clients and the server?
+closeWsConn :: Connection -> Logger -> Maybe WSSessionId -> Maybe String -> IO ()
+closeWsConn conn logger mclientId mreason = do
+  (appLog LogDebug `mapM_` mreason) `runReaderT` logger
+  sendClose @ST conn "closing web socket connection."
+  let pull = do
+        forever . void $ receiveDataMessage conn
+      tout act = do
+        maybe (throwIO $ ErrorCall "timeout") pure
+          =<< timeout (timespanUs $ TimespanSecs 70) act
+      hndl (SomeException status) = do
+        appLog LogDebug ("closeWsConn: " <> show (mclientId, status))
+          `runReaderT` logger
+  void . forkIO $ tout pull `catch` hndl
+
+deleteWsConn :: WSSessionId -> IO ()
+deleteWsConn n = do
   modifyMVar webSocketMVar $ \cmap ->do
     pure (Map.delete n cmap, ())
 
@@ -92,7 +115,7 @@ instance (Monad m, MonadLog m, MonadIO m) => MonadWS m where
 
   modifyCache sid f = liftIO . modifyMVar webSocketMVar $ \m -> pure (Map.adjust (second f) sid m, ())
 
-logWSMessage :: (Monad m, MonadLog m, MonadWS m, Show a) => Maybe WSSessionId -> a -> m ()
+logWSMessage :: (Monad m, MonadLog m, Show a) => Maybe WSSessionId -> a -> m ()
 logWSMessage mclientId msg = appLog LogDebug $
   cs ("[" <> maybe "no session" (ST.take 10 . unWSSessionId) mclientId <> "] ") <>
   show msg
@@ -129,115 +152,141 @@ startWebSocketServer cfg toIO = websocketsOr options server
     server pendingconnection = do
       conn <- acceptRequest pendingconnection
       pingLoop toIO conn
-      clientId <- handshake cfg conn (mkLogger cfg)
-      forever (cmdLoopStepFrame toIO conn clientId (cmdLoopStep conn clientId)
-                `catch` handleAllErrors cfg conn (mkLogger cfg) clientId)
-        `catch` giveUp conn (mkLogger cfg) clientId  -- FUTUREWORK: handle exceptions during inital handshake?
+      Right logger <- toIO $ (asks (view appLogger) :: AppM db Logger)
+      (do
+        handshake Nothing cfg conn logger >>= \case
+          Right clientId -> do
+            let loop = do
+                  b <- (cmdLoopWrapRound toIO cfg conn logger clientId >> pure True)
+                    `catch` handleAllErrors cfg conn logger clientId
+                  when b loop
+            loop
+          Left err -> giveUp conn logger Nothing "initial handshake" err)
+        `catch` giveUp @SomeException conn logger Nothing "exception during initial handshake"
 
-handleAllErrors :: Config -> Connection -> Logger -> WSSessionId -> SomeException -> IO ()
-handleAllErrors cfg conn logger clientId e = do
-  unLogger logger LogError $ show e
-  sendMessage Nothing conn TCReset `runReaderT` logger
-  clientId' <- handshake cfg conn logger
-  assert (clientId' == clientId) $ pure ()
+handleAllErrors :: Config -> Connection -> Logger -> WSSessionId -> SomeException -> IO Bool
+handleAllErrors cfg conn logger clientId err = (handle >> pure True)
+  `catch` \(SomeException err') -> giveUp conn logger (Just clientId) "unknown error" err' >> pure False
+  where
+    handle = do
+      let servermsg = "handleAllErrors: " <> show err
+          clientmsg = "handleAllErrors: unexpected exception in AppM"
+      logWSMessage (Just clientId) servermsg `runReaderT` logger
+      sendMessage Nothing conn (TCError $ ApiUnknownError clientmsg) `runReaderT` logger
+      handshake (Just clientId) cfg conn logger
+        >>= either (throwIO . ErrorCall . show) (const $ pure ())
 
-giveUp :: Connection -> Logger -> WSSessionId -> SomeException -> IO ()
-giveUp conn logger clientId e = do
-  unLogger logger LogError . show . WSErrorResetFailed $ show e
-  closeWsConn clientId
-  sendClose conn ("Cache.hs: could not reset connection, giving up." :: ST)
-    -- (FUTUREWORK: we should flush any remaining incoming messages here; see 'sendClose'.)
+giveUp :: (Show err) => Connection -> Logger -> Maybe WSSessionId -> String -> err -> IO ()
+giveUp conn logger mclientId topic err = do
+  closeWsConn conn logger mclientId (Just $ topic <> ": " <> show err)
 
+handshake :: Maybe WSSessionId -> Config -> Connection -> Logger -> IO (Either String WSSessionId)
+handshake mOldClientId cfg conn logger = (receiveMessage Nothing conn `runReaderT` logger) >>= \case
+  TSGreeting mNewClientId -> handshake' mOldClientId cfg conn logger mNewClientId
+  bad -> pure . Left $ case mOldClientId of
+           Nothing  -> "handshake: expected TCGreeting, got " <> show bad
+           Just cid -> "re-handshake on " <> show cid <> ": expected TCGreeting, got " <> show bad
 
-data WSError
-  = WSErrorUnexpectedPacket ToServer
-  | WSErrorCommandFailed ApiError
-  | WSErrorUnknownError String
-  | WSErrorResetFailed String
-  deriving (Eq, Show)
-
-wserror :: Monad m => WSError -> m a
-wserror = error . show
-
-
-handshake :: Config -> Connection -> Logger -> IO WSSessionId
-handshake cfg conn logger = (receiveMessage Nothing conn `runReaderT` logger) >>= \case
+handshake' :: Maybe WSSessionId -> Config -> Connection -> Logger -> Maybe WSSessionId -> IO (Either String WSSessionId)
+handshake' mOldClientId cfg conn logger mNewClientId = case mNewClientId of
   -- the client is reconnected, its WSSessionId is n
-  TSGreeting (Just n) -> do
-    cmap <- takeMVar webSocketMVar
-    putMVar webSocketMVar $ Map.adjust (_2 .~ mempty) n cmap
-    sendMessage Nothing conn (TCRestrictKeys []) `runReaderT` logger
-        -- TUNING: only send this if we know something happened since the disconnect.
-    pure n
+  Just n -> do
+    if maybe True (== n) mOldClientId
+      then do
+        cmap <- takeMVar webSocketMVar
+        putMVar webSocketMVar $ Map.adjust (_2 .~ mempty) n cmap
+        sendMessage Nothing conn (TCRestrictKeys []) `runReaderT` logger
+            -- TUNING: only send this if we know something happened since the disconnect.
+        pure $ Right n
+      else do
+        pure . Left $ "re-handshake on " <> show (fromJust mOldClientId) <> ": unexpected session id: " <> show n
 
   -- the first connection of the client
-  TSGreeting Nothing -> do
+  Nothing -> do
     clientId <- openWsConn cfg conn
     sendMessage Nothing conn (TCGreeting clientId) `runReaderT` logger
-    pure clientId
-
-  bad -> wserror $ WSErrorUnexpectedPacket bad
+    pure $ Right clientId
 
 pingLoop :: HasCallStack => (forall a. AppM DB a -> IO (Either ApiError a)) -> Connection -> IO ()
-pingLoop toIO conn = either (error . show) (forkPingThread conn . timespanSecs)
+pingLoop toIO conn = either (error . ("impossible: " <>) . show) (forkPingThread conn . timespanSecs)
                      =<< toIO (asks . view $ appConfig . cfgWSPingPeriod)
 
-cmdLoopStepFrame :: forall m. (m ~ AppM DB ()) => (m -> IO (Either ApiError ())) -> Connection -> WSSessionId -> m -> IO ()
-cmdLoopStepFrame toIO conn clientId = dolift . dostate
+cmdLoopWrapRound :: forall m. (m ~ AppM DB) => (forall a. m a -> IO (Either ApiError a))
+        -> Config -> Connection -> Logger -> WSSessionId -> IO ()
+cmdLoopWrapRound toIO cfg conn logger clientId = dolift . dostate $ cmdLoopRound conn clientId
   where
-    dostate :: m -> m
+    dostate :: m LoopRoundResult -> m ()
     dostate cmd = do
-      Just ((_, appStateMVar), _) <- Map.lookup clientId <$> liftIO (readMVar webSocketMVar)
-      put =<< liftIO (takeMVar appStateMVar)
-      sessvalid <- verifyAppState
-      unless sessvalid $ sendMessage (Just clientId) conn TCLogout
-      cmd
-      liftIO . putMVar appStateMVar =<< get
+      msess <- Map.lookup clientId <$> liftIO (readMVar webSocketMVar)
+      case msess of
+        Just ((_, appStateMVar), _) -> do
+          put =<< liftIO (takeMVar appStateMVar)
+          sessvalid <- verifyAppState
+          if sessvalid
+            then do
+              cmd >>= \case
+                LoopRoundOk -> do
+                  liftIO . putMVar appStateMVar =<< get
+                (LoopRoundRequestHandshake mNewClientId) -> do
+                  liftIO $ handshake' (Just clientId) cfg conn logger mNewClientId >>= \case
+                    Right _ -> pure ()
+                    Left err -> throwIO $ ErrorCall err
+            else do
+              sendMessage (Just clientId) conn (TCError ApiSessionTimedout)
+              liftIO $ deleteWsConn clientId
 
-    dolift :: m -> IO ()
+        Nothing -> do
+          sendMessage (Just clientId) conn (TCError ApiSessionInvalid)
+
+    dolift :: m () -> IO ()
     dolift cmd = toIO cmd >>= \case
-      Left e -> wserror $ WSErrorCommandFailed e
       Right () -> pure ()
+      Left (e :: ApiError) -> toIO (sendMessage (Just clientId) conn (TCError e)) >>= \case
+        Right () -> pure ()
+        Left (e' :: ApiError) -> throwIO . ErrorCall $ "could not send uncaught exception to client! " <> show (e, e')
 
+data LoopRoundResult = LoopRoundOk | LoopRoundRequestHandshake (Maybe WSSessionId)
+  deriving (Eq, Show)
 
 -- | Application engine.  From here on inwards, all actions need to be authorization-checked.
-cmdLoopStep :: Connection -> WSSessionId -> (MonadWS m, MonadApp m) => m ()
-cmdLoopStep conn clientId = do
+cmdLoopRound :: Connection -> WSSessionId -> (MonadWS m, MonadApp m) => m LoopRoundResult
+cmdLoopRound conn clientId = do
   let sendmsg = sendMessage (Just clientId) conn
   msg <- receiveMessage (Just clientId) conn
   appLog LogDebug . ("appState = " <>) . show =<< get
 
+  let success = (const LoopRoundOk <$>)
   case msg of
-      TSClearCache -> do
+      TSClearCache -> success $ do
           modifyCache clientId $ const mempty
           sendmsg $ TCRestrictKeys []
-      TSMissing keys -> do
+      TSMissing keys -> success $ do
           modifyCache clientId (<> Set.fromList keys)
           cache <- mconcat <$> mapM getData keys
           sendmsg $ TCServerCache cache
 
-      TSAddGroup cg           -> sendmsg . TCCreatedGroup . view groupID =<< App.addGroup cg
-      TSUpdateGroup gid x     -> void $ App.modifyGroup gid x
-      TSCreateUser cu         -> sendmsg . TCCreateUserResp =<< tryApp (App.createUser cu)
-      TSUpdateUser uid x      -> updateUser uid x
-      TSLogin li              -> sendmsg . TCLoginResp =<< tryApp (App.login li)
-      TSLogout                -> void App.logout
-      TSGetTranslations k     -> sendmsg . TCTranslations =<< App.getTranslations k
+      TSAddGroup cg           -> success $ sendmsg . TCCreatedGroup . view groupID =<< App.addGroup cg
+      TSUpdateGroup gid x     -> success . void $ App.modifyGroup gid x
+      TSCreateUser cu         -> success $ sendmsg . TCCreateUserResp =<< tryApp (App.createUser cu)
+      TSUpdateUser uid x      -> success $ updateUser uid x
+      TSLogin li              -> success $ sendmsg . TCLoginResp =<< tryApp (App.login li)
+      TSLogout                -> success $ void App.logout
+      TSGetTranslations k     -> success $ sendmsg . TCTranslations =<< App.getTranslations k
 
-      TSAddVDoc cv            -> sendmsg . TCCreatedVDoc . view vdocID =<< App.createVDoc cv
-      TSUpdateVDoc vid upd    -> void $ App.updateVDoc vid upd
-      TSAddDiscussion eid x   -> void $ App.addDiscussion eid x
-      TSAddStatement sid x    -> void $ App.addStatement sid x
-      TSUpdateStatement sid x -> void $ App.updateStatement sid x
-      TSAddEdit eid x         -> void $ App.addEdit eid x
-      TSAddEditAndMerge eid x -> void $ App.addEditAndMerge eid x
-      TSUpdateEdit eid x      -> void $ App.updateEdit eid x
-      TSMergeEdit eid         -> void $ App.mergeEditAndRebaseAllSiblings eid
-      TSToggleVote (ContribIDEdit eid) x -> do
+      TSAddVDoc cv            -> success $ sendmsg . TCCreatedVDoc . view vdocID =<< App.createVDoc cv
+      TSUpdateVDoc vid upd    -> success . void $ App.updateVDoc vid upd
+      TSAddDiscussion eid x   -> success . void $ App.addDiscussion eid x
+      TSAddStatement sid x    -> success . void $ App.addStatement sid x
+      TSUpdateStatement sid x -> success . void $ App.updateStatement sid x
+      TSAddEdit eid x         -> success . void $ App.addEdit eid x
+      TSAddEditAndMerge eid x -> success . void $ App.addEditAndMerge eid x
+      TSUpdateEdit eid x      -> success . void $ App.updateEdit eid x
+      TSMergeEdit eid         -> success . void $ App.mergeEditAndRebaseAllSiblings eid
+      TSToggleVote (ContribIDEdit eid) x -> success $ do
         rebased <- App.toggleSimpleVoteOnEdit eid x
         when rebased $ sendmsg TCRebase
       TSToggleVote (ContribIDDiscussion _ nid) x
-                              -> void $ App.toggleSimpleVoteOnDiscussion nid x
-      TSDeleteVote eid        -> void $ App.deleteSimpleVoteOnEdit eid
+                              -> success . void $ App.toggleSimpleVoteOnDiscussion nid x
+      TSDeleteVote eid        -> success . void $ App.deleteSimpleVoteOnEdit eid
 
-      bad@(TSGreeting _)      -> wserror $ WSErrorUnexpectedPacket bad
+      TSGreeting mclientId'   -> pure $ LoopRoundRequestHandshake mclientId'

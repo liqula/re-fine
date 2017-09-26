@@ -19,6 +19,7 @@ import Refine.Backend.App.MigrateDB (initializeDB)
 import Refine.Backend.Config
 import Refine.Backend.Server (backendServer)
 import Refine.Backend.Test.AppServer
+import Refine.Common.Rest
 import Refine.Common.Test
 import Refine.Common.Types
 
@@ -227,7 +228,7 @@ specErrors = describe "errors" . around wsBackend $ do
     respLogin <- askQuestion conn $ TSLogin (Login "admin" "pass")
     show respLogin `shouldContain` "(Right (User {_userMetaID = MetaID {_miID = ID 1, _miMeta = MetaInfo {_metaCreatedBy = Anonymous"
     let noSuchGroup = ID 98691
-    TCReset <- askQuestion conn $ TSMissing [CacheKeyGroup noSuchGroup]
+    TCError (ApiDBError (ApiDBNotFound "not found: ID 98691 :: ID Group")) <- askQuestion conn $ TSMissing [CacheKeyGroup noSuchGroup]
     logShouldContain `mapM_` ["AppDBError (DBNotFound", show (noSuchGroup ^. unID)]
 
 
