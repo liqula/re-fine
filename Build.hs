@@ -138,14 +138,17 @@ main = shakeArgs refineOptions $ do
     stackBuildFast pkgBackend
 
   phony "build-frontend" $ do
-    need ["build-frontend-hpack", "build-frontend-npm", "build-frontend-icons", "build-frontend-trans"]
+    need ["build-frontend-prepare"]
     nixShell "cabal configure --ghcjs -f -ghc-O2 && cabal build"
     command_ [Cwd pkgFrontend] "make" []
 
   phony "build-frontend-optimize" $ do
-    need ["build-frontend-hpack", "build-frontend-npm", "build-frontend-icons", "build-frontend-trans"]
+    need ["build-frontend-prepare"]
     nixShell "cabal configure --ghcjs && cabal build"
     command_ [Cwd pkgFrontend] "make" ["optimize"]
+
+  phony "build-frontend-prepare" $ do
+    need ["build-frontend-hpack", "build-frontend-npm", "build-frontend-icons", "build-frontend-trans"]
 
   phony "build-frontend-hpack" $ do
     -- (needed because build.nix does not to that implicitly yet, like stack did.)
