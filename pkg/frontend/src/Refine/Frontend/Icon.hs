@@ -5,6 +5,7 @@
 
 module Refine.Frontend.Icon
   ( module Refine.Frontend.Icon.Types
+  , ibutton
   , ibutton_
   , sibutton_
   , emptyIbuttonProps
@@ -40,7 +41,6 @@ ibutton pressed = mkStatefulView "Ibutton" (ButtonState (f pressed) NotRollOver)
 ibutton_ :: forall onclick handler. (HasCallStack, IbuttonOnClick onclick 'EventHandlerCode)
          => IbuttonProps onclick -> ReactElementM handler ()
 ibutton_ props = view_ (ibutton (props ^. ibPressed)) ("Ibutton_" <> props ^. ibListKey) props
-
 
 -- | A variant of 'ibutton_' that inherits the local state from the
 -- caller.
@@ -80,6 +80,7 @@ sibutton_ stlens st props = do
       ButtonImageIcon i scm                    -> Svg.render scm (st ^. stlens) i
     forM_ (props ^. ibIndexNum) $
       div_ ["className" $= "number-top-right"] . elemText . cs . show
+      -- TODO: index numbers are not scaled to ibSize
 
 
 emptyIbuttonProps :: HasCallStack => forall onclick. ButtonImage -> onclick -> IbuttonProps onclick

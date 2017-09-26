@@ -23,7 +23,7 @@ testDiscussionProps
   = discussionProps
       (Right (rnge, disc))
       (addMarksToRawContent [(MarkContribution (ContribIDDiscussion False (ID 0)) 0, rnge)] sampleRawContent1)
-      (StatementPropDetails Nothing Nothing mempty)
+      (StatementPropDetails Nothing mempty)
       False
   where
     rnge = Range (Position (BlockIndex 0 (BlockKey "2vutk")) 1)

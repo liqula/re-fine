@@ -247,7 +247,6 @@ data DiscussionProps = DiscussionProps
 
 data StatementPropDetails = StatementPropDetails
   { _spdEditorProps :: Maybe StatementEditorProps
-  , _spdCurrentUser :: Maybe (ID User)
   , _spdUsernames   :: Map (ID User) Username -- FIXME: store user names in discussions
   }
   deriving (Eq, Show, Generic)
@@ -291,8 +290,11 @@ blockIndices (RawContent blocks _) = zipWith BlockIndex [0..] . fmap (view block
 -- * instances
 
 deriveClasses
-  [ ([''VerticalSpanBounds, ''ContributionAction, ''ContributionState, ''BubblePositioning, ''CommentInputState, ''EditInputState, ''CommentKind, ''ActiveDialog, ''QuickCreateSide, ''QuickCreateShowState, ''StatementPropDetails, ''StatementEditorProps], allClass)
-  , ([''AllVerticalSpanBounds, ''CommentInfo, ''EditInfo, ''ProtoBubble, ''BubbleProps, ''QuickCreateProps, ''CommentDisplayProps, ''AddContributionProps], [''Lens'])
+  [ ([ ''VerticalSpanBounds, ''ContributionAction, ''ContributionState, ''BubblePositioning, ''CommentInputState
+     , ''EditInputState, ''CommentKind, ''ActiveDialog, ''QuickCreateSide, ''QuickCreateShowState
+     , ''StatementPropDetails, ''StatementEditorProps], allClass)
+  , ([ ''AllVerticalSpanBounds, ''CommentInfo, ''EditInfo, ''ProtoBubble, ''BubbleProps, ''QuickCreateProps
+     , ''CommentDisplayProps, ''AddContributionProps], [''Lens'])
   ]
 
 makeRefineType' [t| CommentInfo CommentKind |]

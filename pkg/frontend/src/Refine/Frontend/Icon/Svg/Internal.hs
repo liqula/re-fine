@@ -44,7 +44,9 @@ data Icon =
   | DiffExpand
   | Discussion
   | DiscussionFlat
+  | DiscussionReply
   | DiscussionTree
+  | DiscussionTreeChild
   | Edit
   | EditKindGrammar
   | EditKindMeaning
@@ -86,6 +88,7 @@ data Icon =
   | Question
   | Reader
   | Reply
+  | Report
   | Save
   | Search
   | Share
@@ -308,6 +311,18 @@ svgDiscussionFlat c0 = do
     path_ ["className" $= colorName ColorAttrFill c0, "d" $= "M92.38,10.22s0,1.33-.08,1.59A4,4,0,0,1,88.37,15H12.14a4,4,0,0,1-4-4s0-1.33.08-1.59a4,4,0,0,1,3.93-3.21H88.37A4,4,0,0,1,92.38,10.22Zm-4,56.38H12.14A4,4,0,0,0,8.21,69.8c-.05.26-.08,20-.08,20a4,4,0,0,0,4,4H88.37a4,4,0,0,0,3.93-3.21c.05-.26.08-20,.08-20A4,4,0,0,0,88.37,66.6ZM70.29,61.2a4.56,4.56,0,0,0,3.29-7.78L54.92,34.77a6.6,6.6,0,0,0-9.33,0L26.94,53.42a4.56,4.56,0,0,0,3.22,7.78C31.33,61.2,69.14,61.18,70.29,61.2ZM46.15,15h0Z"] $ do mempty
 
 
+svgDiscussionReply :: Color -> ReactElementM h ()
+svgDiscussionReply c0 = do
+  svg_ ["version" $= "1.1", "id" $= "Ebene_1", "xmlns" $= "http://www.w3.org/2000/svg", "xmlnsXlink" $= "http://www.w3.org/1999/xlink", "x" $= "0px", "y" $= "0px", "viewBox" $= "0 0 100 100", "style" @= styles [("enableBackground","new 0 0 100 100")], "xmlSpace" $= "preserve"] $ do
+    elemText "\n"
+    elemText "\n"
+    title_ $ do
+      elemText "Zeichenfl\228che 1 Kopie 2"
+    elemText "\n"
+    circle_ ["className" $= colorName ColorAttrFill c0, "cx" $= "50", "cy" $= "50", "r" $= "50"] $ do mempty
+    elemText "\n"
+
+
 svgDiscussionTree :: Color -> ReactElementM h ()
 svgDiscussionTree c0 = do
   svg_ ["xmlns" $= "http://www.w3.org/2000/svg", "viewBox" $= "0 0 100 100"] $ do
@@ -315,6 +330,18 @@ svgDiscussionTree c0 = do
     title_ $ do
       elemText "Zeichenfl\228che 1 Kopie 5"
     path_ ["className" $= colorName ColorAttrFill c0, "d" $= "M92.38,10.22s0,1.33-.08,1.59A4,4,0,0,1,88.37,15H12.14a4,4,0,0,1-4-4s0-1.33.08-1.59a4,4,0,0,1,3.93-3.21H88.37A4,4,0,0,1,92.38,10.22Zm-4,56.38H12.14A4,4,0,0,0,8.21,69.8c-.05.26-.08,20-.08,20a4,4,0,0,0,4,4H88.37a4,4,0,0,0,3.93-3.21c.05-.26.08-20,.08-20A4,4,0,0,0,88.37,66.6ZM70.29,61.2a4.56,4.56,0,0,0,3.29-7.78L54.92,34.77a6.6,6.6,0,0,0-9.33,0L26.94,53.42a4.56,4.56,0,0,0,3.22,7.78C31.33,61.2,69.14,61.18,70.29,61.2ZM46.15,15h0Z"] $ do mempty
+
+
+svgDiscussionTreeChild :: Color -> ReactElementM h ()
+svgDiscussionTreeChild c0 = do
+  svg_ ["version" $= "1.1", "id" $= "Ebene_1", "xmlns" $= "http://www.w3.org/2000/svg", "xmlnsXlink" $= "http://www.w3.org/1999/xlink", "x" $= "0px", "y" $= "0px", "viewBox" $= "0 0 100 100", "style" @= styles [("enableBackground","new 0 0 100 100")], "xmlSpace" $= "preserve"] $ do
+    elemText "\n"
+    elemText "\n"
+    title_ $ do
+      elemText "Zeichenfl\228che 1 Kopie 2"
+    elemText "\n"
+    circle_ ["className" $= colorName ColorAttrFill c0, "cx" $= "50", "cy" $= "50", "r" $= "50"] $ do mempty
+    elemText "\n"
 
 
 svgEdit :: Color -> Color -> ReactElementM h ()
@@ -755,6 +782,18 @@ svgReader c0 = do
 
 svgReply :: Color -> ReactElementM h ()
 svgReply c0 = do
+  svg_ ["version" $= "1.1", "id" $= "Ebene_1", "xmlns" $= "http://www.w3.org/2000/svg", "xmlnsXlink" $= "http://www.w3.org/1999/xlink", "x" $= "0px", "y" $= "0px", "viewBox" $= "0 0 100 100", "style" @= styles [("enableBackground","new 0 0 100 100")], "xmlSpace" $= "preserve"] $ do
+    elemText "\n"
+    elemText "\n"
+    title_ $ do
+      elemText "Zeichenfl\228che 1 Kopie 2"
+    elemText "\n"
+    circle_ ["className" $= colorName ColorAttrFill c0, "cx" $= "50", "cy" $= "50", "r" $= "50"] $ do mempty
+    elemText "\n"
+
+
+svgReport :: Color -> ReactElementM h ()
+svgReport c0 = do
   svg_ ["version" $= "1.1", "id" $= "Ebene_1", "xmlns" $= "http://www.w3.org/2000/svg", "xmlnsXlink" $= "http://www.w3.org/1999/xlink", "x" $= "0px", "y" $= "0px", "viewBox" $= "0 0 100 100", "style" @= styles [("enableBackground","new 0 0 100 100")], "xmlSpace" $= "preserve"] $ do
     elemText "\n"
     elemText "\n"
