@@ -73,7 +73,7 @@ transformGlobalState = transf
     transf act st = do
       consoleLogGlobalAction act
 
-      st' <- locationHashUpdate <$> pureTransform act st
+      st' <- pureTransform act st
 
       -- ajax
       liftIO $ emitBackendCallsFor act st
@@ -87,7 +87,9 @@ transformGlobalState = transf
         _ -> pure ()
 
       -- routing
-      Route.changeRoute `mapM_` (st' ^. gsLocationHash)
+      case act of
+        OnLocationHashChange{} -> pure ()
+        _ -> Route.changeRoute $ routeFromState st'
                                                -- FIXME: call only once at the end of every @loop@
                                                -- sequence in the class method above?
 
@@ -120,7 +122,7 @@ transformGlobalState = transf
         ContributionAction (SetRange _) -> removeAllRanges
         ContributionAction ClearRange   -> removeAllRanges
 
-        OnLocationHashChange r          -> liftIO $ handleRouteChange (st' ^. gsLocationHash) r
+        OnLocationHashChange r          -> liftIO $ handleRouteChange (Just $ routeFromState st) r
 
         ShowNotImplementedYet -> do
             liftIO $ windowAlertST "not implemented yet."
@@ -129,9 +131,6 @@ transformGlobalState = transf
 
       consoleLogGlobalState (st' /= st) st'
       pure st'
-
-    locationHashUpdate :: HasCallStack => GlobalState -> GlobalState
-    locationHashUpdate s = s & gsLocationHash .~ (Just $ routeFromState s)
 
     pureTransform :: GlobalAction -> GlobalState -> m GlobalState
     pureTransform act st = case runExcept $ fm st of
@@ -219,7 +218,7 @@ handleRouteChange _ r = do
     Right (Route.Process vid)        -> exec $ LoadVDoc vid
     Left _                           -> exec . MainMenuAction . MainMenuActionOpen $ defaultMainMenuTab
   where
-    exec = executeAction . action @GlobalState
+    exec = void . forkIO . executeAction . action @GlobalState
     emptyGroupForm = FormBegin $ newLocalStateRef (CreateGroup mempty mempty mempty mempty mempty Nothing) r
 
 flushCacheMisses :: IO ()
