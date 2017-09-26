@@ -83,6 +83,7 @@ main = shakeArgs refineOptions $ do
     command_ [] "stack" ["--resolver", resolver, "install", "hspec-discover"]
     command_ [] "stack" ["--resolver", resolver, "exec", "--", "which", "hspec-discover"]
     command_ [] "stack" ["--resolver", resolver, "install", "happy"]  -- (needed for pretty-show package)
+    command_ [] "stack" ["--resolver", resolver, "install", "hpack"]
 
     command_ [Cwd pkgPrelude]  "stack" ["setup"]
     command_ [Cwd pkgCommon]   "stack" ["setup"]
@@ -137,14 +138,19 @@ main = shakeArgs refineOptions $ do
     stackBuildFast pkgBackend
 
   phony "build-frontend" $ do
-    need ["build-frontend-npm", "build-frontend-icons", "build-frontend-trans"]
+    need ["build-frontend-hpack", "build-frontend-npm", "build-frontend-icons", "build-frontend-trans"]
     nixShell "cabal configure --ghcjs -f -ghc-O2 && cabal build"
     command_ [Cwd pkgFrontend] "make" []
 
   phony "build-frontend-optimize" $ do
-    need ["build-frontend-npm", "build-frontend-icons", "build-frontend-trans"]
+    need ["build-frontend-hpack", "build-frontend-npm", "build-frontend-icons", "build-frontend-trans"]
     nixShell "cabal configure --ghcjs && cabal build"
     command_ [Cwd pkgFrontend] "make" ["optimize"]
+
+  phony "build-frontend-hpack" $ do
+    -- (needed because build.nix does not to that implicitly yet, like stack did.)
+    command_ [Cwd pkgPrelude] "hpack" []
+    command_ [Cwd pkgCommon] "hpack" []
 
   phony "build-frontend-npm" $ do  -- if this fails, check #40.
     command_ [Cwd pkgFrontend] "node" ["--version"]
