@@ -1,6 +1,7 @@
-/.build
-/.shake
-.stack-work
+dist/
+/.build/
+/.shake/
+.stack-work/
 .sass-cache/
 /pkg/prelude/refine-prelude.cabal
 /pkg/common/refine-common.cabal
@@ -11,5 +12,7 @@
 /pkg/frontend/dev.log
 /pkg/frontend/scss/main.css*
 /pkg/frontend/scss-new/main.css*
+/pkg/frontend/result
+/pkg/frontend/closure-compiler/
 /accept/.selenium/
 /accept/accept.cabal
