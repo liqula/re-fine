@@ -101,7 +101,6 @@ data CacheAction
   = RefreshServerCache ServerCache
   | RestrictCacheItems (Set CacheKey)
   | InvalidateCacheItems (Set CacheKey)
-  | ClearServerCache
   deriving (Show, Eq, Generic)
 
 makeRefineTypes [''GlobalState_, ''DevState, ''GlobalAction, ''CacheAction]

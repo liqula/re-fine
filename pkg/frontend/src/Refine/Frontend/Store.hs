@@ -239,7 +239,6 @@ serverCacheUpdate (CacheAction a) c = case a of
   RefreshServerCache c' -> c' <> c
   RestrictCacheItems keys -> restrictCache keys c
   InvalidateCacheItems keys -> invalidateCache keys c
-  ClearServerCache -> mempty
 serverCacheUpdate _ c = c
 
 

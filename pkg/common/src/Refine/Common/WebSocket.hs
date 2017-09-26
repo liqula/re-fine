@@ -82,10 +82,11 @@ data ToClient
 
   | TCCreateUserResp (Either ApiError User)  -- ^ response to 'TSCreateUser'
   | TCLoginResp (Either ApiError User)       -- ^ response to 'TSLogin'
+  | TCLogout                                 -- ^ e.g. in case of sesssion timeout
   | TCTranslations L10                       -- ^ response to 'TSGetTranslations'
 
   | TCGreeting WSSessionId           -- ^ first message on connect
-  | TCError ApiError                 -- ^ exceptions; client must start over with handshake.
+  | TCReset                          -- ^ in case of exceptions; client must start over with handshake.
   deriving (Eq, Show, Generic)
 
 -- filters the cache

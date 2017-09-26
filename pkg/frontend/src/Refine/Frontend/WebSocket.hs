@@ -12,7 +12,6 @@ import           JavaScript.Web.WebSocket
 import           JavaScript.Web.MessageEvent
 #endif
 
-import Refine.Common.Rest
 import Refine.Common.Types
 import Refine.Frontend.Access
 import Refine.Frontend.Document.Types
@@ -36,14 +35,12 @@ initWebSocket = do
           (n, _) <- takeMVar webSocketMVar
           openConnection $ Just n
 
-        wsMessage :: MessageEvent -> IO ()
         wsMessage msg = do
           case getData msg of
             StringData x -> maybe (error "websockets json decoding error") wsParsedMessage . decode $ cs x
             (BlobData _)        -> error "websockets error: BlobData not supported."
             (ArrayBufferData _) -> error "websockets error: ArrayBufferData not supported."
 
-        wsParsedMessage :: ToClient -> IO ()
         wsParsedMessage = \case
               TCServerCache sc ->
                 executeAction . action @GlobalState . CacheAction $ RefreshServerCache sc
@@ -54,13 +51,13 @@ initWebSocket = do
                 executeAction . action @GlobalState . CacheAction . RestrictCacheItems
                 $ Set.fromList keys
               s@(TCGreeting n) -> do
-                  consoleLogJSStringM "WS" $ cs (show s)
                   (_, putfun) <- takeMVar webSocketMVar
                   putMVar webSocketMVar (n, putfun)
-              s@(TCError msg) -> do
                   consoleLogJSStringM "WS" $ cs (show s)
+              TCReset -> do
                   (n, putfun) <- readMVar webSocketMVar
-                  handleApiError n putfun msg
+                  handshake (Just n) putfun
+                  consoleLogJSStringM "WS" $ "Reset " <> cs (show n)
 
               TCCreatedVDoc vid ->
                 dispatchAndExec $ LoadVDoc vid
@@ -82,6 +79,9 @@ initWebSocket = do
                 dispatchAndExec . SetCurrentUser . UserLoggedIn $ user ^. userID
                 dispatchAndExec $ MainMenuAction MainMenuActionClose
                 dispatchAndExec LoginGuardPop
+              TCLogout -> do
+                dispatchAndExec . SetCurrentUser $ UserLoggedOut
+                wsParsedMessage TCReset
 
               TCTranslations l10 ->
                 dispatchAndExec $ ChangeTranslations l10
@@ -91,7 +91,6 @@ initWebSocket = do
             -> cs $ (if ssl then "wss://" else "ws://") <> host <> ":" <> cs (show port) <> "/"
 
 
-        openConnection :: Maybe WSSessionId -> IO ()
         openConnection mid = handshake mid =<< do
             connect $ WebSocketRequest
                               wsUrl
@@ -99,37 +98,10 @@ initWebSocket = do
                               (Just wsClose)
                               (Just wsMessage)
 
-        handshake :: Maybe WSSessionId -> WebSocket -> IO ()
         handshake mid ws = do
-            consoleLogJSStringM "WS" "connection opened"
             sendMessage ws $ TSGreeting mid
-            putMVar webSocketMVar (fromMaybe (error "no WSSessionId") mid, ws)
-
-        handleApiError :: WSSessionId -> WebSocket -> ApiError -> IO ()
-        handleApiError _ putfun = \case
-          ApiUnknownError _      -> logoutandreset
-          ApiVDocVersionError    -> logoutandreset
-          ApiDBError _           -> logoutandreset
-          ApiUserNotFound _      -> logoutandreset
-          ApiUserNotLoggedIn     -> logoutandreset
-          ApiUserCreationError _ -> logoutandreset
-          ApiCsrfError _         -> logoutandreset
-          ApiSessionTimedout     -> logoutandreset
-          ApiSessionInvalid      -> logoutandreset
-          ApiSanityCheckError _  -> logoutandreset
-          ApiUserHandleError _   -> logoutandreset
-          ApiL10ParseErrors _    -> logoutandreset
-          ApiUnauthorized _      -> logoutandreset
-          ApiMergeError _        -> logoutandreset
-          ApiRebaseError         -> logoutandreset
-          ApiSmtpError           -> logoutandreset
-          where
-            logoutandreset :: IO ()
-            logoutandreset = do
-              executeAction . action @GlobalState . CacheAction $ ClearServerCache
-              dispatchAndExec . SetCurrentUser $ UserLoggedOut
-              threadDelay 500000
-              handshake Nothing putfun
+            putMVar webSocketMVar (fromMaybe (error "unknown WSSessionId") mid, ws)
+            consoleLogJSStringM "WS" "connection opened"
 
     openConnection Nothing
 
