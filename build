@@ -40,6 +40,7 @@ assert_cmd npm
 
 assert_cmd cabal
 assert_cmd nix-build
+assert_cmd tidy  # debian: apt-get install tidy; everybody else: http://www.html-tidy.org/
 
 RESOLVER=lts-8.11
 
