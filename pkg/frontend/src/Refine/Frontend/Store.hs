@@ -87,7 +87,9 @@ transformGlobalState = transf
         _ -> pure ()
 
       -- routing
-      Route.changeRoute $ routeFromState st'
+      case act of
+        OnLocationHashChange{} -> pure ()
+        _ -> Route.changeRoute $ routeFromState st'
                                                -- FIXME: call only once at the end of every @loop@
                                                -- sequence in the class method above?
 
@@ -120,7 +122,7 @@ transformGlobalState = transf
         ContributionAction (SetRange _) -> removeAllRanges
         ContributionAction ClearRange   -> removeAllRanges
 
-        OnLocationHashChange r          -> liftIO $ handleRouteChange (Just $ routeFromState st') r
+        OnLocationHashChange r          -> liftIO $ handleRouteChange (Just $ routeFromState st) r
 
         ShowNotImplementedYet -> do
             liftIO $ windowAlertST "not implemented yet."
