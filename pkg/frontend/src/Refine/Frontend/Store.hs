@@ -218,7 +218,7 @@ handleRouteChange _ r = do
     Right (Route.Process vid)        -> exec $ LoadVDoc vid
     Left _                           -> exec . MainMenuAction . MainMenuActionOpen $ defaultMainMenuTab
   where
-    exec = executeAction . action @GlobalState
+    exec = void . forkIO . executeAction . action @GlobalState
     emptyGroupForm = FormBegin $ newLocalStateRef (CreateGroup mempty mempty mempty mempty mempty Nothing) r
 
 flushCacheMisses :: IO ()
