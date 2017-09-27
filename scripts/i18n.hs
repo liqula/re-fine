@@ -72,6 +72,10 @@ usage exitCode = do
   exitWith exitCode
 
 
+-- | Considered by 'gitStatus' to decide whether working copy is clean.  Other dirt is ignored.
+relevantFiles :: [FilePath]
+relevantFiles = ["./po/", "./pkg/frontend/src/Refine/Frontend/TKey.hs"]
+
 transModDeps :: [ST]
 transModDeps = ["Refine.Common.Types.Translation", "Data.Text"]
 
@@ -265,8 +269,10 @@ assertWorkingCopyClean = do
     exit $ ExitFailure 1
 
 gitStatus :: Shell [GitStatus]
-gitStatus = fmap parse . ST.lines . lineToText <$> inshell "git status --porcelain ." Turtle.empty
+gitStatus = fmap parse . ST.lines . lineToText <$> inshell cmd Turtle.empty
   where
+    cmd = "git status --porcelain " <> ST.unwords (cs <$> relevantFiles)
+
     parse :: ST -> GitStatus
     parse line = GitStatus (parseCode ix) (parseCode wt) (cs file)
       where

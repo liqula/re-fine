@@ -117,7 +117,7 @@ stressers port agents rounds = do
 
 spec :: Spec
 spec = do
-  specStories
+  -- specStories  # FIXME: #458
   specErrors
 
 specStories :: Spec

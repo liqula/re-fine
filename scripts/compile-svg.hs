@@ -255,10 +255,9 @@ guessHsModuleName = f . System.FilePath.splitDirectories . System.FilePath.dropE
     f (_ : xs) = f xs
     f [] = "Main"
 
--- | FIXME: if this is 'True', byte code size does not decrease, but #433 gets worse:
--- http://zb2/re-fine/re-fine/-/jobs/3335
+-- | FIXME: this should affect byte code size more.  (perhaps this only happens with -O2?)
 pleaseOptimize :: Bool
-pleaseOptimize = False
+pleaseOptimize = True
 
 backendHaskell :: ST -> Backend
 backendHaskell modulename ts = ST.intercalate "\n" $ header <> [dataType ts] <> (iconFun <$> ts)
