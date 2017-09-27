@@ -38,17 +38,14 @@ nixShell act = command_ [Cwd pkgFrontend, Shell] "nix-shell"
 
 stackTest :: FilePath -> Action ()
 stackTest package = do
-  command_ [Cwd package] "stack" ["setup"]
   command_ [Cwd package, Shell] "stack" ["test", "--fast", "--test-arguments=$TEST_ARGS"]
 
 stackBuildFast :: FilePath -> Action ()
 stackBuildFast package = do
-  command_ [Cwd package] "stack" ["setup"]
   command_ [Cwd package] "stack" ["build", "--fast"]
 
 stackBuildOptimal :: FilePath -> Action ()
 stackBuildOptimal package = do
-  command_ [Cwd package] "stack" ["setup"]
   command_ [Cwd package] "stack" ["build", "--split-objs", "--ghc-options", "-O2"]
 
 hlintPath :: [String] -> FilePath -> Action ()
@@ -88,6 +85,8 @@ main = shakeArgs refineOptions $ do
     command_ [Cwd pkgPrelude]  "stack" ["setup"]
     command_ [Cwd pkgCommon]   "stack" ["setup"]
     command_ [Cwd pkgBackend]  "stack" ["setup"]
+
+    command_ [] "cabal" ["update"]
 
   phony "test-prelude" $ do
     stackTest pkgPrelude
