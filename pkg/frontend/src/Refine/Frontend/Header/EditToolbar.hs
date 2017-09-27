@@ -64,11 +64,7 @@ getDocumentStateProps as gs@(view gsEditID -> Just baseid)
                                 r <- Map.lookup did $ e ^. editDiscussions'
                                 pure $ Right (r, d))
                             (gs ^. gsRawContent)
-                            (StatementPropDetails
-                               ed
-                               (as ^? accLoginState . lsCurrentUser . loggedInUser)
-                               ((^. userName) <$> (gs ^. gsServerCache . scUsers))
-                            )
+                            (StatementPropDetails ed ((^. userName) <$> (gs ^. gsServerCache . scUsers)))
                             (gs ^. gsHeaderState . hsDiscussionFlatView)
       )
       dst

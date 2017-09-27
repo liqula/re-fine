@@ -86,7 +86,8 @@ guardAccess child = mkControllerView @'[StoreArg AccessState] "GuardAccess" $
   \(accessState :: AccessState) (xs :: Creds) -> do
     if hasCreds xs accessState then child else pure ()
 
-guardAccess_ :: (HasCallStack, Dispatchable GlobalAction, Sendable ToServer) => JSString -> Creds -> ReactElementM 'EventHandlerCode () -> ReactElementM 'EventHandlerCode ()
+guardAccess_ :: (HasCallStack, Dispatchable GlobalAction, Sendable ToServer)
+             => JSString -> Creds -> ReactElementM 'EventHandlerCode () -> ReactElementM 'EventHandlerCode ()
 guardAccess_ rkey xs child = view_ (guardAccess child) rkey xs
 
 

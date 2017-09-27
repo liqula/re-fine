@@ -27,124 +27,221 @@ import           Refine.Frontend.Util
 discussion :: HasCallStack => View '[DiscussionProps]
 discussion = mkView "Discussion" $ \props -> case props ^. discPropsDiscussion of
   Left _ -> hourglass
-  Right (_range, disc) -> do
-    aboutText_ ( props ^. discPropsAboutText
-               , ContribIDDiscussion False $ disc ^. discussionMetaID . miID
-               )
-    if props ^. discPropsFlatView
-      then statementList
-      else statementForest_ 0 (0, [disc ^. discussionTree], props ^. discPropsDetails)
-   where
-    statementList =
-      forM_ (zip [0..] list) $ \(i', stmnt) -> do
-        statement_ i' (0, stmnt, props ^. discPropsDetails)
-        br_ []
-      where
-        list = sortBy (flip compare `on` creationtime) . toList $ disc ^. discussionTree
-        creationtime = (^. statementMetaID . miMeta . metaCreatedAt)
+  Right (_range, disc) -> div_ ["style" @@= styles, "className" $= "discussion-thread-container"] $ do
+    view_ aboutText "aboutText_"
+      ( props ^. discPropsAboutText
+      , ContribIDDiscussion False $ disc ^. discussionMetaID . miID
+      )
+
+    let treeprops = (disc ^. discussionTree, props ^. discPropsDetails)
+        component = if props ^. discPropsFlatView then statementList else statementRoot
+    xview_ component treeprops
+  where
+    -- FIXME: make this fit window size.
+    styles = [decl "width" (Px 800), decl "height" (Px 600)]
 
 discussion_ :: HasCallStack => DiscussionProps -> ReactElementM eventHandler ()
 discussion_ = view_ discussion "discussion_"
 
+
+-- * what the discussion references
+
 aboutText :: HasCallStack => View '[(RawContent, ContributionID)]
-aboutText = mkView "AboutText" $ \(rc, did) -> do
-  h1_ "Related Text:"
+aboutText = mkView "AboutText" $ \(rc, did) -> div_ ["className" $= "discussion-thread-container__text"] $ do
   draftEditor_
     [ "editorState" &= createWithRawContent rc
     , "customStyleMap" &= mkDocumentStyleMap [MarkContribution did 0] (Just rc)
     , "readOnly" &= True
     ] mempty
 
-aboutText_ :: HasCallStack => (RawContent, ContributionID) -> ReactElementM eventHandler ()
-aboutText_ = view_ aboutText "aboutText_"
 
-type StatementForestProps = (Int, Tree.Forest Statement, StatementPropDetails)
-type StatementProps = (Int, Statement, StatementPropDetails)
+-- * flat discussion view
 
-statementForest :: HasCallStack => View '[StatementForestProps]
-statementForest = mkView "StatementForest" $ \(depth, frst, details) -> do
-  forM_ (zip [0..] frst) $ \(i', Tree.Node stmnt chldrn) -> do
-    statement_ i' (depth, stmnt, details)
-    br_ []
-    statementForest_ i' (depth + 1, chldrn, details)
+-- FIXME: this should be "notes".  not implemented yet (neither in styleguide-new nor here).
+statementList :: HasCallStack => View '[(Tree.Tree Statement, StatementPropDetails)]
+statementList = mkView "StatementList" $ \(tree, details) ->
+  div_ ["className" $= "discussion-thread-container__tree"] $ do
+    let list = sortBy (flip compare `on` creationtime) (toList tree)
+        creationtime = (^. statementMetaID . miMeta . metaCreatedAt)
+    (xview_ statementViewer . (, details)) `mapM_` list
 
-statementForest_ :: HasCallStack => Int -> StatementForestProps -> ReactElementM eventHandler ()
-statementForest_ i = view_ statementForest $ "statementForest-" <> cs (show i)
+
+-- * tree-shaped discussion view
+
+statementRoot :: HasCallStack => View '[(Tree.Tree Statement, StatementPropDetails)]
+statementRoot = mkView "StatementForest" $ \(tree, details) ->
+  div_ ["className" $= "discussion-thread-container__tree"] .
+    div_ ["className" $= "discussion-thread-item-root"] $
+      statementSubtree_ details tree
+
+statementChild :: HasCallStack => View '[(Tree.Tree Statement, StatementPropDetails)]
+statementChild = mkView "StatementForest" $ \(tree, details) ->
+  div_ ["className" $= "discussion-thread-item-child"] $ do
+    div_ ["className" $= "discussion-thread-item-child__icon-column"] $ do
+      ibutton_
+        $ emptyIbuttonProps (ButtonImageIcon Svg.DiscussionTreeChild ColorSchemaDiscussion)
+          ([] :: [GlobalAction])
+          & ibListKey .~ "0"
+          & ibSize .~ Large
+    div_ ["className" $= "discussion-thread-item-child__node-column"] $ do
+      statementSubtree_ details tree
+
+-- | (This is a list of more than one DOM sibling, so it can't be a 'View'.)
+statementSubtree_ :: HasCallStack => StatementPropDetails -> Tree.Tree Statement -> ReactElementM 'EventHandlerCode ()
+statementSubtree_ details (Tree.Node stmnt chldrn) = do
+  case details ^. spdEditorProps of
+          Just e | e ^. sepStatementID == stmnt ^. statementID && e ^. sepUpdate
+            -> xview_ (statementEditor e)
+          _ -> xview_ statementViewer (stmnt, details)
+  (xview_ statementChild . (, details)) `mapM_` chldrn
+
+
+-- * item (statement editor or viewer)
 
 statementEditor :: StatementEditorProps -> View '[]
-statementEditor (StatementEditorProps sid r modif) = mkPersistentStatefulView "statementEditor" r Nothing $ \txt -> do
-    div_ ["style" @@= [ decl "border" (Ident "solid 1px black"),
-                        decl "clear" (Ident "both")]] $
-      contributionDialogTextFormInner 400 20 createStatementText txt
-    br_ []
-    ibutton_
-      $ emptyIbuttonProps (ButtonImageIcon (if modif then Svg.Edit else Svg.Reply) ColorSchemaBright)
-          [ DocumentAction . ReplyStatement modif sid $ FormComplete txt
-          , AddStatement modif sid txt
-          ]
-      & ibListKey .~ "0"
-      & ibSize .~ Medium
-    ibutton_
-      $ emptyIbuttonProps (ButtonImageIcon Svg.Close ColorSchemaBright)
-          [ DocumentAction $ ReplyStatement modif sid FormCancel
-          ]
-      & ibListKey .~ "1"
-      & ibSize .~ Medium
-
-statement :: HasCallStack => View '[StatementProps]
-statement = mkView "statement" $ \(depth, stmnt, StatementPropDetails meditor currentuser names) -> do
-
-  let thisuser = getUser (stmnt ^. statementMetaID . miMeta . metaCreatedBy) == currentuser
-      createtime = stmnt ^. statementMetaID . miMeta . metaCreatedAt
-      modtime = stmnt ^. statementMetaID . miMeta . metaChangedAt
-
-  div_ ["style" @@= [ decl "marginLeft" . Px $ 20 * depth ]] $ do
-
-    div_ ["style" @@= [ decl "border" (Ident "solid 2px black"),
-                        decl "clear" (Ident "both")]] $ do
-      case meditor of
-        Just e | e ^. sepStatementID == stmnt ^. statementID && e ^. sepUpdate
-               -> view_ (statementEditor e) "statementEditor_"
-        _ -> elemText $ stmnt ^. statementText
-      br_ []
-      div_ ["style" @@= [ decl "clear" (Ident "both") ]] .
-        elemText $ "by " <> showUser names (stmnt ^. statementMetaID . miMeta . metaCreatedBy)
-                <> " at " <> showTime createtime
-                <> if createtime == modtime then "" else ", last edited at " <> showTime modtime
-    br_ []
-    case meditor of
-      Just e
-        | e ^. sepStatementID == stmnt ^. statementID && not (e ^. sepUpdate)
-             -> view_ (statementEditor e) "statementEditor_"
-        | otherwise -> mempty
-      _ -> do
-        when thisuser . ibutton_
-          $ emptyIbuttonProps (ButtonImageIcon Svg.Edit ColorSchemaBright)
-              [ LoginGuardStash
-                [ DocumentAction . ReplyStatement True (stmnt ^. statementID) . FormBegin
-                $ newLocalStateRef (CreateStatement $ stmnt ^. statementText) stmnt]
-              ]
-          & ibSize .~ Medium
-          & ibListKey .~ "0"
+statementEditor (StatementEditorProps sid r modif) =
+  mkPersistentStatefulView "statementEditor" r Nothing $ \txt ->
+    div_ ["className" $= "discussion-thread-item"] $ do
+      div_ ["className" $= "discussion-thread-item__form-header"] $ do
         ibutton_
-          $ emptyIbuttonProps (ButtonImageIcon Svg.Reply ColorSchemaBright)
-              [ LoginGuardStash
-                [ DocumentAction . ReplyStatement False (stmnt ^. statementID) . FormBegin
-                $ newLocalStateRef (CreateStatement "") stmnt]
-              ]
+          $ emptyIbuttonProps (ButtonImageIcon Svg.Close ColorSchemaBright)
+              [DocumentAction $ ReplyToOrUpdateStatement modif sid FormCancel]
+          & ibListKey .~ "0"
           & ibSize .~ Medium
+        ibutton_
+          $ emptyIbuttonProps (ButtonImageIcon Svg.Help ColorSchemaBright)
+              [ShowNotImplementedYet]
           & ibListKey .~ "1"
-  where
-    getUser = \case
-      UserID i -> Just i
-      _ -> Nothing
+          & ibSize .~ Medium
 
-    showUser names = \case
+      div_ ["className" $= "discussion-thread-item__form-horizontal-line"] $ pure ()
+      div_ ["className" $= "discussion-thread-item__form-body"] $ do
+        div_ ["className" $= "discussion-thread-item__form-body-button"] $ do
+          ibutton_
+            $ emptyIbuttonProps (ButtonImageIcon Svg.Save ColorSchemaBright)
+                [ DocumentAction . ReplyToOrUpdateStatement modif sid $ FormComplete txt
+                , AddStatement modif sid txt
+                ]
+                & ibSize .~ XLarge
+        textarea_ [ "className" $= "discussion-thread-item__form-body-input"
+                  , onChange $ \evt ->
+                      -- Update the current state with the current text in the textbox, sending no actions
+                      simpleHandler $ \txt' -> ([], Just $ txt' & createStatementText .~ target evt "value")
+                  , "value" $= cs (txt ^. createStatementText)
+                  ] $ do
+          pure ()
+
+type StatementViewerProps = (Statement, StatementPropDetails)
+
+statementViewer :: View '[StatementViewerProps]
+statementViewer = mkView "statementViewer" $ \(stmnt, StatementPropDetails meditor names) ->
+  div_ ["className" $= "discussion-thread-item"] $ do
+    div_ ["className" $= "discussion-thread-item__header"] $ do
+      div_ ["className" $= "discussion-thread-item__header-inner"] $ do
+        ibutton_
+          $ emptyIbuttonProps (ButtonImageIcon Svg.Discussion ColorSchemaDiscussion)
+          ([] :: [GlobalAction])
+          & ibListKey .~ "0"
+          & ibSize .~ Medium
+
+        ibutton_  -- FIXME: get user image if available.  make that a little component?
+          $ emptyIbuttonProps (ButtonImageIcon Svg.User ColorSchemaDiscussion)
+          ([] :: [GlobalAction])
+          & ibListKey .~ "1"
+          & ibSize .~ Medium
+
+        authorInfo (stmnt ^. statementMetaID . miMeta) names
+
+      div_ ["className" $= "discussion-thread-item__header-inner"] $ do
+        let expanded = True  -- FIXME: implement partial thread collapse.
+                             -- FIXME: more general name for Svg.DiffExpand, Svg.DiffCollapse.
+        if expanded
+          then do
+            "collapse thread"
+            ibutton_
+              $ emptyIbuttonProps (ButtonImageIcon Svg.DiffCollapse ColorSchemaDiscussion)
+              [ShowNotImplementedYet]
+              & ibListKey .~ "0"
+              & ibSize .~ Medium
+          else do
+            "expand thread"
+            ibutton_
+              $ emptyIbuttonProps (ButtonImageIcon Svg.DiffExpand ColorSchemaDiscussion)
+              [ShowNotImplementedYet]
+              & ibListKey .~ "0"
+              & ibSize .~ Medium
+
+    div_ ["className" $= "discussion-thread-item__body"] $ do
+      elemText $ stmnt ^. statementText
+
+    let editing e = e ^. sepStatementID == stmnt ^. statementID && not (e ^. sepUpdate)
+    case meditor of
+      Just e | editing e -> do
+        div_ ["className" $= "discussion-thread-item__footer"] $ do
+          div_ ["style" @@= [decl "height" (Px 6)]] $ do
+            pure ()
+        xview_ (statementEditor e)
+      _ -> do
+        div_ ["className" $= "discussion-thread-item__footer"] $ do
+          div_ ["className" $= "discussion-thread-item__footer-inner"] $ do
+            -- FIXME: @AP.createOrUpdateComment $ stmnt ^. statementVDoc@, but now we need to look up
+            -- the vdoc under the id :(.  so it seems like the access policy terms need to be with less
+            -- data.  e.g., replace vdoc by the group it's in.  that should be sufficient, and then the
+            -- information is already in global access state.
+            replyButton_ stmnt
+            -- FIXME: comment in #358: @guard (AP.updateStatement stmnt) $ ...@
+            updateButton_ stmnt
+
+          div_ ["className" $= "discussion-thread-item__footer-inner"] $ do
+            voteUpDownReportButtons
+
+  where
+    replyButton_ :: Statement -> ReactElementM 'EventHandlerCode ()
+    replyButton_ stmnt = btn stmnt Svg.Reply False "" "reply"
+
+    updateButton_ :: Statement -> ReactElementM 'EventHandlerCode ()
+    updateButton_ stmnt = btn stmnt Svg.Edit True (stmnt ^. statementText) "update"
+
+    btn :: Statement -> Svg.Icon -> Bool -> CommentText -> ReactElementM 'EventHandlerCode ()
+        -> ReactElementM 'EventHandlerCode ()
+    btn stmnt svg isupdate contents label = do
+      let props = emptyIbuttonProps (ButtonImageIcon svg ColorSchemaDark) act & ibSize .~ Large
+          act = [ DocumentAction . ReplyToOrUpdateStatement isupdate (stmnt ^. statementID) . FormBegin
+                  $ newLocalStateRef (CreateStatement contents) stmnt
+                ]
+      xview_ (ibutton (props ^. ibPressed)) props
+      label
+
+    voteUpDownReportButtons = do
+      ibutton_ $ emptyIbuttonProps (ButtonImageIcon Svg.VotePositive ColorSchemaDiscussion) [ShowNotImplementedYet]
+        & ibListKey .~ "voteup"
+        -- & ibIndexNum .~ Just 0
+        & ibSize .~ Large
+
+      ibutton_ $ emptyIbuttonProps (ButtonImageIcon Svg.VoteNegative ColorSchemaDiscussion) [ShowNotImplementedYet]
+        & ibListKey .~ "votedown"
+        -- & ibIndexNum .~ Just 0
+        & ibSize .~ Large
+
+      div_ ["className" $= "hr-div"] $ pure ()
+
+      ibutton_ $ emptyIbuttonProps (ButtonImageIcon Svg.Report ColorSchemaDiscussion) [ShowNotImplementedYet]
+        & ibListKey .~ "report"
+        & ibSize .~ Large
+
+authorInfo :: MetaInfo -> Map (ID User) Username -> ReactElementM h ()
+authorInfo metaInfo names = elemText . mconcat $
+  [ "author: " <> showUser (metaInfo ^. metaCreatedBy)
+  , ", created: " <> showTime createtime
+  ] <>
+  [ ", last changed: " <> showTime modtime | createtime /= modtime ]
+  where
+    showUser = \case
       UserID i  -> fromMaybe (cs . show $ cacheMiss (CacheKeyUser i) i i) $ Map.lookup i names
       UserIP ip -> ip
       Anonymous -> "anonymous"
 
     showTime (Timestamp t) = cs $ formatTime defaultTimeLocale "%F %T" t
 
-statement_ :: HasCallStack => Int -> StatementProps -> ReactElementM eventHandler ()
-statement_ i = view_ statement $ "statement-" <> cs (show i)
+    createtime = metaInfo ^. metaCreatedAt
+    modtime = metaInfo ^. metaChangedAt

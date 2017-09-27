@@ -21,7 +21,7 @@ data HeaderAction =
   | ScrollToBlockKey BlockKey
 -- FIXME: #452
 --  | OpenEditToolbarLinkEditor ST
-  | ToggleDiscussionFlatView
+  | ToggleDiscussionFlatView  -- ^ toggle between flat and tree (could probably have a better name)
   deriving (Show, Eq, Generic)
 
 data ToolbarExtensionStatus =

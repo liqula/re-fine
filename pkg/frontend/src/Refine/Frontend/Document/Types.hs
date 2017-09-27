@@ -37,7 +37,7 @@ data DocumentAction =
   | DocumentSave (FormActionWith (EditIsInitial, EditorState) (EditInfo EditKind, EditorState))
   | DocumentCancelSave
   | ToggleCollapseDiff
-  | ReplyStatement Bool{-replace-} (ID Statement) (FormAction CreateStatement)
+  | ReplyToOrUpdateStatement Bool{-update-} (ID Statement) (FormAction CreateStatement)
   deriving (Show, Eq, Generic)
 
 data DocumentState_ editable{-() or Bool-} rawcontent edit discussion =

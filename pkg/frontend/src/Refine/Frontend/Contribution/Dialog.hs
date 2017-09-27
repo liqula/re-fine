@@ -7,7 +7,6 @@ module Refine.Frontend.Contribution.Dialog
   ( commentInput_
   , addComment_
   , addEdit_
-  , contributionDialogTextFormInner
   , contributionDialogTextForm
   ) where
 #include "import_frontend.hs"

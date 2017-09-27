@@ -111,12 +111,12 @@ documentStateUpdate (ContributionAction (ShowContributionDialog (ContribIDDiscus
                     (DocumentStateView _)
   = pure $ DocumentStateDiscussion (did, Nothing)
 
-documentStateUpdate (DocumentAction (ReplyStatement upd sid (FormBegin lst)))
+documentStateUpdate (DocumentAction (ReplyToOrUpdateStatement upd sid (FormBegin lst)))
                     _oldgs
                     (DocumentStateDiscussion (did, Nothing))
   = pure $ DocumentStateDiscussion (did, Just (StatementEditorProps sid lst upd))
 
-documentStateUpdate (DocumentAction (ReplyStatement _upd _sid FormCancel))
+documentStateUpdate (DocumentAction (ReplyToOrUpdateStatement _upd _sid FormCancel))
                     _oldgs
                     (DocumentStateDiscussion (did, Just _))
   = pure $ DocumentStateDiscussion (did, Nothing)
