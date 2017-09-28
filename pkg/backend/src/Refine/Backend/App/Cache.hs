@@ -26,17 +26,17 @@ import           Network.WebSockets.Connection
 import           System.IO.Unsafe
 import           System.Timeout (timeout)
 
-import Refine.Common.Types
-import Refine.Common.Rest (ApiError)
 import Refine.Backend.App.Comment     as App
 import Refine.Backend.App.Core        as App
 import Refine.Backend.App.Group       as App
+import {-# SOURCE #-} Refine.Backend.App.Translation as App (getTranslations)
 import Refine.Backend.App.User        as App
 import Refine.Backend.App.VDoc        as App
-import {-# SOURCE #-} Refine.Backend.App.Translation as App (getTranslations)
 import Refine.Backend.Config
 import Refine.Backend.Database
 import Refine.Backend.Logger
+import Refine.Common.Rest (ApiError)
+import Refine.Common.Types
 
 
 -- * types
