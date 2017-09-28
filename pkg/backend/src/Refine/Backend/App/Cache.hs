@@ -8,6 +8,7 @@
 module Refine.Backend.App.Cache
   ( startWebSocketServer
   , resetWebSocketMVar
+  -- (also exports @instance Database db => MonadCache (AppM db)@)
 
     -- * exported for testing only
   , mkWSSessionId
@@ -103,28 +104,6 @@ logWSMessage :: (Monad m, MonadLog m, MonadWS m, Show a) => Maybe WSSessionId ->
 logWSMessage mclientId msg = appLog LogDebug $
   cs ("[" <> maybe "no session" (ST.take 10 . unWSSessionId) mclientId <> "] ") <>
   show msg
-
-
--- * cache
-
-getData :: CacheKey -> App ServerCache
-getData = \case
-  CacheKeyVDoc i       -> App.getVDoc i       <&> \val -> mempty & scVDocs       .~ Map.singleton i val
-  CacheKeyEdit i       -> App.getEdit i       <&> \val -> mempty & scEdits       .~ Map.singleton i val
-  CacheKeyDiscussion i -> App.getDiscussion i <&> \val -> mempty & scDiscussions .~ Map.singleton i val
-  CacheKeyUser i       -> App.getUser i       <&> \val -> mempty & scUsers       .~ Map.singleton i val
-  CacheKeyGroup i      -> App.getGroup i      <&> \val -> mempty & scGroups      .~ Map.singleton i val
-  CacheKeyGroupIds     -> App.getGroups       <&> \val -> mempty & scGroupIds    .~ Just (Set.fromList $ (^. groupID) <$> val)
-  CacheKeyUserIds      -> App.getUsers        <&> \val -> mempty & scUserIds     .~ Just val
-
-instance Database db => MonadCache (AppM db) where
-    invalidateCaches keys = do
-        cmap <- liftIO $ takeMVar webSocketMVar
-        let cmap' = second (Set.\\ keys) <$> cmap
-            cls = [(n, conn, d) | (n, ((conn, _), s)) <- Map.assocs cmap, let d = Set.intersection keys s, not $ Set.null d]
-        forM_ cls $ \(n, conn, d) -> do
-            sendMessage (Just n) conn . TCInvalidateKeys $ Set.toList d
-        liftIO $ putMVar webSocketMVar cmap'
 
 
 -- * server
@@ -257,3 +236,25 @@ cmdLoopStep conn clientId = do
       TSDeleteVote eid        -> void $ App.deleteSimpleVoteOnEdit eid
 
       bad@(TSGreeting _)      -> wserror $ WSErrorUnexpectedPacket bad
+
+
+-- * cache
+
+getData :: CacheKey -> App ServerCache
+getData = \case
+  CacheKeyVDoc i       -> App.getVDoc i       <&> \val -> mempty & scVDocs       .~ Map.singleton i val
+  CacheKeyEdit i       -> App.getEdit i       <&> \val -> mempty & scEdits       .~ Map.singleton i val
+  CacheKeyDiscussion i -> App.getDiscussion i <&> \val -> mempty & scDiscussions .~ Map.singleton i val
+  CacheKeyUser i       -> App.getUser i       <&> \val -> mempty & scUsers       .~ Map.singleton i val
+  CacheKeyGroup i      -> App.getGroup i      <&> \val -> mempty & scGroups      .~ Map.singleton i val
+  CacheKeyGroupIds     -> App.getGroups       <&> \val -> mempty & scGroupIds    .~ Just (Set.fromList $ (^. groupID) <$> val)
+  CacheKeyUserIds      -> App.getUsers        <&> \val -> mempty & scUserIds     .~ Just val
+
+instance Database db => MonadCache (AppM db) where
+    invalidateCaches keys = do
+        cmap <- liftIO $ takeMVar webSocketMVar
+        let cmap' = second (Set.\\ keys) <$> cmap
+            cls = [(n, conn, d) | (n, ((conn, _), s)) <- Map.assocs cmap, let d = Set.intersection keys s, not $ Set.null d]
+        forM_ cls $ \(n, conn, d) -> do
+            sendMessage (Just n) conn . TCInvalidateKeys $ Set.toList d
+        liftIO $ putMVar webSocketMVar cmap'
