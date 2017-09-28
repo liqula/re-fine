@@ -170,7 +170,6 @@ dropExceptions :: IO () -> IO ()
 dropExceptions = handle (\(SomeException _) -> pure ())
 
 
-
 -- * handshake
 
 handshake :: Config -> Connection -> Logger -> IO (Either WSError WSSessionId)
