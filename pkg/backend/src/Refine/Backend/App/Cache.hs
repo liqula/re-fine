@@ -3,10 +3,10 @@
 
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
--- | (This module is called "Cache" for historical reasons.  It's really more of a "WebSocket"
--- protocol module, perhaps we should rename it.)
-module Refine.Backend.App.Cache  -- FIXME: rename to WebSocket.  this is the only place where
-  ( startWebSocketServer         -- communication happens, it's not just about caching.
+-- | FIXME: This module is called "Cache" for historical reasons.  It's really more of a "WebSocket"
+-- protocol module, perhaps we should rename it.
+module Refine.Backend.App.Cache
+  ( startWebSocketServer
   , resetWebSocketMVar
 
     -- * exported for testing only
@@ -35,8 +35,13 @@ import Refine.Backend.Database
 import Refine.Backend.Logger
 
 
+-- * types
+
 type WebSocketMVar = MVar (Map WSSessionId WebSocketSession)
 type WebSocketSession = ((Connection, MVar AppState), Set CacheKey)
+
+
+-- * session store
 
 -- | This is the place where all the session's 'AppState's are kept between websocket
 -- connections.
@@ -75,6 +80,8 @@ closeWsConn n = do
     pure (Map.delete n cmap, ())
 
 
+-- * monad
+
 class MonadWS m where
   sendMessage    :: Maybe WSSessionId -> Connection -> ToClient -> m ()
   receiveMessage :: Maybe WSSessionId -> Connection -> m ToServer
@@ -98,6 +105,8 @@ logWSMessage mclientId msg = appLog LogDebug $
   show msg
 
 
+-- * cache
+
 getData :: CacheKey -> App ServerCache
 getData = \case
   CacheKeyVDoc i       -> App.getVDoc i       <&> \val -> mempty & scVDocs       .~ Map.singleton i val
@@ -108,7 +117,6 @@ getData = \case
   CacheKeyGroupIds     -> App.getGroups       <&> \val -> mempty & scGroupIds    .~ Just (Set.fromList $ (^. groupID) <$> val)
   CacheKeyUserIds      -> App.getUsers        <&> \val -> mempty & scUserIds     .~ Just val
 
-
 instance Database db => MonadCache (AppM db) where
     invalidateCaches keys = do
         cmap <- liftIO $ takeMVar webSocketMVar
@@ -118,7 +126,10 @@ instance Database db => MonadCache (AppM db) where
             sendMessage (Just n) conn . TCInvalidateKeys $ Set.toList d
         liftIO $ putMVar webSocketMVar cmap'
 
--- | FIXME: delete disconnected clients' data
+
+-- * server
+
+-- | TODO: delete disconnected clients' data
 startWebSocketServer :: Config -> (forall a. AppM DB a -> IO (Either ApiError a)) -> Middleware
 startWebSocketServer cfg toIO = websocketsOr options server
   where
@@ -132,7 +143,7 @@ startWebSocketServer cfg toIO = websocketsOr options server
       clientId <- handshake cfg conn (mkLogger cfg)
       forever (cmdLoopStepFrame toIO conn clientId (cmdLoopStep conn clientId)
                 `catch` handleAllErrors cfg conn (mkLogger cfg) clientId)
-        `catch` giveUp conn (mkLogger cfg) clientId  -- FUTUREWORK: handle exceptions during inital handshake?
+        `catch` giveUp conn (mkLogger cfg) clientId  -- TODO: handle exceptions during inital handshake?
 
 handleAllErrors :: Config -> Connection -> Logger -> WSSessionId -> SomeException -> IO ()
 handleAllErrors cfg conn logger clientId e = do
@@ -160,6 +171,8 @@ wserror :: Monad m => WSError -> m a
 wserror = error . show
 
 
+-- * handshake
+
 handshake :: Config -> Connection -> Logger -> IO WSSessionId
 handshake cfg conn logger = (receiveMessage Nothing conn `runReaderT` logger) >>= \case
   -- the client is reconnected, its WSSessionId is n
@@ -181,6 +194,9 @@ handshake cfg conn logger = (receiveMessage Nothing conn `runReaderT` logger) >>
 pingLoop :: HasCallStack => (forall a. AppM DB a -> IO (Either ApiError a)) -> Connection -> IO ()
 pingLoop toIO conn = either (error . show) (forkPingThread conn . timespanSecs)
                      =<< toIO (asks . view $ appConfig . cfgWSPingPeriod)
+
+
+-- * MonadApp
 
 cmdLoopStepFrame :: forall m. (m ~ AppM DB ()) => (m -> IO (Either ApiError ())) -> Connection -> WSSessionId -> m -> IO ()
 cmdLoopStepFrame toIO conn clientId = dolift . dostate
