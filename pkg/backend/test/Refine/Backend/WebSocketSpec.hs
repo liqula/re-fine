@@ -141,11 +141,12 @@ specStories = describe "stories" . around wsBackend $ do
       stressers port 100 3
 
   it "generating session ids is not too expensive" $ \_ -> do
-    -- generating 10k session ids takes <2secs in ghci.  shrinking the getEntropy parameter has little effect on this.
+    -- generating 10k session ids takes <2secs in ghci.  shrinking the getEntropy parameter or not
+    -- calling 'wsBackend'' seems to have little effect on this.
     let n = 100
-    () <- print =<< getCurrentTime
+    when verbose_ $ print =<< getCurrentTime
     sids <- replicateM n mkWSSessionId
-    () <- print =<< getCurrentTime
+    when verbose_ $ print =<< getCurrentTime
     length sids `shouldBe` n
 
   it "story 1" $ do
