@@ -124,7 +124,7 @@ startWebSocketServer cfg toIO = websocketsOr options server
       pingLoop toIO conn
       eClientId <- handshake cfg conn (mkLogger cfg)
       case eClientId of
-        Right clientId -> forever (cmdLoopStepFrame toIO conn clientId (cmdLoopStep conn clientId) >>= \case
+        Right clientId -> forever (stepWrapper toIO conn clientId (step conn clientId) >>= \case
                                       Left err -> handleAllErrors cfg conn (mkLogger cfg) clientId err
                                       Right () -> pure ())
           `catch` giveUp conn (mkLogger cfg) clientId  -- TODO: handle exceptions during inital handshake?
@@ -173,11 +173,10 @@ pingLoop toIO conn = either (error . show) (forkPingThread conn . timespanSecs)
 
 -- * MonadApp
 
--- TODO: rename to stepWrapper
-cmdLoopStepFrame :: forall m. (m ~ AppM DB ())
+stepWrapper :: forall m. (m ~ AppM DB ())
                  => (m -> IO (Either ApiError ())) -> Connection -> WSSessionId
                  -> m -> IO (Either ApiError ())
-cmdLoopStepFrame toIO conn clientId = toIO . dostate
+stepWrapper toIO conn clientId = toIO . dostate
   where
     dostate :: m -> m
     dostate cmd = do
@@ -189,10 +188,9 @@ cmdLoopStepFrame toIO conn clientId = toIO . dostate
       liftIO . putMVar appStateMVar =<< get
 
 
--- TODO: rename to step
 -- | Application engine.  From here on inwards, all actions need to be authorization-checked.
-cmdLoopStep :: Connection -> WSSessionId -> (MonadWS m, MonadApp m) => m ()
-cmdLoopStep conn clientId = do
+step :: Connection -> WSSessionId -> (MonadWS m, MonadApp m) => m ()
+step conn clientId = do
   let sendmsg = sendMessage (Just clientId) conn
   msg <- receiveMessage (Just clientId) conn
   appLog LogDebug . ("appState = " <>) . show =<< get
