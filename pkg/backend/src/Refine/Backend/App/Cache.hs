@@ -41,6 +41,9 @@ import Refine.Backend.Logger
 type WebSocketMVar = MVar (Map WSSessionId WebSocketSession)
 type WebSocketSession = ((Connection, MVar AppState), Set CacheKey)
 
+newtype WSError = WSErrorExpectedTSGreeting ToServer
+  deriving (Eq, Show)
+
 
 -- * session store
 
@@ -119,56 +122,49 @@ startWebSocketServer cfg toIO = websocketsOr options server
     server pendingconnection = do
       conn <- acceptRequest pendingconnection
       pingLoop toIO conn
-      clientId <- handshake cfg conn (mkLogger cfg)
-      forever (cmdLoopStepFrame toIO conn clientId (cmdLoopStep conn clientId)
-                `catch` handleAllErrors cfg conn (mkLogger cfg) clientId)
-        `catch` giveUp conn (mkLogger cfg) clientId  -- TODO: handle exceptions during inital handshake?
+      eClientId <- handshake cfg conn (mkLogger cfg)
+      case eClientId of
+        Right clientId -> forever (cmdLoopStepFrame toIO conn clientId (cmdLoopStep conn clientId) >>= \case
+                                      Left err -> handleAllErrors cfg conn (mkLogger cfg) clientId err
+                                      Right () -> pure ())
+          `catch` giveUp conn (mkLogger cfg) clientId  -- TODO: handle exceptions during inital handshake?
+        Left err -> throwIO . ErrorCall . show $ err
 
-handleAllErrors :: Config -> Connection -> Logger -> WSSessionId -> SomeException -> IO ()
-handleAllErrors cfg conn logger clientId e = do
+handleAllErrors :: Config -> Connection -> Logger -> WSSessionId -> ApiError -> IO ()
+handleAllErrors _cfg conn logger _clientId e = do
   unLogger logger LogError $ show e
   sendMessage Nothing conn TCReset `runReaderT` logger
-  clientId' <- handshake cfg conn logger
-  assert (clientId' == clientId) $ pure ()
+  -- TODO: (TCError ApiError) instead of (TCReset)
+  -- TODO: disconnect now?  no, probably too harsh.
 
 giveUp :: Connection -> Logger -> WSSessionId -> SomeException -> IO ()
 giveUp conn logger clientId e = do
-  unLogger logger LogError . show . WSErrorResetFailed $ show e
+  unLogger logger LogError $ "reset failed: " <> show e
   closeWsConn clientId
   sendClose conn ("Cache.hs: could not reset connection, giving up." :: ST)
     -- (FUTUREWORK: we should flush any remaining incoming messages here; see 'sendClose'.)
 
 
-data WSError
-  = WSErrorUnexpectedPacket ToServer
-  | WSErrorCommandFailed ApiError
-  | WSErrorUnknownError String
-  | WSErrorResetFailed String
-  deriving (Eq, Show)
-
-wserror :: Monad m => WSError -> m a
-wserror = error . show
-
-
 -- * handshake
 
-handshake :: Config -> Connection -> Logger -> IO WSSessionId
+-- | TODO: make this all constraints
+handshake :: Config -> Connection -> Logger -> IO (Either WSError WSSessionId)
 handshake cfg conn logger = (receiveMessage Nothing conn `runReaderT` logger) >>= \case
   -- the client is reconnected, its WSSessionId is n
-  TSGreeting (Just n) -> do
+  TSGreeting (Just clientId) -> do
     cmap <- takeMVar webSocketMVar
-    putMVar webSocketMVar $ Map.adjust (_2 .~ mempty) n cmap
+    putMVar webSocketMVar $ Map.adjust (_2 .~ mempty) clientId cmap
     sendMessage Nothing conn (TCRestrictKeys []) `runReaderT` logger
         -- TUNING: only send this if we know something happened since the disconnect.
-    pure n
+    pure $ Right clientId
 
   -- the first connection of the client
   TSGreeting Nothing -> do
     clientId <- openWsConn cfg conn
     sendMessage Nothing conn (TCGreeting clientId) `runReaderT` logger
-    pure clientId
+    pure $ Right clientId
 
-  bad -> wserror $ WSErrorUnexpectedPacket bad
+  bad -> pure . Left . WSErrorExpectedTSGreeting $ bad
 
 pingLoop :: HasCallStack => (forall a. AppM DB a -> IO (Either ApiError a)) -> Connection -> IO ()
 pingLoop toIO conn = either (error . show) (forkPingThread conn . timespanSecs)
@@ -177,24 +173,23 @@ pingLoop toIO conn = either (error . show) (forkPingThread conn . timespanSecs)
 
 -- * MonadApp
 
-cmdLoopStepFrame :: forall m. (m ~ AppM DB ()) => (m -> IO (Either ApiError ())) -> Connection -> WSSessionId -> m -> IO ()
-cmdLoopStepFrame toIO conn clientId = dolift . dostate
+-- TODO: rename to stepWrapper
+cmdLoopStepFrame :: forall m. (m ~ AppM DB ())
+                 => (m -> IO (Either ApiError ())) -> Connection -> WSSessionId
+                 -> m -> IO (Either ApiError ())
+cmdLoopStepFrame toIO conn clientId = toIO . dostate
   where
     dostate :: m -> m
     dostate cmd = do
       Just ((_, appStateMVar), _) <- Map.lookup clientId <$> liftIO (readMVar webSocketMVar)
       put =<< liftIO (takeMVar appStateMVar)
       sessvalid <- verifyAppState
-      unless sessvalid $ sendMessage (Just clientId) conn TCLogout
+      unless sessvalid $ sendMessage (Just clientId) conn TCLogout  -- TODO: or TCError, rather?
       cmd
       liftIO . putMVar appStateMVar =<< get
 
-    dolift :: m -> IO ()
-    dolift cmd = toIO cmd >>= \case
-      Left e -> wserror $ WSErrorCommandFailed e
-      Right () -> pure ()
 
-
+-- TODO: rename to step
 -- | Application engine.  From here on inwards, all actions need to be authorization-checked.
 cmdLoopStep :: Connection -> WSSessionId -> (MonadWS m, MonadApp m) => m ()
 cmdLoopStep conn clientId = do
@@ -235,7 +230,10 @@ cmdLoopStep conn clientId = do
                               -> void $ App.toggleSimpleVoteOnDiscussion nid x
       TSDeleteVote eid        -> void $ App.deleteSimpleVoteOnEdit eid
 
-      bad@(TSGreeting _)      -> wserror $ WSErrorUnexpectedPacket bad
+      bad@(TSGreeting _) -> throwError . AppUnknownError $ "unexpected package: " <> cs (show bad)
+        -- FUTUREWORK: this should be a WSError, but we can't easily throw this here.  could we have
+        -- a constraint set here with two exception types, distinguishable by their error type?
+        -- then we could throw 'WSError' here and extend that with a second error constructor.
 
 
 -- * cache
