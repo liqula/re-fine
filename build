@@ -42,6 +42,10 @@ assert_cmd cabal
 assert_cmd nix-build
 assert_cmd tidy  # debian: apt-get install tidy; everybody else: http://www.html-tidy.org/
 
+if [ "$IN_NIX_SHELL" == "1" ]; then
+    echo "please do not run $0 from within nix-shell"; exit 1
+fi
+
 RESOLVER=lts-8.11
 
 stack setup --resolver $RESOLVER
