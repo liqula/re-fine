@@ -15,13 +15,16 @@ module Refine.Backend.App.Cache
   ) where
 #include "import_backend.hs"
 
+import           Control.Exception
 import           Control.Concurrent
-import           Network.Wai (Middleware)
-import           System.IO.Unsafe
-import           Network.WebSockets
-import           Network.Wai.Handler.WebSockets
 import qualified "cryptonite" Crypto.Hash as CRT
 import qualified Crypto.Random.Entropy as CRT
+import           Network.Wai.Handler.WebSockets
+import           Network.Wai (Middleware)
+import           Network.WebSockets
+import           Network.WebSockets.Connection
+import           System.IO.Unsafe
+import           System.Timeout (timeout)
 
 import Refine.Common.Types
 import Refine.Common.Rest (ApiError)
@@ -78,11 +81,6 @@ openWsConn cfg conn = do
     let cmap' = Map.insert i ((conn, appState), mempty) cmap
     pure (cmap', i)
 
-closeWsConn :: WSSessionId -> IO ()
-closeWsConn n = do
-  modifyMVar webSocketMVar $ \cmap ->do
-    pure (Map.delete n cmap, ())
-
 
 -- * monad
 
@@ -111,43 +109,72 @@ logWSMessage mclientId msg = appLog LogDebug $
 
 -- * server
 
--- | TODO: delete disconnected clients' data
 startWebSocketServer :: Config -> (forall a. AppM DB a -> IO (Either ApiError a)) -> Middleware
 startWebSocketServer cfg toIO = websocketsOr options server
   where
     options :: ConnectionOptions
     options = defaultConnectionOptions
 
+    logger :: Logger
+    logger = mkLogger cfg
+
     server :: ServerApp
-    server pendingconnection = do
+    server pendingconnection = handle (handleHandshakeException logger) $ do
       conn <- acceptRequest pendingconnection
-      pingLoop toIO conn
-      eClientId <- handshake cfg conn (mkLogger cfg)
-      case eClientId of
-        Right clientId -> forever (stepWrapper toIO conn clientId (step conn clientId) >>= \case
-                                      Left err -> handleAllErrors cfg conn (mkLogger cfg) clientId err
-                                      Right () -> pure ())
-          `catch` giveUp conn (mkLogger cfg) clientId  -- TODO: handle exceptions during inital handshake?
-        Left err -> throwIO . ErrorCall . show $ err
+      (do
+        pingLoop toIO conn
+        eClientId <- handshake cfg conn logger
+        case eClientId of
+          Right clientId ->
+            forever (stepWrapper toIO conn clientId (step conn clientId)
+                      >>= \case Left err -> handleUncaughtApiError cfg conn logger clientId err
+                                Right () -> pure ())
+          Left err -> handleHandshakeError conn logger err)
+        `catch` handleConnectionException conn logger
+        `catch` handleAnyException conn logger
 
-handleAllErrors :: Config -> Connection -> Logger -> WSSessionId -> ApiError -> IO ()
-handleAllErrors _cfg conn logger _clientId e = do
-  unLogger logger LogError $ show e
+
+-- | thrown by 'acceptRequest'.
+handleHandshakeException :: Logger -> HandshakeException -> IO ()
+handleHandshakeException logger err = do
+  unLogger logger LogInfo $ show err
+
+handleUncaughtApiError :: Config -> Connection -> Logger -> WSSessionId -> ApiError -> IO ()
+handleUncaughtApiError _cfg conn logger _clientId err = do
+  unLogger logger LogError $ show err
   sendMessage Nothing conn TCReset `runReaderT` logger
-  -- TODO: (TCError ApiError) instead of (TCReset)
-  -- TODO: disconnect now?  no, probably too harsh.
+  -- TODO: (TCError ApiError) instead of (TCReset); no need to log the error any more; inline sendMessage on the call side.
 
-giveUp :: Connection -> Logger -> WSSessionId -> SomeException -> IO ()
-giveUp conn logger clientId e = do
-  unLogger logger LogError $ "reset failed: " <> show e
-  closeWsConn clientId
-  sendClose conn ("Cache.hs: could not reset connection, giving up." :: ST)
-    -- (FUTUREWORK: we should flush any remaining incoming messages here; see 'sendClose'.)
+-- | thrown by 'handshake' below.
+handleHandshakeError :: Connection -> Logger -> WSError -> IO ()
+handleHandshakeError conn logger = giveup conn logger Nothing
+
+-- | FUTUREWORK: sometimes, there is a clientId here, but it's a little awkward to get access to it.
+handleConnectionException :: Connection -> Logger -> ConnectionException -> IO ()
+handleConnectionException conn logger = giveup conn logger Nothing
+
+handleAnyException :: Connection -> Logger -> SomeException -> IO ()
+handleAnyException conn logger = giveup conn logger Nothing
+
+-- | Given an error, log it and close the connection.  (Otherwise the client may keep waiting for us
+-- to say something.)  Note that we do not gc sessions here.  The client can still open a new
+-- connection and connect with the old clientId.
+giveup :: (Show err) => Connection -> Logger -> Maybe WSSessionId -> err -> IO ()
+giveup conn logger mClientId err = do
+  unLogger logger LogInfo $ "giveup: " <> show (mClientId, err)
+  void . forkIO . dropExceptions $ do
+    -- code 1011: "unexpected condition" http://tools.ietf.org/html/rfc6455#section-7.4
+    sendCloseCode @ST conn 1011 "bye"
+    void . timeout (timespanUs $ TimespanSecs 45) $ do
+      forever receiveDataMessage conn
+
+dropExceptions :: IO () -> IO ()
+dropExceptions = handle (\(SomeException _) -> pure ())
+
 
 
 -- * handshake
 
--- | TODO: make this all constraints
 handshake :: Config -> Connection -> Logger -> IO (Either WSError WSSessionId)
 handshake cfg conn logger = (receiveMessage Nothing conn `runReaderT` logger) >>= \case
   -- the client is reconnected, its WSSessionId is n
