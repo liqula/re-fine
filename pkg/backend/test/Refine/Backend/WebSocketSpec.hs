@@ -245,4 +245,6 @@ specErrors = describe "errors" . around wsBackend $ do
 
 
 logShouldContain :: String -> Expectation
-logShouldContain substr = readTestLogfile >>= (`shouldContain` substr)
+logShouldContain substr = do
+  pendingWith "#459"
+  readTestLogfile >>= (`shouldContain` substr)
