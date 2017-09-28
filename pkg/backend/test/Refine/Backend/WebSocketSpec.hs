@@ -240,7 +240,7 @@ specErrors = describe "errors" . around wsBackend $ do
     respLogin <- askQuestion conn $ TSLogin (Login "admin" "pass")
     show respLogin `shouldContain` "(Right (User {_userMetaID = MetaID {_miID = ID 1, _miMeta = MetaInfo {_metaCreatedBy = Anonymous"
     let noSuchGroup = ID 98691
-    TCReset <- askQuestion conn $ TSMissing [CacheKeyGroup noSuchGroup]
+    TCError _ <- askQuestion conn $ TSMissing [CacheKeyGroup noSuchGroup]
     logShouldContain `mapM_` ["AppDBError (DBNotFound", show (noSuchGroup ^. unID)]
 
 

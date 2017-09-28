@@ -54,10 +54,9 @@ initWebSocket = do
                   (_, putfun) <- takeMVar webSocketMVar
                   putMVar webSocketMVar (n, putfun)
                   consoleLogJSStringM "WS" $ cs (show s)
-              TCReset -> do
-                  (n, putfun) <- readMVar webSocketMVar
-                  handshake (Just n) putfun
-                  consoleLogJSStringM "WS" $ "Reset " <> cs (show n)
+              e@(TCError _) -> do
+                  (n, _putfun) <- readMVar webSocketMVar
+                  consoleLogJSStringM "WS" . cs $ show (n, e)
 
               TCCreatedVDoc vid ->
                 dispatchAndExec $ LoadVDoc vid
@@ -81,7 +80,6 @@ initWebSocket = do
                 dispatchAndExec LoginGuardPop
               TCLogout -> do
                 dispatchAndExec . SetCurrentUser $ UserLoggedOut
-                wsParsedMessage TCReset
 
               TCTranslations l10 ->
                 dispatchAndExec $ ChangeTranslations l10

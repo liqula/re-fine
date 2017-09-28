@@ -127,7 +127,7 @@ startWebSocketServer cfg toIO = websocketsOr options server
         case eClientId of
           Right clientId ->
             forever (stepWrapper toIO conn clientId (step conn clientId)
-                      >>= \case Left err -> handleUncaughtApiError cfg conn logger clientId err
+                      >>= \case Left err -> handleUncaughtApiError conn logger err
                                 Right () -> pure ())
           Left err -> handleHandshakeError conn logger err)
         `catch` handleConnectionException conn logger
@@ -139,11 +139,9 @@ handleHandshakeException :: Logger -> HandshakeException -> IO ()
 handleHandshakeException logger err = do
   unLogger logger LogInfo $ show err
 
-handleUncaughtApiError :: Config -> Connection -> Logger -> WSSessionId -> ApiError -> IO ()
-handleUncaughtApiError _cfg conn logger _clientId err = do
-  unLogger logger LogError $ show err
-  sendMessage Nothing conn TCReset `runReaderT` logger
-  -- TODO: (TCError ApiError) instead of (TCReset); no need to log the error any more; inline sendMessage on the call side.
+handleUncaughtApiError :: Connection -> Logger -> ApiError -> IO ()
+handleUncaughtApiError conn logger err = do
+  sendMessage Nothing conn (TCError err) `runReaderT` logger
 
 -- | thrown by 'handshake' below.
 handleHandshakeError :: Connection -> Logger -> WSError -> IO ()
