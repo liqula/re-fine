@@ -234,9 +234,7 @@ instance NFData (EEdit (NonEditable a)) where rnf _ = error "impossible"
 ---------------------------------------- atomic data (can be replaced but cannot be edited)
 
 newtype Atom a = Atom { unAtom :: a }
-  deriving (Eq, Ord, Bounded, Enum, NFData, ToJSON, FromJSON, Arbitrary)
-
-instance Show a => Show (Atom a) where show = show . unAtom
+  deriving (Eq, Show, Ord, Bounded, Enum, NFData, ToJSON, FromJSON, Arbitrary)
 
 instance (Eq a) => Editable (Atom a) where
     newtype EEdit (Atom a) = EAtom a
