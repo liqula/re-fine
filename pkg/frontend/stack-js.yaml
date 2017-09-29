@@ -1,0 +1,61 @@
+# this file should not be obsoleted by build.nix.  the ghc used here
+# has known issues (https://github.com/ghcjs/ghcjs/issues/601,
+# https://github.com/ghcjs/ghcjs/issues/588), but it's much faster to
+# compile with stack than with the current nix setup, and the nix
+# setup does not work on macos.  so this file is left here for swifter
+# development.
+
+resolver: lts-8.11
+
+
+# START __GHCJS__
+# see also: stack.yaml
+
+compiler: ghcjs-0.2.1.9008011_ghc-8.0.2
+compiler-check: match-exact
+
+# for custom ghcjs compilers, set version like this:
+# ghcjs-`ghcjs --numeric-version`_ghc-`ghcjs --numeric-ghc-version`
+#export PATH=/home/mf/src/ghcjs/.cabal-sandbox/bin:$PATH
+#stack build --fast --system-ghc
+#compiler: ghcjs-0.2.1_ghc-8.0.2
+#compiler-check: match-exact
+
+setup-info:
+  ghcjs:
+    source:
+      ghcjs-0.2.1.9008011_ghc-8.0.2:
+        url: https://github.com/zerobuzz/ghcjs-stack-dist/raw/master/ghcjs-0.2.1.9008011.tar.gz
+        sha1: a72a5181124baf64bcd0e68a8726e65914473b3b
+      ghcjs-0.2.1.9007019_ghc-8.0.1:
+        url: http://ghcjs.tolysz.org/ghc-8.0-2017-02-05-lts-7.19-9007019.tar.gz
+        sha1: d2cfc25f9cda32a25a87d9af68891b2186ee52f9
+      ghcjs-0.2.1.9007013_ghc-8.0.1:
+        url: http://ghcjs.tolysz.org/ghc-8.0-2016-12-18-lts-7.13-9007013.tar.gz
+        sha1: 530c4ee5e19e2874e128431c7ad421e336df0303
+
+# END __GHCJS__
+
+packages:
+- '.'
+- location: '../common'
+  extra-dep: true
+- location: '../prelude'
+  extra-dep: true
+- location:
+    git: https://github.com/liqula/react-hs
+    commit: 20afefb10e2d8f9a126bc62d2058fe4735b3a31c
+  extra-dep: true
+  subdirs:
+  - react-hs
+
+extra-deps:
+- basic-sop-0.2.0.1
+- functor-infix-0.0.4
+- i18n-0.4.0.0
+- json-sop-0.2.0.2
+- lens-sop-0.2.0.1
+
+- react-hs-0.1.0
+- language-css-0.0.3
+- fingertree-tf-0.1.0.0

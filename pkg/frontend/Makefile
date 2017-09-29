@@ -5,6 +5,7 @@
 
 .PHONY: all clean
 INSTALL_ROOT:=dist/build/refine-frontend
+STACK_INSTALL_ROOT:=$(shell stack --stack-yaml=stack-js.yaml path --local-install-root)
 
 # to build with cabal:
 # curl https://www.stackage.org/lts-7.19/cabal.config >> cabal.config
@@ -23,7 +24,7 @@ GOOGLE_CLOSURE=time java -jar ./closure-compiler/closure-compiler-v20170626.jar 
 
 
 # all: js-build/install-root js-build/frontend.min.js
-all: js-build/install-root js-build/frontend.js
+all: js-build/frontend.js
 
 optimize: all js-build/frontend.min.js
 	cp js-build/frontend.min.js js-build/frontend.js
@@ -40,9 +41,22 @@ js-build/frontend.min.js: js-build/frontend.js
 	$(GOOGLE_CLOSURE) js-build/frontend.js > js-build/frontend.min.js
 	ls -alF js-build/frontend.js js-build/frontend.min.js
 
-js-build/frontend.js: setup-js-build $(INSTALL_ROOT)/refine-frontend.jsexe/all.js
+js-build/frontend.js: js-build/install-root setup-js-build $(INSTALL_ROOT)/refine-frontend.jsexe/all.js
 	echo "(function(global,React,ReactDOM) {" > js-build/frontend.js-
 	cat $(INSTALL_ROOT)/refine-frontend.jsexe/all.js >> js-build/frontend.js-
+	echo "})(window, window['React'], window['ReactDOM']);" >> js-build/frontend.js-
+	sed -i 's/goog.provide.*//' js-build/frontend.js-
+	sed -i 's/goog.require.*//' js-build/frontend.js-
+	mv js-build/frontend.js- js-build/frontend.js
+
+# build without nix.  see stack-js.yaml for why.
+via-stack: setup-js-build $(STACK_INSTALL_ROOT)/bin/refine-frontend.jsexe/all.js
+	mkdir -p js-build
+	cp images/favicon.ico js-build/
+	ln -sf $(STACK_INSTALL_ROOT) js-build/install-root
+	stack build --stack-yaml=stack-js.yaml --flag refine-frontend:-ghc-O2 --ghc-options="-O0 -fno-ignore-asserts"
+	echo "(function(global,React,ReactDOM) {" > js-build/frontend.js-
+	cat $(STACK_INSTALL_ROOT)/bin/refine-frontend.jsexe/all.js >> js-build/frontend.js-
 	echo "})(window, window['React'], window['ReactDOM']);" >> js-build/frontend.js-
 	sed -i 's/goog.provide.*//' js-build/frontend.js-
 	sed -i 's/goog.require.*//' js-build/frontend.js-
