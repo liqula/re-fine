@@ -1,0 +1,361 @@
+
+/* EDITORPAGE COMMON */
+
+.editorpage-header {
+    //background-color: $c_discussion_bubble;
+    border-bottom: 1px solid $c_discussion_background;
+    box-sizing: border-box;
+    display: flex;
+    height: 8 * $dunit;
+    justify-content: space-between;
+    position: relative;
+    width: 100%;
+    min-width: 200 * $dunit;
+
+    &__column1 {
+      @include sidebar-width;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    &__column2 {
+      display: flex;
+      width: $editor-content-width;
+      justify-content: space-between;
+    }
+
+    &__column3 {
+      @include sidebar-width;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    &__vertical-bar {
+      border-left: 1px solid white;
+      margin: $dunit 0;
+    }
+
+    &__ibutton {
+      padding: $dunit;
+      //height: $icon-size-xxlarge;
+      //width: $icon-size-xxlarge;
+    }
+}
+
+.editorpage-body {
+  display: flex;
+  height: calc(100vh - 8 * #{$dunit});
+}
+
+.editorpage-center-content {
+  //background-color: blue;
+  flex: 0 0 ($editor-content-width);
+  height: 100%;
+  overflow: scroll;
+
+  &__text {
+    padding: 2*$dunit;
+    width: $content-box-width;
+  }
+}
+
+.editorpage-centerright-content {
+  //background-color: blue;
+  //flex: (($editor-content-width + $editor-sidebar-width)/1px) 0 ($editor-content-width + $editor-sidebar-width);
+  //flex: 1 0 ($editor-content-width + $editor-sidebar-width);
+  //width: 100%; // scrollbar on right border of window?
+  //min-width: calc(100vw - ((100% - 720px) / 2) ); // scrollbar on right border of window?
+  
+  height: 100%;
+  min-width: $editor-content-width;
+  overflow: scroll;
+}
+
+/* BOX */
+
+.content-box {
+  //@include centered;
+  border-radius: $border-radius;
+  box-sizing: border-box;
+  //height: 50px;
+  padding: $dunit;
+  width: $content-box-width;
+  margin-top: $dunit;
+
+  &__header {
+    display: flex;
+    justify-content: space-between;
+
+    &__label {
+      @include text-normal;
+      line-height: $icon-size-xlarge;
+      margin-right: $dunit;
+    }
+  }
+
+  &__body {
+    padding: $dunit;
+  }
+
+  &__form-div {
+    @include centered;
+    display: flex;
+    justify-content: space-between;
+    margin-top: 2 * $dunit;
+    width: $content-box-width - (4 * $dunit);
+  }
+
+  &__form-textarea {
+    border: 1px solid white;    
+    border-radius: $border-radius;
+    box-sizing: border-box;
+    max-width: $content-box-width - (12 * $dunit);
+    min-width: $content-box-width - (12 * $dunit);
+    width: $content-box-width - (12 * $dunit);
+  }
+
+  &__form-ibutton-div {
+    display: flex;
+    //vertical-align: middle;
+    align-items: center;
+  }
+
+  &__hr {
+    @include centered;
+    border-bottom: 1px solid $c_blue_dark;
+    height: $dunit;
+    width: $content-box-width - (4 * $dunit);
+  }
+
+  &__section {
+    @include centered;
+    @include two-columns-space-between($content-box-width - (4 * $dunit));
+    margin-top: 2 * $dunit;
+
+    &__label {
+      @include text-small;
+      line-height: 4 * $dunit;
+    }
+  }
+
+  &__comment {
+    @include centered;
+    border-radius: $border-radius;
+    box-sizing: border-box;
+    padding: $dunit;
+    width: $content-box-width - (4 * $dunit);
+
+    &__header {
+      @include centered;
+      @include two-columns-space-between($content-box-width - (6 * $dunit));
+    }
+
+    &__header-label {
+      @include text-small;
+      line-height: 4*$dunit;
+    }
+
+    &__body {
+      @include text-small;
+      padding: $dunit;
+    }
+  }
+
+  &__footer {
+    @include centered;
+    @include two-columns-space-between($content-box-width - (4 * $dunit));
+
+    &-label {
+      @include text-normal;
+      line-height: 4 * $dunit;
+    }
+  }
+}
+
+.editorpage-center-content > .content-box {
+  @include centered;
+}
+
+.editorpage-centerright-content > .content-box {
+  margin-left: $dunit;
+}
+
+.discussion-thread-container {
+  height: 100%;
+  overflow: scroll;
+  padding-left: $dunit;
+  padding-right: 4*$dunit;
+  padding-top: $dunit;
+  position: relative;
+  width: 100%;
+  box-sizing: border-box;
+
+  &__text {
+    padding: 2*$dunit;
+    width: $content-box-width;
+  }
+
+  &__tree {
+    border-radius: $border-radius;
+    background-color: $c_discussion_background;
+    display: inline-block;
+    margin-bottom: 2*$dunit;
+    padding: 2*$dunit;
+  }
+}
+
+
+.discussion-thread-root {
+  position: relative;
+  //padding-top: 2*$dunit;
+  //padding-left: 2*$dunit;
+} 
+
+.discussion-thread-child {
+  display: flex;
+  padding-top: 1*$dunit;
+
+  &__icon-column {
+    padding-right: 2*$dunit;
+    padding-top: 1*$dunit;
+    width: 4*$dunit;
+  }
+  &__node-column {
+
+  }
+} 
+
+.editorpage-left-sidebar {
+  @include sidebar-width;
+  //flex: ($editor-sidebar-width/1px) 0 ($editor-sidebar-width);
+  //min-width: $editor-sidebar-width;
+  //width: calc((100% - 720px) / 2);
+  box-sizing: border-box;
+  height: 100%;
+  overflow: scroll;
+  padding: $dunit;
+
+  &__titlebar {
+    display: flex;
+    justify-content: space-between;
+    margin-left:auto; 
+    margin-right:$dunit;
+    padding-right: $dunit;
+    width: $editor-sidebar-width - (3*$dunit);
+
+    &-title {
+
+    }
+    &-icon {
+      //height: $icon-size-xlarge;
+      //width: $icon-size-xlarge;
+    }
+  }
+
+  &__preview {
+    margin-left:auto; 
+    margin-right:$dunit;
+    padding-left: 0*$dunit;
+    padding-top: 1*$dunit;
+    position: relative;
+    width: $editor-sidebar-width - (3*$dunit);
+
+    &-inner {
+      background-color: $c_discussion_bubble;
+      border-radius: 2*$dunit;
+      height: 15*$dunit;
+      margin: $dunit;
+      overflow: hidden;
+      padding: 2*$dunit;
+      position: relative;
+      z-index: 0;
+    }
+
+    &-inner-text {
+      @include text-small;
+      height: 14*$dunit;
+      overflow: hidden;
+    }
+
+    &-inner-bottom {
+      background-color: red;
+      bottom: 0;
+      height: $dunit;
+      left: 0;
+      position: absolute;
+      width: 100%;
+    }
+    &-icon {
+      //height: $icon-size-xlarge;
+      left: 0;
+      position: absolute;
+      top: 0;
+      //width: $icon-size-xlarge;
+      z-index: 1;
+    }
+  }
+}
+
+.editorpage-right-sidebar {
+  @include sidebar-width;
+  box-sizing: border-box;  
+  height: 100%;
+  //min-width: $editor-sidebar-width;
+  overflow: scroll;
+  padding: $dunit;
+
+  &__titlebar {
+    display: flex;
+    justify-content: space-between;
+    padding-right: $dunit;
+
+    &-title {
+
+    }
+    &-icon {
+      //height: $icon-size-xlarge;
+      //width: $icon-size-xlarge;
+    }
+  }
+
+  &__preview {
+    padding-left: 0*$dunit;
+    padding-top: 1*$dunit;
+    position: relative;
+    width: $editor-sidebar-width - (3*$dunit);
+
+    &-inner {
+      background-color: $c_discussion_bubble;
+      border-radius: 2*$dunit;
+      height: 15*$dunit;
+      margin: $dunit;
+      overflow: hidden;
+      padding: 2*$dunit;
+      position: relative;
+      z-index: 0;
+    }
+
+    &-inner-text {
+      font-size: 2*$dunit;
+      height: 14*$dunit;
+      overflow: hidden;
+    }
+
+    &-inner-bottom {
+      background-color: red;
+      bottom: 0;
+      height: $dunit;
+      left: 0;
+      position: absolute;
+      width: 100%;
+    }
+    &-icon {
+      //height: $icon-size-xlarge;
+      position: absolute;
+      right: 0; //2*$dunit;
+      top: 0; //-(2*$dunit);
+      //width: $icon-size-xlarge;
+      z-index: 1;
+    }
+  }
+}

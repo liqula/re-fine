@@ -1,0 +1,33 @@
+$dunit: 6px;
+
+$icon-size-medium: 2 * $dunit;
+$icon-size-large: 3 * $dunit;
+$icon-size-xlarge: 4 * $dunit;
+$icon-size-xxlarge: 6 * $dunit;
+$icon-size-xxxlarge: 9 * $dunit;
+
+//@import url('https://fonts.googleapis.com/css?family=Open+Sans:400,600,700|PT+Serif:400,700');
+
+$font-serif: "PT Serif", Times, serif;
+$font-sans: "Open Sans", Arial, sans-serif;
+
+
+$border-radius: $dunit;
+
+$menupage-container-width: 152 * $dunit;
+$menupage-container-inner-width: $menupage-container-width - (4 * $dunit);
+
+$group-tile-width: 36 * $dunit;
+$group-tile-height: 54 * $dunit;
+
+$document-tile-width: 144 * $dunit;
+$document-tile-height: 24 * $dunit;
+
+$editor-sidebar-width: 40 * $dunit;
+$editor-content-width: 120 * $dunit;
+
+$content-box-width: 116 * $dunit;
+
+$dashboard-item-width: 24 * $dunit;
+$dashboard-item-height: 24 * $dunit;
+

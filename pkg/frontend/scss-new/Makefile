@@ -1,6 +1,6 @@
 SHELL=/bin/bash
 
-default: generate-main once loop
+default: once loop
 
 .phony:
 
