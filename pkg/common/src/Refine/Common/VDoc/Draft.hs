@@ -67,7 +67,7 @@ rangeIsEmpty rc = isEmptyRange . fmap (toStylePosition rc)
 -- * vdoc
 
 rawContentFromCompositeVDoc :: CompositeVDoc -> RawContent
-rawContentFromCompositeVDoc (CompositeVDoc _ base edits discussions) =
+rawContentFromCompositeVDoc cvdoc@(CompositeVDoc _ base edits discussions) =
   addMarksToRawContent marks rawContent
   where
     rawContent = base ^. editVDocVersion
@@ -82,7 +82,8 @@ rawContentFromCompositeVDoc (CompositeVDoc _ base edits discussions) =
         Range x y = toStylePosition rawContent <$> r
 
         next (_: z: _) = z
-        next zs = head zs
+        next (z: _)    = z
+        next []        = error $ "rawContentFromCompositeVDoc: " <> show cvdoc
 
     marks :: [(MarkID, Range Position)]
     marks = [ (MarkContribution (ContribIDEdit k) i, s)

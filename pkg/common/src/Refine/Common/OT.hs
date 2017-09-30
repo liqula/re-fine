@@ -339,7 +339,13 @@ instance Editable a => Editable [a] where
         revInits :: [a] -> [[a]]
         revInits = f []
           where
-            f acc xs = acc: f (head xs: acc) (tail xs)
+            -- NOTE: the following will fail to pattern-match:
+            --
+            -- f acc (x: xs) = acc: f (x: acc) xs
+            -- f acc []      = acc: repeat undefined
+            f acc xs = acc: f (head' xs: acc) (tail' xs)
+            head' (x:_) = x
+            tail' (_:xs) = xs
 
     eMerge d (EditItem i x) (EditItem i' y) | i == i' = editItem i *** editItem i $ merge (d !! i) x y
     eMerge _ (EditItem i _) (DeleteRange i' l) | i >= i' && i < i'+l = ([DeleteRange i' l], [])      -- information lost!

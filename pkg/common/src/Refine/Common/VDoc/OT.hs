@@ -672,8 +672,8 @@ toRawContent (docBlocks -> dls@(_:_))
           key
       where
         (is, as) = unzip [(ST.length txt, s) | DocElem (ChangeSet s) txt <- d]
-        is' = scanl (+) 0 is
-        end = last is'
+        is'      = scanl (+) 0 is
+        (end: _) = reverse is'
 
         ss = mkRanges ((,) 0 <$> Set.toList sty_) $ zip is' as
 

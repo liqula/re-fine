@@ -177,7 +177,7 @@ mergeEditAndRebaseAllSiblings eid = do
   movedCommentOwners :: [MetaInfo] <- db $ do
     edit <- DB.getEdit eid
     base <- DB.getEdit hid
-    let diff = head [di | (di, d) <- edit ^. editSource . unEditSource, d == hid]
+    let (diff: _) = [di | (di, d) <- edit ^. editSource . unEditSource, d == hid]
         trRange = transformRangeOTDoc
                   (concat (coerce diff :: [OT.Edit OTDoc]))
                   (rawContentToDoc $ base ^. editVDocVersion)
