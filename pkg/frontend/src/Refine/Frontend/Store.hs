@@ -218,7 +218,10 @@ handleRouteChange _ r = do
     Right (Route.Process vid)        -> exec $ LoadVDoc vid
     Left _                           -> exec . MainMenuAction . MainMenuActionOpen $ defaultMainMenuTab
   where
-    exec = void . forkIO . executeAction . action @GlobalState
+    exec = void . reactFluxWorkAroundForkIO . executeAction . action @GlobalState
+      -- FIXME: this means we double-fork, once in reactFluxWorkAroundForkIO and once in
+      -- executeAction.  but if we skip either one it won't work any more.  react-hs really needs to
+      -- get more stable.
     emptyGroupForm = FormBegin $ newLocalStateRef (CreateGroup mempty mempty mempty mempty mempty Nothing) r
 
 flushCacheMisses :: IO ()
