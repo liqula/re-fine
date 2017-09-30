@@ -126,10 +126,15 @@ cacheMiss = cacheMisses . pure
 cacheMissId :: CacheLookup v => ID v -> a -> a
 cacheMissId i x = cacheMiss (cacheKey i) x i
 
-gsRawContent :: Getter (GlobalState_ a) RawContent
+gsRawContent :: Getter GlobalState RawContent
 gsRawContent = to $ \case
-  (view gsCompositeVDoc -> Just (Just cvdoc)) -> rawContentFromCompositeVDoc cvdoc
-  _                                           -> mkRawContent $ mkBlock hourglass :| []
+  gs@(view gsDocumentState -> DocumentStateDiff _ _ (eid :: ID Edit) _ _)
+    -> maybe (cacheMissId eid rcHourglass) (^. editVDocVersion) (cacheLookup gs eid)
+  (view gsCompositeVDoc -> Just (Just cvdoc))
+    -> rawContentFromCompositeVDoc cvdoc
+  _ -> rcHourglass
+  where
+    rcHourglass = mkRawContent $ mkBlock hourglass :| []
 
 class CacheLookup a where
   cacheKey :: ID a -> CacheKey
