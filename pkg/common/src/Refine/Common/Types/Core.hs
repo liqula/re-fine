@@ -841,7 +841,9 @@ toStylePosition rc p_@(Position (BlockIndex i_ _) col)
     | col == lb_ = StylePosition p_ $ f 0 bs_
     | otherwise  = StylePosition p_ 0
   where
-    Just (rev, b_: bs_) = focusList (NEL.toList $ rc ^. rawContentBlocks) `atMay` i_
+    (rev, b_: bs_) = case focusList (NEL.toList $ rc ^. rawContentBlocks) `atMay` i_ of
+      Just ok -> ok
+      Nothing -> error $ "toStylePosition: position outside content: " <> show (rc, p_)
     lb_ = len b_
 
     f m [] = m

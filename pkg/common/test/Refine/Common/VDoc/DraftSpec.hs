@@ -4,7 +4,7 @@
 module Refine.Common.VDoc.DraftSpec where
 #include "import_common.hs"
 
-import Data.List.NonEmpty (NonEmpty((:|)))
+import Control.Exception.Base (evaluate)
 import Test.Aeson.GenericSpecs
 import Test.Hspec
 import Test.QuickCheck
@@ -21,10 +21,23 @@ spec = do
     roundtripSpecs (Proxy @RawContent)
 
     it "rawContentFromCompositeVDoc regression test" $ do
-      pendingWith "TODO"
-      -- TODO: 'compositeVDocRegression1' may very well be inconsistent, but in that case we'd like
-      -- a useful error message.  currently we get an unlocated "Prelude.!!: index too large.".
-      (length . show $ rawContentFromCompositeVDoc compositeVDocRegression1) `shouldNotBe` 0
+      let errmsg = "toStylePosition: position outside content: " <> show (rc, pos)
+          rc = RawContent (Block' { _blockText' = "wef"
+                                  , _blockEntityRanges' = mempty
+                                  , _blockStyles' = mempty
+                                  , _blockType' = NormalText
+                                  , _blockDepth' = 0
+                                  , _blockKey' = BlockKey {_unBlockKey = "b0"}
+                                  } :| [])
+                          mempty
+          pos = Position { _blockIndex = BlockIndex { _blockIndexIndex = 2 :: Int
+                                                    , _blockIndexKey = BlockKey {_unBlockKey = "n3ur"}}
+                         , _columnIndex = 0 :: Int
+                         }
+          thrower = show . length . show $ rawContentFromCompositeVDoc compositeVDocRegression1
+
+      evaluate thrower `catch` (\(ErrorCall errmsg') -> pure errmsg')
+        `shouldReturn` errmsg
 
   describe "rangeText" $ do
     it "works" $ do
