@@ -13,15 +13,16 @@ import "hlint" HLint.Generalise
 import "hlint" HLint.HLint
 
 ignore "Redundant do"
-ignore "Use String"
-ignore "Use const"
-ignore "Use fmap"
-ignore "Use list literal"
-ignore "Use record patterns"
 ignore "Unused LANGUAGE pragma"  -- tried to that with `{-# ANN module ... #-}`, but then ghc-8.0.1
                                  -- couldn't find the module keyword any more.
-ignore "Use =<<" -- Do not change concatMap into =<< for sake of readibility.
 ignore "Use &&"
+ignore "Use const"
+ignore "Use =<<" -- Do not change concatMap into =<< for sake of readibility.
+ignore "Use fmap"
+ignore "Use fromMaybe"
+ignore "Use list literal"
+ignore "Use record patterns"
+ignore "Use String"
 
 warn = listToMaybe (filter f xs) ==> find f xs
 warn = isJust $ find f xs ==> any f xs
