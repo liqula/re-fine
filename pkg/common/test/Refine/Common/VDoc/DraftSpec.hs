@@ -9,10 +9,12 @@ import Test.Aeson.GenericSpecs
 import Test.Hspec
 import Test.QuickCheck
 
+import Refine.Common.OT
 import Refine.Common.Test.Arbitrary ()
 import Refine.Common.Test.Samples ()  -- (just importing it so we know it compiles.)
 import Refine.Common.Types
 import Refine.Common.VDoc.Draft
+import Refine.Common.VDoc.OT
 
 
 spec :: Spec
@@ -90,6 +92,20 @@ spec = do
         rangeText BlockBoundaryIsNewline rc (Range (pos 1 2) (pos 1 2)) `shouldBe` ""
         rangeText BlockBoundaryIsNewline rc (Range (pos 1 2) (pos 1 3)) `shouldBe` "f"
         rangeText BlockBoundaryIsNewline rc (Range (pos 1 3) (pos 1 3)) `shouldBe` ""
+
+  describe "showEditAsRawContentWithMarks" $ do
+    let rc0   = rawContentFromST "sdxyf\nwef"
+        rc1 r = rc0 & rawContentBlocks %~ (\(h :| t) -> (h & blockStyles' %~ Set.insert r) :| t)
+
+        check_ r = do
+          pendingWith "TODO"
+          let Right d = rc0 `diff` rc1 (r, Bold)
+              rc' = showEditAsRawContentWithMarks d rc0
+          NEL.head (rc' ^.rawContentBlocks) ^. blockStyles'
+            `shouldBe` Set.fromList [(r, StyleAdded)]
+
+    it "Changing style on 'dxy' shows the location of the edit at 'dxy'." $ check_ (RangeInner 2 4)
+    it "Changing style on 'dxyf' shows the location of the edit at 'dxyf'." $ check_ (RangeInner 2 5)
 
   describe "separateStyles, joinStyles" $ do
     it "joinStyles . separateStyles == id" . property $ \(rawContent :: RawContent) -> do
