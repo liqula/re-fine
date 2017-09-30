@@ -867,14 +867,14 @@ toStyleRanges :: RawContent -> Ranges Position -> Ranges StylePosition
 toStyleRanges rc rs = mconcat $ (rangesFromRange False . fmap (toStylePosition rc)) <$> unRanges rs
 
 -- all positions which maps to the same style position
-stylePositions :: RawContent -> StylePosition -> [Position]
+stylePositions :: RawContent -> StylePosition -> NonEmpty Position
 stylePositions rc (StylePosition p@(Position (BlockIndex i _) _) m)
-    = p: [Position (mkBlockIndex rc j) 0 | j <- [i+1..i+m]]
+    = p :| [Position (mkBlockIndex rc j) 0 | j <- [i+1..i+m]]
 
 -- this computes the minimal selection range
 fromStyleRange :: RawContent -> Range StylePosition -> Range Position
 fromStyleRange rc (Range a b)
-  | a < b = RangeInner (last $ stylePositions rc a) (basePosition b)
+  | a < b = RangeInner (NEL.last $ stylePositions rc a) (basePosition b)
   | a == b = RangeInner (basePosition a) (basePosition a)
   | otherwise = error "range invariant failed"
 
@@ -901,7 +901,7 @@ toLeafSelector top rc (Position (BlockIndex i key) col) = (Position key (SpanInd
 styleRangeToLeafSelectors :: RawContent -> Range StylePosition -> Range LeafSelector
 styleRangeToLeafSelectors rc (Range a b) | a < b = RangeInner a' b'
   where
-    (a', 0) = toLeafSelector True rc . last $ stylePositions rc a
+    (a', 0) = toLeafSelector True rc . NEL.last $ stylePositions rc a
     (b', _) = toLeafSelector False rc $ basePosition b
 
 lineElemLength :: LineElem -> Int
