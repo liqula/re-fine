@@ -40,8 +40,8 @@ instance SometimesLoggable EditorStoreAction where
 transformEditorStore :: EditorStoreAction -> EditorStore -> IO EditorStore
 transformEditorStore act st = do
   consoleLogGlobalAction act
-  st' <- transformEditorStoreHandler act st
-  consoleLogGlobalStateWith (\(EditorStore (EditorState (NoJSONRep j))) -> j) (st /= st') st'
+  st'@(EditorStore (getCurrentRawContent -> rc)) <- transformEditorStoreHandler act st
+  consoleLogGlobalState (st /= st') rc
   pure st'
 
 transformEditorStoreHandler :: EditorStoreAction -> EditorStore -> IO EditorStore
