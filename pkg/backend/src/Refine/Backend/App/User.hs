@@ -49,7 +49,7 @@ login (Login username (Users.PasswordPlain -> password)) = do
   sessionDuration <- asks . view $ appConfig . cfgSessionLength . to timespanToNominalDiffTime
   session <- nothingToError (AppUserNotFound username)
              =<< dbUsersCmd (\db_ -> Users.authUser db_ username password sessionDuration)
-  loginId <- nothingToError AppSessionError
+  loginId <- nothingToError (AppUnknownError "session did not validate after successful login")
              =<< dbUsersCmd (\db_ -> Users.verifySession db_ session 0)
   void $ setUserSession (toUserID loginId) (UserSession session)
   dbUser <- getUser $ toUserID loginId

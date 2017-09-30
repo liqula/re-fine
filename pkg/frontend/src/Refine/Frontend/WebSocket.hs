@@ -35,12 +35,13 @@ initWebSocket = do
           (n, _) <- takeMVar webSocketMVar
           openConnection $ Just n
 
-        wsMessage msg = do
-          case getData msg of
+        wsMessage :: MessageEvent -> IO ()
+        wsMessage msg = case getData msg of
             StringData x -> maybe (error "websockets json decoding error") wsParsedMessage . decode $ cs x
             (BlobData _)        -> error "websockets error: BlobData not supported."
             (ArrayBufferData _) -> error "websockets error: ArrayBufferData not supported."
 
+        wsParsedMessage :: ToClient -> IO ()
         wsParsedMessage = \case
               TCServerCache sc ->
                 executeAction . action @GlobalState . CacheAction $ RefreshServerCache sc
@@ -54,10 +55,9 @@ initWebSocket = do
                   (_, putfun) <- takeMVar webSocketMVar
                   putMVar webSocketMVar (n, putfun)
                   consoleLogJSStringM "WS" $ cs (show s)
-              TCReset -> do
-                  (n, putfun) <- readMVar webSocketMVar
-                  handshake (Just n) putfun
-                  consoleLogJSStringM "WS" $ "Reset " <> cs (show n)
+              e@(TCError _) -> do
+                  (n, _putfun) <- readMVar webSocketMVar
+                  consoleLogJSStringM "WS" . cs $ show (n, e)
 
               TCCreatedVDoc vid ->
                 dispatchAndExec $ LoadVDoc vid
@@ -81,7 +81,6 @@ initWebSocket = do
                 dispatchAndExec LoginGuardPop
               TCLogout -> do
                 dispatchAndExec . SetCurrentUser $ UserLoggedOut
-                wsParsedMessage TCReset
 
               TCTranslations l10 ->
                 dispatchAndExec $ ChangeTranslations l10

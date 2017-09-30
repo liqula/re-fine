@@ -209,7 +209,8 @@ appServantErr' = \case
   ApiUserNotLoggedIn       -> err403
   ApiUserCreationError uce -> userCreationError uce
   ApiCsrfError _           -> err403
-  ApiSessionError          -> err403
+  ApiSessionTimedout       -> err403
+  ApiSessionInvalid        -> err403
   ApiSanityCheckError _    -> err409
   ApiUserHandleError _     -> err500
   ApiL10ParseErrors _      -> err500

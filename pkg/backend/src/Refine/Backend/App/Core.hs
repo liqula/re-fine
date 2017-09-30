@@ -138,7 +138,6 @@ data AppError
   | AppUserCreationError Users.CreateUserError
   | AppUserHandleError UserHandleError
   | AppCsrfError ST
-  | AppSessionError
   | AppSanityCheckError ST
   | AppL10ParseErrors [ST]
   | AppUnauthorized Creds
@@ -168,7 +167,6 @@ toApiError err = l err >> pure (c err)
       AppUserNotLoggedIn         -> appLog LogInfo  $ "AppError: " <> show err
       AppUserCreationError _     -> appLog LogInfo  $ "AppError: " <> show err
       AppCsrfError _             -> appLog LogError $ "AppError: " <> show err
-      AppSessionError            -> appLog LogError $ "AppError: " <> show err
       AppSanityCheckError _      -> appLog LogError $ "AppError: " <> show err
       AppUserHandleError _       -> appLog LogError $ "AppError: " <> show err
       AppL10ParseErrors _        -> appLog LogError $ "AppError: " <> show err
@@ -185,7 +183,6 @@ toApiError err = l err >> pure (c err)
       AppUserNotLoggedIn         -> ApiUserNotLoggedIn
       AppUserCreationError e     -> ApiUserCreationError $ createUserErrorToApiError e
       AppCsrfError e             -> ApiCsrfError e
-      AppSessionError            -> ApiSessionError
       AppSanityCheckError e      -> ApiSanityCheckError e
       AppUserHandleError e       -> ApiUserHandleError . cs $ show e  -- FIXME: implement 'toApiErrorUser'
       AppL10ParseErrors e        -> ApiL10ParseErrors e
