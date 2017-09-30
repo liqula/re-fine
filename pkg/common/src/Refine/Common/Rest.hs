@@ -19,10 +19,8 @@ data ApiError
   | ApiUserNotLoggedIn
   | ApiUserCreationError ApiErrorCreateUser
   | ApiCsrfError ST
-  | ApiSessionTimedout
   | ApiSessionInvalid
   | ApiSanityCheckError ST
-  | ApiUserHandleError ST
   | ApiL10ParseErrors [ST]
   | ApiUnauthorized ST
   | ApiMergeError ST

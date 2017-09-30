@@ -10,8 +10,10 @@ import           System.IO.Unsafe
 #ifdef __GHCJS__
 import           JavaScript.Web.WebSocket
 import           JavaScript.Web.MessageEvent
+import           JavaScript.Web.CloseEvent
 #endif
 
+import Refine.Common.Rest
 import Refine.Common.Types
 import Refine.Frontend.Access
 import Refine.Frontend.Document.Types
@@ -30,7 +32,8 @@ sendMessage conn msg = send (cs $ encode msg) conn
 
 initWebSocket :: (StoreData GlobalState, StoreAction GlobalState ~ GlobalAction, Dispatchable GlobalAction) => IO ()
 initWebSocket = do
-    let wsClose _ = do
+    let wsClose :: CloseEvent -> IO ()
+        wsClose _ = do
           consoleLogJSStringM "WS" "connection closed"
           (n, _) <- takeMVar webSocketMVar
           openConnection $ Just n
@@ -52,12 +55,13 @@ initWebSocket = do
                 executeAction . action @GlobalState . CacheAction . RestrictCacheItems
                 $ Set.fromList keys
               s@(TCGreeting n) -> do
-                  (_, putfun) <- takeMVar webSocketMVar
-                  putMVar webSocketMVar (n, putfun)
+                  (_, ws) <- takeMVar webSocketMVar
+                  putMVar webSocketMVar (n, ws)
                   consoleLogJSStringM "WS" $ cs (show s)
-              e@(TCError _) -> do
-                  (n, _putfun) <- readMVar webSocketMVar
+              TCError e -> do
+                  (n, ws) <- readMVar webSocketMVar
                   consoleLogJSStringM "WS" . cs $ show (n, e)
+                  handleApiError ws e
 
               TCCreatedVDoc vid ->
                 dispatchAndExec $ LoadVDoc vid
@@ -79,17 +83,36 @@ initWebSocket = do
                 dispatchAndExec . SetCurrentUser . UserLoggedIn $ user ^. userID
                 dispatchAndExec $ MainMenuAction MainMenuActionClose
                 dispatchAndExec LoginGuardPop
-              TCLogout -> do
-                dispatchAndExec . SetCurrentUser $ UserLoggedOut
 
               TCTranslations l10 ->
                 dispatchAndExec $ ChangeTranslations l10
 
+        handleApiError :: WebSocket -> ApiError -> IO ()
+        handleApiError ws = \case
+          ApiUnknownError _                       -> ignore
+          ApiVDocVersionError                     -> ignore
+          ApiDBError _                            -> ignore
+          ApiUserNotFound _                       -> ignore  -- handled via 'TCLoginResp'
+          ApiUserNotLoggedIn                      -> ignore
+          ApiUserCreationError _                  -> ignore  -- handled via 'TCCreateUserResp'
+          ApiCsrfError _                          -> ignore  -- (doesn't even apply)
+          ApiSessionInvalid                       -> reconnect
+          ApiSanityCheckError _                   -> ignore
+          ApiL10ParseErrors _                     -> ignore
+          ApiUnauthorized _                       -> ignore
+          ApiMergeError _                         -> ignore
+          ApiRebaseError                          -> ignore
+          ApiSmtpError                            -> ignore
+          where
+            ignore = pure ()
+            reconnect = close Nothing Nothing ws  -- just need to close, re-open happens automatically.
+
+        wsUrl :: JSString
         wsUrl = case clientCfg of
           ClientCfg port host ssl
             -> cs $ (if ssl then "wss://" else "ws://") <> host <> ":" <> cs (show port) <> "/"
 
-
+        openConnection :: Maybe WSSessionId -> IO ()
         openConnection mid = handshake mid =<< do
             connect $ WebSocketRequest
                               wsUrl
@@ -97,6 +120,7 @@ initWebSocket = do
                               (Just wsClose)
                               (Just wsMessage)
 
+        handshake :: Maybe WSSessionId -> WebSocket -> IO ()
         handshake mid ws = do
             sendMessage ws $ TSGreeting mid
             putMVar webSocketMVar (fromMaybe (error "unknown WSSessionId") mid, ws)
@@ -143,6 +167,9 @@ send = error "ghcjs base not available"
 
 getData :: MessageEvent -> MessageEventData
 getData = error "ghcjs base not available"
+
+close :: Maybe Int -> Maybe JSString -> WebSocket -> IO ()
+close = error "ghcjs base not available"
 
 clientCfg :: ClientCfg
 clientCfg = def

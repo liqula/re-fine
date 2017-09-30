@@ -35,7 +35,7 @@ import Refine.Backend.App.VDoc        as App
 import Refine.Backend.Config
 import Refine.Backend.Database
 import Refine.Backend.Logger
-import Refine.Common.Rest (ApiError)
+import Refine.Common.Rest (ApiError(..))
 import Refine.Common.Types
 
 
@@ -207,7 +207,7 @@ stepWrapper toIO conn clientId = toIO . dostate
       Just ((_, appStateMVar), _) <- Map.lookup clientId <$> liftIO (readMVar webSocketMVar)
       put =<< liftIO (takeMVar appStateMVar)
       sessvalid <- verifyAppState
-      unless sessvalid $ sendMessage (Just clientId) conn TCLogout  -- TODO: or TCError, rather?
+      unless sessvalid $ sendMessage (Just clientId) conn (TCError ApiSessionInvalid)
       cmd
       liftIO . putMVar appStateMVar =<< get
 

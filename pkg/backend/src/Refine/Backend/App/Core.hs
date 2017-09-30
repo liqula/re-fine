@@ -136,7 +136,6 @@ data AppError
   | AppUserNotFound ST
   | AppUserNotLoggedIn
   | AppUserCreationError Users.CreateUserError
-  | AppUserHandleError UserHandleError
   | AppCsrfError ST
   | AppSanityCheckError ST
   | AppL10ParseErrors [ST]
@@ -168,7 +167,6 @@ toApiError err = l err >> pure (c err)
       AppUserCreationError _     -> appLog LogInfo  $ "AppError: " <> show err
       AppCsrfError _             -> appLog LogError $ "AppError: " <> show err
       AppSanityCheckError _      -> appLog LogError $ "AppError: " <> show err
-      AppUserHandleError _       -> appLog LogError $ "AppError: " <> show err
       AppL10ParseErrors _        -> appLog LogError $ "AppError: " <> show err
       AppUnauthorized _          -> appLog LogInfo  $ "AppError: " <> show err
       AppMergeError _ _ _ _      -> appLog LogError $ "AppError: " <> show err
@@ -184,7 +182,6 @@ toApiError err = l err >> pure (c err)
       AppUserCreationError e     -> ApiUserCreationError $ createUserErrorToApiError e
       AppCsrfError e             -> ApiCsrfError e
       AppSanityCheckError e      -> ApiSanityCheckError e
-      AppUserHandleError e       -> ApiUserHandleError . cs $ show e  -- FIXME: implement 'toApiErrorUser'
       AppL10ParseErrors e        -> ApiL10ParseErrors e
       AppUnauthorized info       -> ApiUnauthorized (cs $ show info)
       AppMergeError base e1 e2 s -> ApiMergeError $ cs (show (base, e1, e2)) <> ": " <> s
