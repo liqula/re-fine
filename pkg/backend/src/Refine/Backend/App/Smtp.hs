@@ -32,7 +32,7 @@ class IsEmailRecipient r where
   recipientToAddresses :: r -> [Address]
 
 class IsEmailMessage msg where
-  renderEmail :: SmtpCfg -> msg -> RandomGen g => g -> (LBS, g)
+  renderEmail :: SmtpCfg -> msg -> RandomGen g => g -> ([LBS], g)
 
 
 data EmailMessage r = EmailMessage
@@ -63,12 +63,15 @@ instance IsEmailRecipient r => IsEmailRecipient [r] where
 -- * message rendering
 
 instance IsEmailRecipient r => IsEmailMessage (EmailMessage r) where
-  renderEmail cfg msg g = renderMail g mail
+  renderEmail cfg msg g = foldl' aggr ([], g) recipients
     where
-      sender     = Address (Just $ cfg ^. smtpSenderName) (cfg ^. smtpSenderEmail)
+      aggr :: RandomGen g => ([LBS], g) -> Address -> ([LBS], g)
+      aggr (dones, g') adr = case renderMail g' (mail adr) of (done, g'') -> (done: dones, g'')
+
       recipients = recipientToAddresses $ msg ^. emailRecipient
+      sender     = Address (Just $ cfg ^. smtpSenderName) (cfg ^. smtpSenderEmail)
       subj       = msg ^. emailSubject
-      mail       = simpleMail' (head recipients) sender subj (cs $ msg ^. emailBody)
+      mail rcp   = simpleMail' rcp sender subj (cs $ msg ^. emailBody)
 
 
 -- * message sending
@@ -84,9 +87,10 @@ sendMailToAppM msg = do
       appLog LogInfo $ "sendMailTo: no config, email dropped: " <> show msg
     Just (cfg :: SmtpCfg) -> do
       appLog LogInfo $ "sendMailTo: " <> show (cfg, msg)
-      msglbs :: LBS <- liftIO . getStdRandom $ renderEmail cfg msg
+      msgslbs :: [LBS] <- liftIO . getStdRandom $ renderEmail cfg msg
 
-      (liftIO . try $ sendmailCustomCaptureOutput (cs $ cfg ^. smtpSendmailPath) (cs <$> cfg ^. smtpSendmailArgs) msglbs)
+      forM_ msgslbs $ \msglbs -> do
+       (liftIO . try $ sendmailCustomCaptureOutput (cs $ cfg ^. smtpSendmailPath) (cs <$> cfg ^. smtpSendmailArgs) msglbs)
         >>= \case
           Right (out, err) -> do
             do
@@ -113,7 +117,7 @@ checkSendMail cfg = do
             , _emailSubject   = "[starting re-fine server]"
             , _emailBody      = cs $ explainConfig cfg "active server configuration" False
             }
-      msglbs :: LBS <- liftIO . getStdRandom $ renderEmail scfg msg
+      [msglbs :: LBS] <- liftIO . getStdRandom $ renderEmail scfg msg
       result :: Either SomeException (SBS, SBS)
         <- try $ sendmailCustomCaptureOutput (cs $ scfg ^. smtpSendmailPath) (cs <$> scfg ^. smtpSendmailArgs) msglbs
       case result of
