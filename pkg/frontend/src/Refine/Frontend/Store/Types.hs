@@ -122,7 +122,7 @@ cacheMisses keys i _ = unsafePerformIO $ do
 cacheMiss :: CacheKey -> i -> a -> i
 cacheMiss = cacheMisses . pure
 
--- prefer to use this instead of cacheMiss
+-- | prefer to use this instead of 'cacheMiss'
 cacheMissId :: CacheLookup v => ID v -> a -> a
 cacheMissId i x = cacheMiss (cacheKey i) x i
 

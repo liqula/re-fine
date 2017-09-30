@@ -110,7 +110,7 @@ data Edit = Edit
   , _editKind         :: EditKind
   , _editSource       :: EditSource (ID Edit)
   , _editVDoc         :: ID VDoc
-  , _editVDocVersion  :: RawContent     -- FIXME: is it OK to store this in edit (consider serialization)?
+  , _editVDocVersion  :: RawContent     -- TUNING: is it OK to store this in edit (consider serialization)?
   , _editVotes        :: Votes
   , _editChildren     :: Set (ID Edit)
   , _editDiscussions' :: Map (ID Discussion) (Range Position)
