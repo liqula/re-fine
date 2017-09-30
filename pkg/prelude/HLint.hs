@@ -5,6 +5,7 @@ import           Data.String (fromString)
 import           Data.String.Conversions (cs)
 import qualified Data.Text as ST
 import           Debug.Trace
+import           Safe
 
 import "hlint" HLint.Default
 import "hlint" HLint.Dollar
@@ -42,3 +43,9 @@ warn = traceEventIO  ==> errorDoNotUseTrace
 warn = traceEvent    ==> errorDoNotUseTrace
 warn = traceMarker   ==> errorDoNotUseTrace
 warn = traceMarkerIO ==> errorDoNotUseTrace
+
+warn = head          ==> headMay
+warn = last          ==> lastMay
+warn = (!!)          ==> atMay
+warn = a !! b        ==> atMay  -- like @let Just x = a `atMay` b in x@: pattern match failures
+                                -- produce easily locatable errors.

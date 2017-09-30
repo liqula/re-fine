@@ -803,7 +803,9 @@ treeRoot f (Node a t) = f a <&> flip Node t
 
 -- TUNING: speed this up by adding an index structure to RawContent
 mkBlockIndex :: RawContent -> Int -> BlockIndex
-mkBlockIndex rc i = BlockIndex i $ ((rc ^. rawContentBlocks) NEL.!! i) ^. blockKey
+mkBlockIndex rc i =
+  let Just h = NEL.toList (rc ^. rawContentBlocks) `atMay` i
+  in BlockIndex i $ h ^. blockKey
 
 -- TUNING: speed this up by adding an index structure to RawContent
 fromSelectionPoint :: RawContent -> SelectionPoint -> Position
@@ -829,7 +831,7 @@ surroundingPositions rc (Position (BlockIndex i _) col)
       ]
     )
   where
-    (prev, this: next) = focusList (len <$> NEL.toList (rc ^. rawContentBlocks)) !! i
+    Just (prev, this: next) = focusList (len <$> NEL.toList (rc ^. rawContentBlocks)) `atMay` i
     len b = ST.length $ b ^. blockText
 
 -- TUNING: speed this up by adding an index structure to RawContent
@@ -839,7 +841,7 @@ toStylePosition rc p_@(Position (BlockIndex i_ _) col)
     | col == lb_ = StylePosition p_ $ f 0 bs_
     | otherwise  = StylePosition p_ 0
   where
-    (rev, b_: bs_) = focusList (NEL.toList $ rc ^. rawContentBlocks) !! i_
+    Just (rev, b_: bs_) = focusList (NEL.toList $ rc ^. rawContentBlocks) `atMay` i_
     lb_ = len b_
 
     f m [] = m
@@ -860,7 +862,7 @@ toStylePosition rc p_@(Position (BlockIndex i_ _) col)
 surroundingStylePositions :: RawContent -> StylePosition -> ([StylePosition]{-previous, reversed-}, [StylePosition]{-next-})
 surroundingStylePositions rc sp
   = surroundingPositions rc (basePosition sp)
-  & both %~ fmap head . group . fmap (toStylePosition rc)
+  & both %~ fmap (\(x: _) -> x) . group . fmap (toStylePosition rc)
 
 -- TUNING: speed this up
 toStyleRanges :: RawContent -> Ranges Position -> Ranges StylePosition
@@ -882,7 +884,7 @@ fromStyleRange rc (Range a b)
 toLeafSelector :: Bool -> RawContent -> Position -> (LeafSelector, Int)
 toLeafSelector top rc (Position (BlockIndex i key) col) = (Position key (SpanIndex dec_ sp_), col - beg)
   where
-    DocBlock _ _ _ es_ = rawContentToDoc rc NEL.!! i
+    Just (DocBlock _ _ _ es_) = NEL.toList (rawContentToDoc rc) `atMay` i
 
     (((beg, _), (dec_, sp_)): _)
         = dropWhile (cmp top . fst) . zip (zip lengths $ tail lengths) $ mkSelectors 0 0 es_

@@ -33,6 +33,7 @@ dependencies:
   - mtl
   - natural-transformation
   - process
+  - safe
   - servant
   - stm
   - string-conversions

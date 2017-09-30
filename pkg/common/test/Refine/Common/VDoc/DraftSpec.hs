@@ -26,6 +26,58 @@ spec = do
       -- a useful error message.  currently we get an unlocated "Prelude.!!: index too large.".
       (length . show $ rawContentFromCompositeVDoc compositeVDocRegression1) `shouldNotBe` 0
 
+  describe "rangeText" $ do
+    it "works" $ do
+      let rc = rawContentFromST "sdf\nwef"
+          pos :: Int -> Int -> Position
+          pos row = Position (BlockIndex row bkey)
+            where
+              Just bkey = bkeys `atMay` row
+              bkeys = NEL.toList $ (^. blockKey) <$> (rc ^. rawContentBlocks)
+
+       in do
+        -- putStrLn `mapM_` ["        rangeText BlockBoundaryIsNewline rc " <>
+        --                  "(Range (pos " <> show y1 <> " " <> show x1 <> ") (pos " <> show y2 <> " " <> show x2 <>")) " <>
+        --                  "`shouldBe` \"\""
+        --                  | y1 <- [0..1], x1 <- [0..3], y2 <- [0..1], x2 <- [0..3], y1 <= y2 && (x1 <= x2 || y1 < y2)]
+
+        rangeText BlockBoundaryIsNewline rc (Range (pos 0 0) (pos 0 0)) `shouldBe` ""
+        rangeText BlockBoundaryIsNewline rc (Range (pos 0 0) (pos 0 1)) `shouldBe` "s"
+        rangeText BlockBoundaryIsNewline rc (Range (pos 0 0) (pos 0 2)) `shouldBe` "sd"
+        rangeText BlockBoundaryIsNewline rc (Range (pos 0 0) (pos 0 3)) `shouldBe` "sdf"
+        rangeText BlockBoundaryIsNewline rc (Range (pos 0 0) (pos 1 0)) `shouldBe` "sdf\n"
+        rangeText BlockBoundaryIsNewline rc (Range (pos 0 0) (pos 1 1)) `shouldBe` "sdf\nw"
+        rangeText BlockBoundaryIsNewline rc (Range (pos 0 0) (pos 1 2)) `shouldBe` "sdf\nwe"
+        rangeText BlockBoundaryIsNewline rc (Range (pos 0 0) (pos 1 3)) `shouldBe` "sdf\nwef"
+        rangeText BlockBoundaryIsNewline rc (Range (pos 0 1) (pos 0 1)) `shouldBe` ""
+        rangeText BlockBoundaryIsNewline rc (Range (pos 0 1) (pos 0 2)) `shouldBe` "d"
+        rangeText BlockBoundaryIsNewline rc (Range (pos 0 1) (pos 0 3)) `shouldBe` "df"
+        rangeText BlockBoundaryIsNewline rc (Range (pos 0 1) (pos 1 0)) `shouldBe` "df\n"
+        rangeText BlockBoundaryIsNewline rc (Range (pos 0 1) (pos 1 1)) `shouldBe` "df\nw"
+        rangeText BlockBoundaryIsNewline rc (Range (pos 0 1) (pos 1 2)) `shouldBe` "df\nwe"
+        rangeText BlockBoundaryIsNewline rc (Range (pos 0 1) (pos 1 3)) `shouldBe` "df\nwef"
+        rangeText BlockBoundaryIsNewline rc (Range (pos 0 2) (pos 0 2)) `shouldBe` ""
+        rangeText BlockBoundaryIsNewline rc (Range (pos 0 2) (pos 0 3)) `shouldBe` "f"
+        rangeText BlockBoundaryIsNewline rc (Range (pos 0 2) (pos 1 0)) `shouldBe` "f\n"
+        rangeText BlockBoundaryIsNewline rc (Range (pos 0 2) (pos 1 1)) `shouldBe` "f\nw"
+        rangeText BlockBoundaryIsNewline rc (Range (pos 0 2) (pos 1 2)) `shouldBe` "f\nwe"
+        rangeText BlockBoundaryIsNewline rc (Range (pos 0 2) (pos 1 3)) `shouldBe` "f\nwef"
+        rangeText BlockBoundaryIsNewline rc (Range (pos 0 3) (pos 0 3)) `shouldBe` ""
+        rangeText BlockBoundaryIsNewline rc (Range (pos 0 3) (pos 1 0)) `shouldBe` "\n"
+        rangeText BlockBoundaryIsNewline rc (Range (pos 0 3) (pos 1 1)) `shouldBe` "\nw"
+        rangeText BlockBoundaryIsNewline rc (Range (pos 0 3) (pos 1 2)) `shouldBe` "\nwe"
+        rangeText BlockBoundaryIsNewline rc (Range (pos 0 3) (pos 1 3)) `shouldBe` "\nwef"
+        rangeText BlockBoundaryIsNewline rc (Range (pos 1 0) (pos 1 0)) `shouldBe` ""
+        rangeText BlockBoundaryIsNewline rc (Range (pos 1 0) (pos 1 1)) `shouldBe` "w"
+        rangeText BlockBoundaryIsNewline rc (Range (pos 1 0) (pos 1 2)) `shouldBe` "we"
+        rangeText BlockBoundaryIsNewline rc (Range (pos 1 0) (pos 1 3)) `shouldBe` "wef"
+        rangeText BlockBoundaryIsNewline rc (Range (pos 1 1) (pos 1 1)) `shouldBe` ""
+        rangeText BlockBoundaryIsNewline rc (Range (pos 1 1) (pos 1 2)) `shouldBe` "e"
+        rangeText BlockBoundaryIsNewline rc (Range (pos 1 1) (pos 1 3)) `shouldBe` "ef"
+        rangeText BlockBoundaryIsNewline rc (Range (pos 1 2) (pos 1 2)) `shouldBe` ""
+        rangeText BlockBoundaryIsNewline rc (Range (pos 1 2) (pos 1 3)) `shouldBe` "f"
+        rangeText BlockBoundaryIsNewline rc (Range (pos 1 3) (pos 1 3)) `shouldBe` ""
+
   describe "separateStyles, joinStyles" $ do
     it "joinStyles . separateStyles == id" . property $ \(rawContent :: RawContent) -> do
       joinStyles (separateStyles rawContent) `shouldBe` rawContent

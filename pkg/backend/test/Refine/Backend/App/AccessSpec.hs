@@ -24,7 +24,9 @@ import Refine.Common.Types
 import Refine.Common.VDoc.Draft
 
 {-# ANN module ("HLint: ignore Reduce duplication" :: String) #-}
-
+{-# ANN module ("HLint: ignore Use headMay" :: String) #-}
+{-# ANN module ("HLint: ignore Use lastMay" :: String) #-}
+{-# ANN module ("HLint: ignore Use atMay" :: String) #-}
 
 type SwitchUser = SessUser -> IO ()
 type GetUid = SessUser -> ID User

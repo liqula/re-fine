@@ -21,6 +21,9 @@ import           Refine.Common.ChangeAPI
 import           Refine.Common.Types as Common
 
 {-# ANN module ("HLint: ignore Reduce duplication" :: String) #-}
+{-# ANN module ("HLint: ignore Use headMay" :: String) #-}
+{-# ANN module ("HLint: ignore Use lastMay" :: String) #-}
+{-# ANN module ("HLint: ignore Use atMay" :: String) #-}
 
 
 spec :: Spec

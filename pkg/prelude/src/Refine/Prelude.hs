@@ -45,7 +45,6 @@ module Refine.Prelude
   , finally
   , justIf
   , justIfP
-  , toEnumMay
   , focusList
   , ordNub
   , joinE
@@ -113,6 +112,7 @@ import Debug.Trace as P
 import GHC.Generics as P (Generic)
 import GHC.Stack as P (HasCallStack)
 import Prelude as P hiding ((.), id)
+import Safe as P hiding (at)
 import System.Directory as P
 import Text.Read as P (readEither, readMaybe)
 import Web.HttpApiData as P (ToHttpApiData, FromHttpApiData, toUrlPiece, parseUrlPiece)
@@ -244,11 +244,6 @@ justIf x b = if b then Just x else Nothing
 
 justIfP :: a -> (a -> Bool) -> Maybe a
 justIfP x f = justIf x (f x)
-
-toEnumMay :: forall a. (Enum a, Bounded a) => Int -> Maybe a
-toEnumMay i = if i >= 0 && i <= fromEnum (maxBound :: a)
-    then Just $ toEnum i
-    else Nothing
 
 -- focusList "abc" = [("","abc"),("a","bc"),("ba","c"),("cba","")]
 focusList :: [a] -> [([a], [a])]

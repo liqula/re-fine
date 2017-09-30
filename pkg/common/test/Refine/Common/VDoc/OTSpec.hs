@@ -18,6 +18,9 @@ import Refine.Common.Test.Arbitrary ()
 import Refine.Common.Types.Core hiding (Edit)
 import Refine.Common.VDoc.OT
 
+{-# ANN module ("HLint: ignore Use headMay" :: String) #-}
+{-# ANN module ("HLint: ignore Use lastMay" :: String) #-}
+{-# ANN module ("HLint: ignore Use atMay" :: String) #-}
 
 -- do not insert more than 4 elems into a Style set
 instance HasEnoughInhabitants (Atom Style) where numOfInhabitants _ = Just 4
