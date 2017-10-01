@@ -29,7 +29,16 @@ import Refine.Common.Types
 -- * config
 
 verbose_ :: Bool
-verbose_ = True
+verbose_ = False
+
+-- | Do not start server in 'wsBackend', but reference one that is already running elsewhere,
+-- outside the test suide.  Could be a staging or even production system that we want to stress
+-- test, for instance.
+useExternalBackend :: Bool
+useExternalBackend = False
+
+timeoutVal :: Timespan
+timeoutVal = TimespanSecs 3
 
 
 -- * primitives
@@ -48,6 +57,11 @@ askQuestion conn question
 timeout' :: Timespan -> IO a -> IO (Maybe a)
 timeout' = timeout . timespanUs
 
+timeout'' :: Timespan -> IO () -> IO ()
+timeout'' timespan action = do
+  Just () <- timeout' timespan action
+  pure ()
+
 runWS :: HasCallStack => Int -> (Connection -> IO a) -> IO a
 runWS port action = do
   let host :: String = "localhost"
@@ -62,27 +76,20 @@ runWS port action = do
 -- FUTUREWORK: a) integrate this with the code in "Refine.Backend.Test.AppServer"; b) multiple
 -- connections for multiple users.
 wsBackend :: (WSBackend -> IO ()) -> IO ()
-wsBackend = if useExternalBackend then externalServer else builtinServer
+wsBackend = timeout'' timeoutVal
+          . if useExternalBackend then externalServer 3000 else builtinServer
   where
-    builtinServer = wsBackend' (TimespanSecs 3)
-    externalServer = ($ WSBackend Nothing 3000 Nothing)
+    builtinServer = wsBackend'
+    externalServer port act = runWS port $ \conn -> act $ WSBackend Nothing port (Just conn)
 
--- | Do not start server in 'wsBackend', but reference one that is already running elsewhere,
--- outside the test suide.  Could be a staging or even production system that we want to stress
--- test, for instance.
-useExternalBackend :: Bool
-useExternalBackend = False
-
-wsBackend' :: Timespan -> (WSBackend -> IO ()) -> IO ()
-wsBackend' timespan action = do
-  Just () <- timeout' timespan $ do
+wsBackend' :: (WSBackend -> IO ()) -> IO ()
+wsBackend' action = do
     let cfg = wsBackendCfg
     createTestSession' cfg $ \(tbe :: TestBackend) -> do
       testWithApplication (pure . backendServer . view testBackend $ tbe) $ \port -> do
         runWS port $ \conn -> do
           runDB tbe . unsafeAsGod $ initializeDB sampleContent
           action $ WSBackend (Just tbe) port (Just conn)
-  pure ()
 
 wsBackendCfg :: Config
 wsBackendCfg = testBackendCfg
