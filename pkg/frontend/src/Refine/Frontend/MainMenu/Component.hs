@@ -237,7 +237,6 @@ mainMenuGroup = mkView "mainMenuGroup" $ \case
           & ibListKey .~ "subgroups"
           & ibIndexNum .~ Nothing
           & ibSize .~ XXXLarge
-          & ibEnabled .~ False
 
         ibutton_ $ emptyIbuttonProps (ButtonImageIcon Svg.Process ColorSchemaDark)
             [ MainMenuAction . MainMenuActionOpen
