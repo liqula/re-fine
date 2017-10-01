@@ -26,7 +26,7 @@ import           Refine.Frontend.MainMenu.Component (mainMenu)
 import           Refine.Frontend.MainMenu.Types
 import           Refine.Frontend.Screen.Types as SC
 import           Refine.Frontend.Screen.WindowSize (trackWindowSize)
-import           Refine.Frontend.Store.Types as RS
+import           Refine.Frontend.Store.Types
 import           Refine.Frontend.Test.Debug
 import           Refine.Frontend.Types
 import           Refine.Frontend.Util
@@ -102,13 +102,13 @@ mainScreen = mkView' "MainScreen" $ \(gst, procst, as) -> do
           case contrst ^. csActiveDialog of
               Just (ActiveDialogComment lst) -> do
                 addComment_ $ AddContributionProps
-                                (contrst ^. RS.csCurrentSelectionWithPx)
+                                (contrst ^. csCurrentSelectionWithPx)
                                 lst
                                 (screenst ^. SC.ssWindowWidth)
               Just (ActiveDialogEdit estate) -> do
                 let Just (localst :: EditInfo (Maybe EditKind)) = docst ^? documentStateEditInfo
                 addEdit_ $ AddContributionProps
-                                (contrst ^. RS.csCurrentSelectionWithPx)
+                                (contrst ^. csCurrentSelectionWithPx)
                                 (localst, estate)
                                 (screenst ^. SC.ssWindowWidth)
               Nothing -> mempty
