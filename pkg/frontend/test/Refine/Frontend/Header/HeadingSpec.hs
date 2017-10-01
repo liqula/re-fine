@@ -38,7 +38,7 @@ spec = do
 
           gs :: GlobalState
           gs = emptyGlobalState
-             & gsProcessState .~ Just (emptyProcessState 1)
+             & gsPageState .~ PageStateVDoc (emptyProcessState 1)
              & gsServerCache %~ serverCacheUpdate (LoadVDoc (newVDoc ^. compositeVDoc . vdocID))
 
           as :: AccessState

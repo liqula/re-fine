@@ -45,10 +45,11 @@ wholeScreen_ accessState props = React.viewWithSKey wholeScreen "wholeScreen" (p
 wholeScreen :: React.ReactView (GlobalState, AccessState)
 wholeScreen = React.defineLifecycleView "WholeScreen" () React.lifecycleConfig
   { React.lRender = \() (gs, as) ->
-     case (gs ^? gsMainMenuState . mmState . mainMenuOpenTab, gs ^. gsProcessState) of
-      (Nothing, Nothing)  -> error "inconsistent global state!"
-      (Nothing, Just pst) -> view_' mainScreen "mainScreen" (gs, pst, as)
-      (Just tab, _) -> view_ mainMenu "mainMenu" $ MainMenuProps
+     case gs ^. gsPageState of
+      PageStateVDoc pst
+        -> view_' mainScreen "mainScreen" (gs, pst, as)
+      PageStateMainMenu (mainmenustate :: MainMenuState) _
+        -> view_ mainMenu "mainMenu" $ MainMenuProps
                             (mapMainMenuTab
                               (const (GroupsProps groups vdocs users))
                               groupFromCache
@@ -56,8 +57,8 @@ wholeScreen = React.defineLifecycleView "WholeScreen" () React.lifecycleConfig
                               id
                               id
                               (first $ cacheLookup' gs)
-                              tab)
-                            (gs ^. gsMainMenuState . mmErrors)
+                              (mainmenustate ^. mmState :: MainMenuTabState))
+                            (mainmenustate ^. mmErrors :: MainMenuErrors)
                             (cacheLookup' gs <$> (as ^. accLoginState . lsCurrentUser))
         where
           groupFromCache :: ID Group -> GroupProps
@@ -65,7 +66,7 @@ wholeScreen = React.defineLifecycleView "WholeScreen" () React.lifecycleConfig
 
           groups :: [Group]
           groups = mapMaybe (cacheLookup gs) . Set.elems
-                 . fromMaybe (cacheMiss CacheKeyGroupIds mempty tab)
+                 . fromMaybe (cacheMiss CacheKeyGroupIds mempty mainmenustate)
                  $ gs ^. gsServerCache . scGroupIds
 
           vdocs :: Map (ID VDoc) VDoc
@@ -73,7 +74,7 @@ wholeScreen = React.defineLifecycleView "WholeScreen" () React.lifecycleConfig
 
           users :: Map (ID User) User
           users = Map.fromList . mapMaybe (\i -> (,) i <$> cacheLookup gs i) . Set.elems
-                . fromMaybe (cacheMiss CacheKeyUserIds mempty tab)
+                . fromMaybe (cacheMiss CacheKeyUserIds mempty mainmenustate)
                 $ gs ^. gsServerCache . scUserIds
 
   , React.lComponentDidMount = Just $ \this _ _ -> didMountOrUpdate this

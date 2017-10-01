@@ -20,7 +20,7 @@ import           Refine.Frontend.Document.Store (setAllVerticalSpanBounds, docum
 import           Refine.Frontend.Document.Types
 import           Refine.Frontend.Header.Store (headerStateUpdate)
 import           Refine.Frontend.Header.Types
-import           Refine.Frontend.MainMenu.Store (mainMenuUpdate)
+import           Refine.Frontend.MainMenu.Store (mainMenuUpdate, mainMenuOpen)
 import           Refine.Frontend.MainMenu.Types
 import qualified Refine.Frontend.Route as Route
 import           Refine.Frontend.Screen.Store (screenStateUpdate)
@@ -145,10 +145,9 @@ transformGlobalState = transf
       fm :: GlobalState -> CacheLookupT GlobalState
       fm =    gsServerCache         (pure . serverCacheUpdate act)
           >=> gsScreenState         (pure . maybe id screenStateUpdate (act ^? _ScreenAction))
-          >=> gsMainMenuState       (pure . mainMenuUpdate act (isJust $ st ^. gsVDocID))
           >=> gsTranslations        (pure . translationsUpdate act)
           >=> gsDevState            (pure . devStateUpdate act)
-          >=> (\st' -> gsProcessState (processStateUpdate act st') st')
+          >=> (\st' -> gsPageState (pageStateUpdate act st') st')
 
 initRouting :: IO ()
 initRouting = do
@@ -160,7 +159,7 @@ initRouting = do
 -- right order, since later ones can be true even though earlier ones should fire.)
 routeFromState :: GlobalState -> Route.Route
 routeFromState st
-  | MainMenuOpen tab <- st ^. gsMainMenuState . mmState = case tab of
+  | PageStateMainMenu mm _ <- st ^. gsPageState = case mm ^. mmState of
       MainMenuHelp                              -> Route.Help
       MainMenuLogin MainMenuSubTabLogin         -> Route.Login
       MainMenuLogin MainMenuSubTabRegistration  -> Route.Register
@@ -241,17 +240,27 @@ serverCacheUpdate _ c = c
 
 -- * pure updates (well, with cache update effects)
 
-processStateUpdate :: forall s s'. (s ~ Maybe s', s' ~ ProcessState DocumentState)
+pageStateUpdate :: forall s. s ~ PageState DocumentState
                    => GlobalAction -> GlobalState -> s -> CacheLookupT s
-processStateUpdate (LoadVDoc vid) _ _ = pure . Just $ emptyProcessState vid
-processStateUpdate UnloadVDoc _ _ = pure Nothing
-processStateUpdate act gs (Just ps) = Just <$> fm ps
+pageStateUpdate (LoadVDoc vid) _ _ = pure . PageStateVDoc $ emptyProcessState vid
+pageStateUpdate UnloadVDoc _ _ = pure emptyPageState
+
+pageStateUpdate (MainMenuAction (MainMenuActionOpen tab)) _ lastpage@(PageStateVDoc _) =
+  pure $ PageStateMainMenu (mainMenuOpen emptyMainMenuState tab) (Just lastpage)
+
+pageStateUpdate (MainMenuAction MainMenuActionClose) _ (PageStateMainMenu _ mlastpage) =
+  pure $ maybe emptyPageState id mlastpage
+
+pageStateUpdate act gs (PageStateVDoc ps) = PageStateVDoc <$> fm ps
   where
-    fm :: s' -> CacheLookupT s'
+    fm :: forall s'. s' ~ ProcessState DocumentState
+       => s' -> CacheLookupT s'
     fm =    psContributionState (pure . contributionStateUpdate act)
         >=> psHeaderState       (pure . headerStateUpdate act)
         >=> psDocumentState     (documentStateUpdate act gs)
-processStateUpdate _ _ s = pure s
+
+pageStateUpdate act _ (PageStateMainMenu mm mlastpage) =
+  pure $ PageStateMainMenu (mainMenuUpdate act mm) mlastpage
 
 
 -- | Only touches the 'DevState' if it is 'Just'.  In production, 'gsDevState' should always be

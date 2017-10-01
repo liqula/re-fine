@@ -25,9 +25,8 @@ import Refine.Frontend.Util
 type GlobalState = GlobalState_ DocumentState
 
 data GlobalState_ a = GlobalState
-  { _gsProcessState               :: Maybe (ProcessState a)
+  { _gsPageState                  :: PageState a
   , _gsScreenState                :: ScreenState
-  , _gsMainMenuState              :: MainMenuState
   , _gsTranslations               :: Trans
   , _gsDevState                   :: Maybe DevState  -- ^ for development & testing, see 'devStateUpdate'.
   , _gsServerCache                :: ServerCache
@@ -35,13 +34,22 @@ data GlobalState_ a = GlobalState
 
 emptyGlobalState :: HasCallStack => GlobalState
 emptyGlobalState = GlobalState
-  { _gsProcessState               = Nothing
+  { _gsPageState                  = emptyPageState
   , _gsScreenState                = emptyScreenState
-  , _gsMainMenuState              = emptyMainMenuState
   , _gsTranslations               = emptyTrans
   , _gsDevState                   = Nothing
   , _gsServerCache                = mempty
   }
+
+-- | There are two pages: the vdoc process, and main menu.  If we get to the main menu from the
+-- process, we store the last state.
+data PageState a
+  = PageStateVDoc (ProcessState a)
+  | PageStateMainMenu MainMenuState (Maybe (PageState a))
+  deriving (Show, Eq, Generic, Functor)
+
+emptyPageState :: PageState a
+emptyPageState = PageStateMainMenu emptyMainMenuState Nothing
 
 data ProcessState a = ProcessState
   { _psVDocID            :: ID VDoc
@@ -111,7 +119,10 @@ data CacheAction
 
 -- * lenses
 
-makeRefineTypes [''GlobalState_, ''ProcessState, ''DevState, ''GlobalAction, ''CacheAction]
+makeRefineTypes [''GlobalState_, ''PageState, ''ProcessState, ''DevState, ''GlobalAction, ''CacheAction]
+
+gsProcessState :: Getter (GlobalState_ a) (Maybe (ProcessState a))
+gsProcessState = to $ \gs -> case gs ^. gsPageState of PageStateVDoc p -> Just p; _ -> Nothing
 
 -- | (Lens' does not work because we would have to be able to create the entire 'Process' value from
 -- 'Nothing' if we get a vdoc id.)

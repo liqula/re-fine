@@ -8,19 +8,30 @@ import Refine.Frontend.Store.Types (GlobalAction(..))
 import Refine.Frontend.Types
 
 
-mainMenuUpdate :: HasCallStack => GlobalAction -> Bool -> MainMenuState -> MainMenuState
-mainMenuUpdate (MainMenuAction MainMenuActionClose) isThereVDoc st = st
-  & mmState                    .~ (if isThereVDoc then MainMenuClosed else MainMenuOpen $ MainMenuGroups ())
+mainMenuUpdate :: HasCallStack => GlobalAction -> MainMenuState -> MainMenuState
+mainMenuUpdate (MainMenuAction (MainMenuActionOpen tab)) st = mainMenuOpen st tab
+
+mainMenuUpdate (MainMenuAction (MainMenuActionLoginError e)) st = st
+  & mmErrors . mmeLogin .~ Just e
+
+mainMenuUpdate (MainMenuAction (MainMenuActionRegistrationError e)) st = st
+  & mmErrors . mmeRegistration .~ Just (cs $ show e)
+
+mainMenuUpdate (MainMenuAction MainMenuActionClearErrors) st = st
   & mmErrors . mmeLogin        .~ Nothing
   & mmErrors . mmeRegistration .~ Nothing
 
-mainMenuUpdate (MainMenuAction (MainMenuActionOpen tab)) _ st = case tab of
+mainMenuUpdate _ st = st
+
+
+mainMenuOpen :: HasCallStack => MainMenuState -> MainMenuTabAction -> MainMenuState
+mainMenuOpen st = \case
   MainMenuCreateOrUpdateGroup _ (completeOrCancel -> True) -> st
   MainMenuCreateProcess (completeOrCancel -> True)         -> st
   MainMenuUpdateProcess _ (completeOrCancel -> True)       -> st
   MainMenuProfile (_, completeOrCancel -> True)            -> st
-  _ -> st
-     & mmState .~ MainMenuOpen (mapMainMenuTab
+  tab -> st
+     & mmState .~ mapMainMenuTab
                                 id
                                 id
                                 -- the following impossible cases are ruled out by the cases above
@@ -29,19 +40,3 @@ mainMenuUpdate (MainMenuAction (MainMenuActionOpen tab)) _ st = case tab of
                                 (formAction id (error "impossible - MainMenuUpdateProcess #5") (error "impossible - MainMenuUpdateProcess #6"))
                                 (second $ formAction id (error "impossible - MainMenuUpdateProcess #7") (error "impossible - MainMenuUpdateProcess #8"))
                                 tab
-                               )
-
-mainMenuUpdate (MainMenuAction (MainMenuActionLoginError e)) _ st = st
-  & mmErrors . mmeLogin .~ Just e
-
-mainMenuUpdate (MainMenuAction (MainMenuActionRegistrationError e)) _ st = st
-  & mmErrors . mmeRegistration .~ Just (cs $ show e)
-
-mainMenuUpdate (MainMenuAction MainMenuActionClearErrors) _ st = st
-  & mmErrors . mmeLogin        .~ Nothing
-  & mmErrors . mmeRegistration .~ Nothing
-
-mainMenuUpdate (LoadVDoc _) _ st = st
-  & mmState .~ MainMenuClosed
-
-mainMenuUpdate _ _ st = st
