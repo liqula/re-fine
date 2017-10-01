@@ -12,7 +12,7 @@ import Refine.Common.Types.Vote
 
 -- | FUTUREWORK: this is used both for Rest or WebSockets; more to a more appropriate module.
 data ApiError
-  = ApiUnknownError ST
+  = ApiUnknownError
   | ApiVDocVersionError
   | ApiDBError ApiErrorDB
   | ApiUserNotFound ST

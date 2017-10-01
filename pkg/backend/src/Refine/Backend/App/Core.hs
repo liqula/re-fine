@@ -174,7 +174,7 @@ toApiError err = l err >> pure (c err)
       AppSmtpError _             -> appLog LogError $ "AppError: " <> show err
 
     c = \case
-      AppUnknownError e          -> ApiUnknownError e
+      AppUnknownError _          -> ApiUnknownError
       AppVDocVersionError        -> ApiVDocVersionError
       AppDBError e               -> ApiDBError $ dbErrorToApiError e
       AppUserNotFound e          -> ApiUserNotFound e

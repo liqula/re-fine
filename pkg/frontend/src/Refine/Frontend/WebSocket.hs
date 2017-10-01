@@ -90,7 +90,7 @@ initWebSocket = do
 
         handleApiError :: WebSocket -> ApiError -> IO ()
         handleApiError ws = \case
-          ApiUnknownError _                       -> ignore
+          ApiUnknownError                         -> ignore
           ApiVDocVersionError                     -> ignore
           ApiDBError (ApiDBNotFound _)            -> unloadvdoc >> resetroute  -- (e.g., because somebody hit an old route)
           ApiDBError _                            -> ignore

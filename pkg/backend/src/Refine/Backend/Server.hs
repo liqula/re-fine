@@ -202,7 +202,7 @@ appServantErr err = throwError $ (appServantErr' err) { errBody = encode err }
 
 appServantErr' :: ApiError -> ServantErr
 appServantErr' = \case
-  ApiUnknownError _        -> err500
+  ApiUnknownError          -> err500
   ApiVDocVersionError      -> err409
   ApiDBError dbe           -> dbServantErr dbe
   ApiUserNotFound _        -> err404
