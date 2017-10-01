@@ -127,15 +127,15 @@ contributionDialogTextFormInner width height stateLens st' = do
 
 -- * comments
 
-addComment :: HasCallStack => Translations -> View '[AddContributionProps (LocalStateRef CommentInputState)]
-addComment __ = mkView "AddComment" $ \props -> addContributionDialogFrame
+addComment :: HasCallStack => View '[AddContributionProps (LocalStateRef CommentInputState)]
+addComment = mkView "AddComment" $ \props -> addContributionDialogFrame
   (__ add_a_comment)
   (props ^. acpRange)
   (props ^. acpWindowWidth)
   (commentInput_ $ props ^. acpLocalState)
 
-addComment_ :: HasCallStack => Translations -> AddContributionProps (LocalStateRef CommentInputState) -> ReactElementM eventHandler ()
-addComment_ __ = view_ (addComment __) "addComment_"
+addComment_ :: HasCallStack => AddContributionProps (LocalStateRef CommentInputState) -> ReactElementM eventHandler ()
+addComment_ = view_ addComment "addComment_"
 
 
 commentInput :: HasCallStack => LocalStateRef CommentInputState -> View '[]

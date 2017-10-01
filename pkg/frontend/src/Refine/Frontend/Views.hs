@@ -90,9 +90,6 @@ mainScreen = mkView' "MainScreen" $ \(rs, as) -> case rs ^. gsCompositeVDoc of
   Nothing -> error "mainScreen: no gsVDoc"
   Just Nothing -> hourglass
   Just (Just vdoc) -> do
-    let __ :: Translations = rs ^. RS.gsTranslations . unTrans
-                                -- FIXME: I think this could be done more nicely.
-
     div_ ["key" $= "maindiv" {-FIXME: seems not to work as expected, we still have a warning-}] $ do
           React.view trackWindowSize (rs ^. gsScreenState . SC.ssWindowSize) mempty
 
@@ -104,7 +101,7 @@ mainScreen = mkView' "MainScreen" $ \(rs, as) -> case rs ^. gsCompositeVDoc of
             Nothing -> mempty
             Just (contrst :: ContributionState) -> case contrst ^. RS.csActiveDialog of
               Just (ActiveDialogComment lst) -> do
-                addComment_ __ $ AddContributionProps
+                addComment_ $ AddContributionProps
                                 (contrst ^. RS.csCurrentSelectionWithPx)
                                 lst
                                 (rs ^. RS.gsScreenState . SC.ssWindowWidth)
