@@ -1,7 +1,7 @@
 {-# LANGUAGE CPP #-}
 #include "language_frontend.hs"
 
-{-# OPTIONS_GHC -Wno-orphans #-}
+{-# OPTIONS_GHC -Wno-orphans -Wno-incomplete-patterns #-}
 
 module Refine.Frontend.Header.EditToolbar where
 #include "import_frontend.hs"
@@ -65,11 +65,11 @@ getDocumentStateProps as gs@(view gsEditID -> Just baseid)
                                 pure $ Right (r, d))
                             (gs ^. gsRawContent)
                             (StatementPropDetails ed ((^. userName) <$> (gs ^. gsServerCache . scUsers)))
-                            (gs ^. gsHeaderState . hsDiscussionFlatView)
+                            (case gs ^. gsHeaderState of Just hs -> hs ^. hsDiscussionFlatView)
       )
       dst
   where
-    dst = gs ^. gsDocumentState
+    Just dst = gs ^. gsDocumentState
     eid = case dst of
       DocumentStateDiff _ _ i _ _ -> i
       _ -> error "getDocumentStateProps: impossible"

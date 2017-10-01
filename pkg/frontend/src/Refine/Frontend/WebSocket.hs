@@ -92,7 +92,7 @@ initWebSocket = do
         handleApiError ws = \case
           ApiUnknownError _                       -> ignore
           ApiVDocVersionError                     -> ignore
-          ApiDBError (ApiDBNotFound _)            -> resetroute  -- (e.g., because somebody hit an old route)
+          ApiDBError (ApiDBNotFound _)            -> unloadvdoc >> resetroute  -- (e.g., because somebody hit an old route)
           ApiDBError _                            -> ignore
           ApiUserNotFound _                       -> ignore  -- handled via 'TCLoginResp'
           ApiUserNotLoggedIn                      -> ignore
@@ -109,6 +109,7 @@ initWebSocket = do
             ignore = pure ()
             reconnect = close Nothing Nothing ws  -- just need to close, re-open happens automatically.
             resetroute = changeRoute defaultRoute
+            unloadvdoc = dispatchAndExec UnloadVDoc
 
         wsUrl :: JSString
         wsUrl = case clientCfg of

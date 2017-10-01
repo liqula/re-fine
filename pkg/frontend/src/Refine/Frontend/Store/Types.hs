@@ -25,10 +25,7 @@ import Refine.Frontend.Util
 type GlobalState = GlobalState_ DocumentState
 
 data GlobalState_ a = GlobalState
-  { _gsVDocID                     :: Maybe (ID VDoc)
-  , _gsContributionState          :: ContributionState
-  , _gsHeaderState                :: HeaderState
-  , _gsDocumentState              :: a
+  { _gsProcessState               :: Maybe (ProcessState a)
   , _gsScreenState                :: ScreenState
   , _gsMainMenuState              :: MainMenuState
   , _gsTranslations               :: Trans
@@ -38,16 +35,23 @@ data GlobalState_ a = GlobalState
 
 emptyGlobalState :: HasCallStack => GlobalState
 emptyGlobalState = GlobalState
-  { _gsVDocID                     = Nothing
-  , _gsContributionState          = emptyContributionState
-  , _gsHeaderState                = emptyHeaderState
-  , _gsDocumentState              = emptyDocumentState
+  { _gsProcessState               = Nothing
   , _gsScreenState                = emptyScreenState
   , _gsMainMenuState              = emptyMainMenuState
   , _gsTranslations               = emptyTrans
   , _gsDevState                   = Nothing
   , _gsServerCache                = mempty
   }
+
+data ProcessState a = ProcessState
+  { _psVDocID            :: ID VDoc
+  , _psHeaderState       :: HeaderState
+  , _psDocumentState     :: a
+  , _psContributionState :: ContributionState
+  } deriving (Show, Eq, Generic, Functor)
+
+emptyProcessState :: ID VDoc -> ProcessState DocumentState
+emptyProcessState vid = ProcessState vid emptyHeaderState emptyDocumentState emptyContributionState
 
 newtype DevState = DevState
   { _devStateTrace :: [GlobalAction]
@@ -63,6 +67,7 @@ emptyDevState = DevState []
 data GlobalAction =
     -- documents
     LoadVDoc (ID VDoc)
+  | UnloadVDoc
 
     -- contributions
   | ScreenAction ScreenAction
@@ -103,10 +108,60 @@ data CacheAction
   | InvalidateCacheItems (Set CacheKey)
   deriving (Show, Eq, Generic)
 
-makeRefineTypes [''GlobalState_, ''DevState, ''GlobalAction, ''CacheAction]
+
+-- * lenses
+
+makeRefineTypes [''GlobalState_, ''ProcessState, ''DevState, ''GlobalAction, ''CacheAction]
+
+-- | (Lens' does not work because we would have to be able to create the entire 'Process' value from
+-- 'Nothing' if we get a vdoc id.)
+gsVDocID :: forall a. Getter (GlobalState_ a) (Maybe (ID VDoc))
+gsVDocID = to (fmap (^. psVDocID) . (^. gsProcessState))
+
+gsHeaderState :: Getter (GlobalState_ a) (Maybe HeaderState)
+gsHeaderState = to (fmap (^. psHeaderState) . (^. gsProcessState))
+
+gsDocumentState :: forall a. Getter (GlobalState_ a) (Maybe a)
+gsDocumentState = to (fmap (^. psDocumentState) . (^. gsProcessState))
+
+gsContributionState :: Getter (GlobalState_ a) (Maybe ContributionState)
+gsContributionState = to (fmap (^. psContributionState) . (^. gsProcessState))
 
 
--- * stuff
+-- | Currently open 'Edit'.
+--
+-- >>> Just (Just e) -- found
+-- >>> Just Nothing  -- ID exists, but it or the corresponding vdoc is missing in cache
+-- >>> Nothing       -- no such ID
+--
+-- NOTE: you may get an edit here even if you are, say in the menu and it is not technically open.
+gsEdit :: HasCallStack => Getter (GlobalState_ a) (Maybe (Maybe Edit))
+gsEdit = to $ \gs -> (>>= cacheLookup gs) <$> gs ^. gsEditID
+
+-- | See 'gsEdit'.
+gsEditID :: HasCallStack => Getter (GlobalState_ a) (Maybe (Maybe (ID Edit)))
+gsEditID = to $ \gs -> fmap (^. vdocHeadEdit) . cacheLookup gs <$> gs ^. gsVDocID
+
+gsCompositeVDoc :: Getter (GlobalState_ a) (Maybe (Maybe CompositeVDoc))
+gsCompositeVDoc = to getCompositeVDoc
+  where
+    getCompositeVDoc :: GlobalState_ a -> Maybe (Maybe CompositeVDoc)
+    getCompositeVDoc gs = (>>= mkCompositeVDoc gs) <$> gs ^. gsEdit
+
+    mkCompositeVDoc :: GlobalState_ a -> Edit -> Maybe CompositeVDoc
+    mkCompositeVDoc gs edit = do
+      vdoc <- cacheLookup gs $ edit ^. editVDoc
+      pure $ CompositeVDoc
+        vdoc
+        edit
+        (Map.fromList $ catMaybes [ (,) k <$> cacheLookup gs k | k <- Set.toList $ edit ^. editChildren ])
+        (Map.fromList $ catMaybes [ cacheLookup gs k <&> \d -> (k, (r, d)) | (k, r) <- Map.toList $ edit ^. editDiscussions' ])
+
+gsCurrentSelection :: HasCallStack => Getter GlobalState (Maybe (Selection Position))
+gsCurrentSelection = to (^? gsContributionState . _Just . csCurrentSelectionWithPx . _Just . sstSelectionState)
+
+
+-- * cache stuff
 
 {-# NOINLINE cacheMissesMVar #-}
 cacheMissesMVar :: MVar [CacheKey]
@@ -128,7 +183,7 @@ cacheMissId i x = cacheMiss (cacheKey i) x i
 
 gsRawContent :: Getter GlobalState RawContent
 gsRawContent = to $ \case
-  gs@(view gsDocumentState -> DocumentStateDiff _ _ (eid :: ID Edit) _ _)
+  gs@(view gsDocumentState -> Just (DocumentStateDiff _ _ (eid :: ID Edit) _ _))
     -> maybe (cacheMissId eid rcHourglass) (^. editVDocVersion) (cacheLookup gs eid)
   (view gsCompositeVDoc -> Just (Just cvdoc))
     -> rawContentFromCompositeVDoc cvdoc
@@ -178,35 +233,3 @@ instance CacheLookup User where
 instance CacheLookup Group where
   cacheKey = CacheKeyGroup
   cacheLens = scGroups
-
--- | Currently open 'Edit'.
---
--- >>> Just (Just e) -- found
--- >>> Just Nothing  -- ID exists, but it or the corresponding vdoc is missing in cache
--- >>> Nothing       -- no such ID
---
--- NOTE: you may get an edit here even if you are, say in the menu and it is not technically open.
-gsEdit :: HasCallStack => Getter (GlobalState_ a) (Maybe (Maybe Edit))
-gsEdit = to $ \gs -> (>>= cacheLookup gs) <$> gs ^. gsEditID
-
--- | See 'gsEdit'.
-gsEditID :: HasCallStack => Getter (GlobalState_ a) (Maybe (Maybe (ID Edit)))
-gsEditID = to $ \gs -> fmap (^. vdocHeadEdit) . cacheLookup gs <$> gs ^. gsVDocID
-
-gsCompositeVDoc :: Getter (GlobalState_ a) (Maybe (Maybe CompositeVDoc))
-gsCompositeVDoc = to getCompositeVDoc
-  where
-    getCompositeVDoc :: GlobalState_ a -> Maybe (Maybe CompositeVDoc)
-    getCompositeVDoc gs = (>>= mkCompositeVDoc gs) <$> gs ^. gsEdit
-
-    mkCompositeVDoc :: GlobalState_ a -> Edit -> Maybe CompositeVDoc
-    mkCompositeVDoc gs edit = do
-      vdoc <- cacheLookup gs $ edit ^. editVDoc
-      pure $ CompositeVDoc
-        vdoc
-        edit
-        (Map.fromList $ catMaybes [ (,) k <$> cacheLookup gs k | k <- Set.toList $ edit ^. editChildren ])
-        (Map.fromList $ catMaybes [ cacheLookup gs k <&> \d -> (k, (r, d)) | (k, r) <- Map.toList $ edit ^. editDiscussions' ])
-
-gsCurrentSelection :: HasCallStack => Getter GlobalState (Maybe (Selection Position))
-gsCurrentSelection = to (^? gsContributionState . csCurrentSelectionWithPx . _Just . sstSelectionState)

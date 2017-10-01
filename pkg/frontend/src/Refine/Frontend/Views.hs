@@ -100,16 +100,19 @@ mainScreen = mkView' "MainScreen" $ \(rs, as) -> case rs ^. gsCompositeVDoc of
           div_ ["className" $= "c_bg_blue_dark"] $ mainHeader_ (mkMainHeaderProps as rswiped)
 
           -- components that are visible only sometimes:
-          case rs ^. RS.gsContributionState . RS.csActiveDialog of
+          case rs ^. RS.gsContributionState of
+           Nothing -> mempty
+           Just (contrst :: ContributionState) -> case contrst ^. RS.csActiveDialog of
             Just (ActiveDialogComment lst) -> do
               addComment_ __ $ AddContributionProps
-                              (rs ^. RS.gsContributionState . RS.csCurrentSelectionWithPx)
+                              (contrst ^. RS.csCurrentSelectionWithPx)
                               lst
                               (rs ^. RS.gsScreenState . SC.ssWindowWidth)
             Just (ActiveDialogEdit estate) -> do
-              let Just (localst :: EditInfo (Maybe EditKind)) = rs ^? RS.gsDocumentState . documentStateEditInfo
+              let Just docst = rs ^. RS.gsDocumentState
+                  Just (localst :: EditInfo (Maybe EditKind)) = docst ^? documentStateEditInfo
               addEdit_ $ AddContributionProps
-                              (rs ^. RS.gsContributionState . RS.csCurrentSelectionWithPx)
+                              (contrst ^. RS.csCurrentSelectionWithPx)
                               (localst, estate)
                               (rs ^. RS.gsScreenState . SC.ssWindowWidth)
             Nothing -> mempty
@@ -118,39 +121,41 @@ mainScreen = mkView' "MainScreen" $ \(rs, as) -> case rs ^. gsCompositeVDoc of
               mainHeaderToolbar_ (mkMainHeaderToolbarProps rswiped)
               div_ ["className" $= "grid-wrapper"] $ do
                   div_ ["className" $= "row row-align-center row-align-top"] $ do
+                      let Just procst = rs ^. gsProcessState
+
                       let asideProps = AsideProps
-                                     (rs ^. gsContributionState . csAllVerticalSpanBounds)
+                                     (procst ^. psContributionState . csAllVerticalSpanBounds)
                                      (OffsetFromDocumentTop $ rs ^. gsScreenState . ssHeaderHeight + fixedHeaderHeight + 15)
-                                     (rs ^. gsContributionState . csCurrentSelectionWithPx)
-                                     (rs ^. gsContributionState . csHighlightedMarkAndBubble)
+                                     (procst ^. psContributionState . csCurrentSelectionWithPx)
+                                     (procst ^. psContributionState . csHighlightedMarkAndBubble)
                                      (rs ^. gsScreenState)
                                      (fltr (\i -> ContribIDDiscussion <$> [True, False] <*> pure i)
                                            (fmap snd $ vdoc ^. compositeVDocApplicableDiscussions))
                                      (fltr ((:[]) . ContribIDEdit)
                                            (fltrThisEdit $ vdoc ^. compositeVDocApplicableEdits))
-                                     (case rs ^. gsDocumentState of
+                                     (case procst ^. psDocumentState of
                                         DocumentStateDiff{} -> BubblePositioningEvenlySpaced
-                                        _ -> rs ^. gsContributionState . csBubblePositioning)
-                                     (rs ^. gsContributionState . csQuickCreateShowState)
+                                        _ -> procst ^. psContributionState . csBubblePositioning)
+                                     (procst ^. psContributionState . csQuickCreateShowState)
 
-                          fltrThisEdit = case rs ^. gsDocumentState of
+                          fltrThisEdit = case procst ^. psDocumentState of
                             DocumentStateDiff _ _ eid _ _ -> Map.filter $ (/= eid) . (^. editID)
                             DocumentStateEdit{} -> const mempty
                             _ -> id
 
                           fltr :: (ID c -> [ContributionID]) -> Map (ID c) b -> [b]
-                          fltr mkCId = if rs ^. gsHeaderState . hsReadOnly
+                          fltr mkCId = if procst ^. psHeaderState . hsReadOnly
                               then const mempty
-                              else maybe Map.elems go (rs ^. gsContributionState . csBubbleFilter)
+                              else maybe Map.elems go (procst ^. psContributionState . csBubbleFilter)
                             where
                               go allowed = fmap snd . filter (any (`Set.member` allowed) . mkCId . fst) . Map.toList
 
                       leftAside_ asideProps
-                      document_ $ DocumentProps ((if rs ^. gsHeaderState . hsReadOnly
+                      document_ $ DocumentProps ((if procst ^. psHeaderState . hsReadOnly
                                                   then mapDocumentState id deleteMarksFromRawContent id id
                                                   else id)
                                                  $ getDocumentStateProps as rs)
-                                                (rs ^. RS.gsContributionState)
+                                                (procst ^. psContributionState)
                       rightAside_ asideProps
 
           -- append an empty page to the botton.  (helps with legitimate attempts to scroll beyond

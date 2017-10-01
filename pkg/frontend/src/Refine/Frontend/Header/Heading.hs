@@ -102,15 +102,15 @@ mkMainHeaderProps as wiped = (title, abstract, props)
 mkMainHeaderToolbarProps :: GlobalState_ WipedDocumentState -> MainHeaderToolbarProps
 mkMainHeaderToolbarProps wiped = MainHeaderToolbarProps ds vdoc indexprops extprops
   where
-    ds = wiped ^. gsDocumentState
+    Just ds = wiped ^. gsDocumentState
     Just vdoc = wiped ^? gsCompositeVDoc . _Just . _Just . compositeVDoc
     indexprops = mkIndexToolbarProps wiped
-    extprops = wiped ^. gsHeaderState . hsToolbarExtensionStatus
+    Just extprops = wiped ^? gsHeaderState . _Just . hsToolbarExtensionStatus
 
 mkIndexToolbarProps :: GlobalState_ WipedDocumentState -> IndexToolbarProps
 mkIndexToolbarProps rs
-  | rs ^. gsHeaderState . hsToolbarExtensionStatus == IndexToolbarExtension
-  && fromMaybe True (not <$> rs ^? gsDocumentState . wipedDocumentStateDiffCollapsed)
+  | rs ^? gsHeaderState . _Just . hsToolbarExtensionStatus == Just IndexToolbarExtension
+  && fromMaybe True (not <$> rs ^? gsDocumentState . _Just . wipedDocumentStateDiffCollapsed)
   = mkIndex . _editVDocVersion <$> join (rs ^. gsEdit)
   | otherwise = Nothing
   where

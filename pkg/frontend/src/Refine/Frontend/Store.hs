@@ -80,8 +80,8 @@ transformGlobalState = transf
 
       -- scrolling
       case act of
-        ContributionAction ShowCommentEditor                            -> scrollToCurrentSelection (st ^. gsContributionState)
-        DocumentAction (DocumentSave (FormBegin (EditIsNotInitial, _))) -> scrollToCurrentSelection (st ^. gsContributionState)
+        ContributionAction ShowCommentEditor                            -> scrollToCurrentSelection `mapM_` (st ^. gsContributionState)
+        DocumentAction (DocumentSave (FormBegin (EditIsNotInitial, _))) -> scrollToCurrentSelection `mapM_` (st ^. gsContributionState)
         HeaderAction (ScrollToBlockKey (Common.BlockKey k))             -> liftIO . js_scrollToBlockKey $ cs k
         HeaderAction ScrollToPageTop                                    -> liftIO js_scrollToPageTop
         _ -> pure ()
@@ -113,7 +113,7 @@ transformGlobalState = transf
             Nothing -> pure ()
             Just rangeEvent -> do
               reDispatchM $ ContributionAction rangeEvent
-              when (st ^. gsHeaderState . hsToolbarExtensionStatus == CommentToolbarExtensionWithRange) $ do
+              when (st ^? gsHeaderState . _Just . hsToolbarExtensionStatus == Just CommentToolbarExtensionWithRange) $ do
                 -- (if the comment editor (or dialog) is started via the toolbar
                 -- extension, this is where it should be started.  assume that this can
                 -- only happen if rangeEvent is SetRange, not ClearRange.)
@@ -141,16 +141,14 @@ transformGlobalState = transf
         dispatchAndExec act
         pure st
      where
+      -- the order in which this happens is relevant!
       fm :: GlobalState -> CacheLookupT GlobalState
       fm =    gsServerCache         (pure . serverCacheUpdate act)
-          >=> gsVDocID              (pure . vdocIDUpdate act)
-          >=> gsContributionState   (pure . contributionStateUpdate act)
-          >=> gsHeaderState         (pure . headerStateUpdate act)
           >=> gsScreenState         (pure . maybe id screenStateUpdate (act ^? _ScreenAction))
           >=> gsMainMenuState       (pure . mainMenuUpdate act (isJust $ st ^. gsVDocID))
           >=> gsTranslations        (pure . translationsUpdate act)
           >=> gsDevState            (pure . devStateUpdate act)
-          >=> (\st' -> gsDocumentState (documentStateUpdate act st') st')
+          >=> (\st' -> gsProcessState (processStateUpdate act st') st')
 
 initRouting :: IO ()
 initRouting = do
@@ -233,10 +231,6 @@ flushCacheMisses = do
     sendTS msg
     consoleLogJSStringM "WS" . cs $ show msg
 
-vdocIDUpdate :: GlobalAction -> Maybe (ID Common.VDoc) -> Maybe (ID Common.VDoc)
-vdocIDUpdate (LoadVDoc cvd) _ = Just cvd
-vdocIDUpdate _ st = st
-
 serverCacheUpdate :: GlobalAction -> ServerCache -> ServerCache
 serverCacheUpdate (CacheAction a) c = case a of
   RefreshServerCache c' -> c' <> c
@@ -245,7 +239,20 @@ serverCacheUpdate (CacheAction a) c = case a of
 serverCacheUpdate _ c = c
 
 
--- * pure updates
+-- * pure updates (well, with cache update effects)
+
+processStateUpdate :: forall s s'. (s ~ Maybe s', s' ~ ProcessState DocumentState)
+                   => GlobalAction -> GlobalState -> s -> CacheLookupT s
+processStateUpdate (LoadVDoc vid) _ _ = pure . Just $ emptyProcessState vid
+processStateUpdate UnloadVDoc _ _ = pure Nothing
+processStateUpdate act gs (Just ps) = Just <$> fm ps
+  where
+    fm :: s' -> CacheLookupT s'
+    fm =    psContributionState (pure . contributionStateUpdate act)
+        >=> psHeaderState       (pure . headerStateUpdate act)
+        >=> psDocumentState     (documentStateUpdate act gs)
+processStateUpdate _ _ s = pure s
+
 
 -- | Only touches the 'DevState' if it is 'Just'.  In production, 'gsDevState' should always be
 -- 'Nothing'.  Use 'weAreInDevMode' to decide whether you want to initialize it, or, when writing
@@ -300,7 +307,7 @@ emitBackendCallsFor act st = case act of
 
     DocumentAction (DocumentSave (FormBegin (EditIsInitial, estate)))
       -> do
-        let DocumentStateEdit _ (Just baseEdit) = st ^. gsDocumentState
+        let Just (DocumentStateEdit _ (Just baseEdit)) = st ^. gsDocumentState
             cedit = Common.CreateEdit
                   { Common._createEditDesc        = "initial content"
                   , Common._createEditVDocVersion = getCurrentRawContent estate
@@ -311,7 +318,7 @@ emitBackendCallsFor act st = case act of
         dispatchAndExec $ DocumentAction UpdateDocumentStateView
 
     DocumentAction (DocumentSave (FormComplete (info, estate)))
-      | DocumentStateEdit _ baseEdit_ <- st ^. gsDocumentState
+      | Just (DocumentStateEdit _ baseEdit_) <- st ^. gsDocumentState
       -> do
         let baseEdit :: Common.ID Common.Edit
             (baseEdit:_) = catMaybes [baseEdit_, st ^? gsEditID . _Just . _Just]
