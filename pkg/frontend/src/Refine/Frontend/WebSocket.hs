@@ -35,13 +35,13 @@ initWebSocket :: (StoreData GlobalState, StoreAction GlobalState ~ GlobalAction,
 initWebSocket = do
     let wsClose :: CloseEvent -> IO ()
         wsClose _ = do
-          consoleLogJSStringM "WS" "connection closed"
           (n, _) <- takeMVar webSocketMVar
           openConnection $ Just n
 
         wsMessage :: MessageEvent -> IO ()
         wsMessage msg = case getData msg of
-            StringData x -> maybe (error "websockets json decoding error") wsParsedMessage . decode $ cs x
+            StringData x -> either (error . ("websockets json decoding error: " <>)) wsParsedMessage
+                        . eitherDecode $ cs x
             (BlobData _)        -> error "websockets error: BlobData not supported."
             (ArrayBufferData _) -> error "websockets error: ArrayBufferData not supported."
 
@@ -107,7 +107,7 @@ initWebSocket = do
           ApiSmtpError                            -> ignore
           where
             ignore = pure ()
-            reconnect = close Nothing Nothing ws  -- just need to close, re-open happens automatically.
+            reconnect = close Nothing (Just "disconnect after error") ws  -- should re-open automatically.
             resetroute = changeRoute defaultRoute
             unloadvdoc = dispatchAndExec UnloadVDoc
 

@@ -95,9 +95,10 @@ instance (Monad m, MonadLog m, MonadIO m) => MonadWS m where
     liftIO $ sendTextData conn (cs $ encode msg :: ST)
 
   receiveMessage mclientId conn = do
-    msg <- liftIO $ receiveData conn <&> fromMaybe (error "websockets json decoding error") . decode
-    logWSMessage mclientId msg
-    pure msg
+    emsg <- liftIO $ eitherDecode <$> receiveData conn
+    case emsg of
+      Left err -> liftIO . throwIO . ErrorCall $ "could not parse client message: " <> show (mclientId, err)
+      Right msg -> logWSMessage mclientId msg >> pure msg
 
   modifyCache sid f = liftIO . modifyMVar webSocketMVar $ \m -> pure (Map.adjust (second f) sid m, ())
 
