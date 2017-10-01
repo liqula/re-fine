@@ -19,6 +19,7 @@ import Refine.Frontend.Access
 import Refine.Frontend.Document.Types
 import Refine.Frontend.Login.Types
 import Refine.Frontend.MainMenu.Types
+import Refine.Frontend.Route
 import Refine.Frontend.Store.Types
 import Refine.Frontend.Test.Console
 
@@ -91,6 +92,7 @@ initWebSocket = do
         handleApiError ws = \case
           ApiUnknownError _                       -> ignore
           ApiVDocVersionError                     -> ignore
+          ApiDBError (ApiDBNotFound _)            -> resetroute  -- (e.g., because somebody hit an old route)
           ApiDBError _                            -> ignore
           ApiUserNotFound _                       -> ignore  -- handled via 'TCLoginResp'
           ApiUserNotLoggedIn                      -> ignore
@@ -106,6 +108,7 @@ initWebSocket = do
           where
             ignore = pure ()
             reconnect = close Nothing Nothing ws  -- just need to close, re-open happens automatically.
+            resetroute = changeRoute defaultRoute
 
         wsUrl :: JSString
         wsUrl = case clientCfg of
