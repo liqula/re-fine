@@ -101,21 +101,21 @@ mainScreen = mkView' "MainScreen" $ \(rs, as) -> case rs ^. gsCompositeVDoc of
 
           -- components that are visible only sometimes:
           case rs ^. RS.gsContributionState of
-           Nothing -> mempty
-           Just (contrst :: ContributionState) -> case contrst ^. RS.csActiveDialog of
-            Just (ActiveDialogComment lst) -> do
-              addComment_ __ $ AddContributionProps
-                              (contrst ^. RS.csCurrentSelectionWithPx)
-                              lst
-                              (rs ^. RS.gsScreenState . SC.ssWindowWidth)
-            Just (ActiveDialogEdit estate) -> do
-              let Just docst = rs ^. RS.gsDocumentState
-                  Just (localst :: EditInfo (Maybe EditKind)) = docst ^? documentStateEditInfo
-              addEdit_ $ AddContributionProps
-                              (contrst ^. RS.csCurrentSelectionWithPx)
-                              (localst, estate)
-                              (rs ^. RS.gsScreenState . SC.ssWindowWidth)
             Nothing -> mempty
+            Just (contrst :: ContributionState) -> case contrst ^. RS.csActiveDialog of
+              Just (ActiveDialogComment lst) -> do
+                addComment_ __ $ AddContributionProps
+                                (contrst ^. RS.csCurrentSelectionWithPx)
+                                lst
+                                (rs ^. RS.gsScreenState . SC.ssWindowWidth)
+              Just (ActiveDialogEdit estate) -> do
+                let Just docst = rs ^. RS.gsDocumentState
+                    Just (localst :: EditInfo (Maybe EditKind)) = docst ^? documentStateEditInfo
+                addEdit_ $ AddContributionProps
+                                (contrst ^. RS.csCurrentSelectionWithPx)
+                                (localst, estate)
+                                (rs ^. RS.gsScreenState . SC.ssWindowWidth)
+              Nothing -> mempty
 
           main_ ["role" $= "main", "key" $= "main"] $ do
               mainHeaderToolbar_ (mkMainHeaderToolbarProps rswiped)
@@ -123,7 +123,7 @@ mainScreen = mkView' "MainScreen" $ \(rs, as) -> case rs ^. gsCompositeVDoc of
                   div_ ["className" $= "row row-align-center row-align-top"] $ do
                       let Just procst = rs ^. gsProcessState
 
-                      let asideProps = AsideProps
+                          asideProps = AsideProps
                                      (procst ^. psContributionState . csAllVerticalSpanBounds)
                                      (OffsetFromDocumentTop $ rs ^. gsScreenState . ssHeaderHeight + fixedHeaderHeight + 15)
                                      (procst ^. psContributionState . csCurrentSelectionWithPx)
