@@ -3,9 +3,6 @@
 
 module Refine.Frontend.Views
   ( refineApp
-
-  -- for testing:
-  , mainScreen_
   ) where
 #include "import_frontend.hs"
 
@@ -48,9 +45,10 @@ wholeScreen_ accessState props = React.viewWithSKey wholeScreen "wholeScreen" (p
 wholeScreen :: React.ReactView (GlobalState, AccessState)
 wholeScreen = React.defineLifecycleView "WholeScreen" () React.lifecycleConfig
   { React.lRender = \() (gs, as) ->
-     case gs ^? gsMainMenuState . mmState . mainMenuOpenTab of
-      Nothing  -> mainScreen_ (gs, as)
-      Just tab -> view_ mainMenu "mainMenu" $ MainMenuProps
+     case (gs ^? gsMainMenuState . mmState . mainMenuOpenTab, gs ^. gsProcessState) of
+      (Nothing, Nothing)  -> error "inconsistent global state!"
+      (Nothing, Just pst) -> view_' mainScreen "mainScreen" (gs, pst, as)
+      (Just tab, _) -> view_ mainMenu "mainMenu" $ MainMenuProps
                             (mapMainMenuTab
                               (const (GroupsProps groups vdocs users))
                               groupFromCache
@@ -85,55 +83,54 @@ wholeScreen = React.defineLifecycleView "WholeScreen" () React.lifecycleConfig
     didMountOrUpdate :: HasCallStack => React.LPropsAndState (GlobalState, AccessState) () -> IO ()
     didMountOrUpdate _getPropsAndState = flushCacheMisses
 
-mainScreen :: HasCallStack => View' '[(GlobalState, AccessState)]
-mainScreen = mkView' "MainScreen" $ \(rs, as) -> case rs ^. gsCompositeVDoc of
-  Nothing -> error "mainScreen: no gsVDoc"
-  Just Nothing -> hourglass
-  Just (Just vdoc) -> do
-    div_ ["key" $= "maindiv" {-FIXME: seems not to work as expected, we still have a warning-}] $ do
-          React.view trackWindowSize (rs ^. gsScreenState . SC.ssWindowSize) mempty
+mainScreen :: HasCallStack => View' '[(GlobalState, ProcessState DocumentState, AccessState)]
+mainScreen = mkView' "MainScreen" $ \(gst, procst, as) -> do
+  let cachest  = gst ^. gsServerCache
+      screenst = gst ^. gsScreenState
+      gstwiped = wipeDocumentState as gst
+      contrst  = procst ^. psContributionState
+      docst    = procst ^. psDocumentState
 
-          let rswiped = wipeDocumentState as rs
-          div_ ["className" $= "c_bg_blue_dark"] $ mainHeader_ (mkMainHeaderProps as rswiped)
+  case (procst ^. psVDocID, cachest) ^. getCompositeVDoc of
+   Nothing -> hourglass
+   Just vdoc ->
+    div_ ["key" $= "maindiv" {-FIXME: seems not to work as expected, we still have a warning-}] $ do
+          React.view trackWindowSize (screenst ^. SC.ssWindowSize) mempty
+          div_ ["className" $= "c_bg_blue_dark"] $ mainHeader_ (mkMainHeaderProps as gstwiped)
 
           -- components that are visible only sometimes:
-          case rs ^. RS.gsContributionState of
-            Nothing -> mempty
-            Just (contrst :: ContributionState) -> case contrst ^. RS.csActiveDialog of
+          case contrst ^. csActiveDialog of
               Just (ActiveDialogComment lst) -> do
                 addComment_ $ AddContributionProps
                                 (contrst ^. RS.csCurrentSelectionWithPx)
                                 lst
-                                (rs ^. RS.gsScreenState . SC.ssWindowWidth)
+                                (screenst ^. SC.ssWindowWidth)
               Just (ActiveDialogEdit estate) -> do
-                let Just docst = rs ^. RS.gsDocumentState
-                    Just (localst :: EditInfo (Maybe EditKind)) = docst ^? documentStateEditInfo
+                let Just (localst :: EditInfo (Maybe EditKind)) = docst ^? documentStateEditInfo
                 addEdit_ $ AddContributionProps
                                 (contrst ^. RS.csCurrentSelectionWithPx)
                                 (localst, estate)
-                                (rs ^. RS.gsScreenState . SC.ssWindowWidth)
+                                (screenst ^. SC.ssWindowWidth)
               Nothing -> mempty
 
           main_ ["role" $= "main", "key" $= "main"] $ do
-              mainHeaderToolbar_ (mkMainHeaderToolbarProps rswiped)
+              mainHeaderToolbar_ (mkMainHeaderToolbarProps gstwiped)
               div_ ["className" $= "grid-wrapper"] $ do
                   div_ ["className" $= "row row-align-center row-align-top"] $ do
-                      let Just procst = rs ^. gsProcessState
-
-                          asideProps = AsideProps
-                                     (procst ^. psContributionState . csAllVerticalSpanBounds)
-                                     (OffsetFromDocumentTop $ rs ^. gsScreenState . ssHeaderHeight + fixedHeaderHeight + 15)
-                                     (procst ^. psContributionState . csCurrentSelectionWithPx)
-                                     (procst ^. psContributionState . csHighlightedMarkAndBubble)
-                                     (rs ^. gsScreenState)
+                      let asideProps = AsideProps
+                                     (contrst ^. csAllVerticalSpanBounds)
+                                     (OffsetFromDocumentTop $ screenst ^. ssHeaderHeight + fixedHeaderHeight + 15)
+                                     (contrst ^. csCurrentSelectionWithPx)
+                                     (contrst ^. csHighlightedMarkAndBubble)
+                                     screenst
                                      (fltr (\i -> ContribIDDiscussion <$> [True, False] <*> pure i)
                                            (fmap snd $ vdoc ^. compositeVDocApplicableDiscussions))
                                      (fltr ((:[]) . ContribIDEdit)
                                            (fltrThisEdit $ vdoc ^. compositeVDocApplicableEdits))
                                      (case procst ^. psDocumentState of
                                         DocumentStateDiff{} -> BubblePositioningEvenlySpaced
-                                        _ -> procst ^. psContributionState . csBubblePositioning)
-                                     (procst ^. psContributionState . csQuickCreateShowState)
+                                        _ -> contrst ^. csBubblePositioning)
+                                     (contrst ^. csQuickCreateShowState)
 
                           fltrThisEdit = case procst ^. psDocumentState of
                             DocumentStateDiff _ _ eid _ _ -> Map.filter $ (/= eid) . (^. editID)
@@ -143,7 +140,7 @@ mainScreen = mkView' "MainScreen" $ \(rs, as) -> case rs ^. gsCompositeVDoc of
                           fltr :: (ID c -> [ContributionID]) -> Map (ID c) b -> [b]
                           fltr mkCId = if procst ^. psHeaderState . hsReadOnly
                               then const mempty
-                              else maybe Map.elems go (procst ^. psContributionState . csBubbleFilter)
+                              else maybe Map.elems go (contrst ^. csBubbleFilter)
                             where
                               go allowed = fmap snd . filter (any (`Set.member` allowed) . mkCId . fst) . Map.toList
 
@@ -151,17 +148,14 @@ mainScreen = mkView' "MainScreen" $ \(rs, as) -> case rs ^. gsCompositeVDoc of
                       document_ $ DocumentProps ((if procst ^. psHeaderState . hsReadOnly
                                                   then mapDocumentState id deleteMarksFromRawContent id id
                                                   else id)
-                                                 $ getDocumentStateProps as rs)
-                                                (procst ^. psContributionState)
+                                                 $ getDocumentStateProps as gst)
+                                                contrst
                       rightAside_ asideProps
 
           -- append an empty page to the botton.  (helps with legitimate attempts to scroll beyond
           -- the end of the document, e.g. when moving dialogs into the center of the screen before
           -- they have been rendered.)
           div_ ["style" @@= [decl "marginBottom" (Px 800)]] $ pure ()
-
-mainScreen_ :: HasCallStack => (GlobalState, AccessState) -> ReactElementM eventHandler ()
-mainScreen_ = view_' mainScreen "mainScreen_"
 
 
 leftAside :: HasCallStack => View '[AsideProps]

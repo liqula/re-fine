@@ -143,22 +143,30 @@ gsEditID :: HasCallStack => Getter (GlobalState_ a) (Maybe (Maybe (ID Edit)))
 gsEditID = to $ \gs -> fmap (^. vdocHeadEdit) . cacheLookup gs <$> gs ^. gsVDocID
 
 gsCompositeVDoc :: Getter (GlobalState_ a) (Maybe (Maybe CompositeVDoc))
-gsCompositeVDoc = to getCompositeVDoc
-  where
-    getCompositeVDoc :: GlobalState_ a -> Maybe (Maybe CompositeVDoc)
-    getCompositeVDoc gs = (>>= mkCompositeVDoc gs) <$> gs ^. gsEdit
+gsCompositeVDoc = to $ \gs -> (\vid -> (vid, gs ^. gsServerCache) ^. getCompositeVDoc) <$> (gs ^. gsVDocID)
 
-    mkCompositeVDoc :: GlobalState_ a -> Edit -> Maybe CompositeVDoc
-    mkCompositeVDoc gs edit = do
-      vdoc <- cacheLookup gs $ edit ^. editVDoc
-      pure $ CompositeVDoc
-        vdoc
-        edit
-        (Map.fromList $ catMaybes [ (,) k <$> cacheLookup gs k | k <- Set.toList $ edit ^. editChildren ])
-        (Map.fromList $ catMaybes [ cacheLookup gs k <&> \d -> (k, (r, d)) | (k, r) <- Map.toList $ edit ^. editDiscussions' ])
+getCompositeVDoc :: Getter (ID VDoc, ServerCache) (Maybe CompositeVDoc)
+getCompositeVDoc = to $ \(vid, cache) -> do
+  vdoc <- cacheLookupIn cache vid
+  edit <- cacheLookupIn cache $ vdoc ^. vdocHeadEdit
+  pure $ CompositeVDoc
+    vdoc
+    edit
+    (Map.fromList $ catMaybes [ (,) k <$> cacheLookupIn cache k | k <- Set.toList $ edit ^. editChildren ])
+    (Map.fromList $ catMaybes [ cacheLookupIn cache k <&> \d -> (k, (r, d)) | (k, r) <- Map.toList $ edit ^. editDiscussions' ])
 
 gsCurrentSelection :: HasCallStack => Getter GlobalState (Maybe (Selection Position))
 gsCurrentSelection = to (^? gsContributionState . _Just . csCurrentSelectionWithPx . _Just . sstSelectionState)
+
+gsRawContent :: Getter GlobalState RawContent
+gsRawContent = to $ \case
+  gs@(view gsDocumentState -> Just (DocumentStateDiff _ _ (eid :: ID Edit) _ _))
+    -> maybe (cacheMissId eid rcHourglass) (^. editVDocVersion) (cacheLookup gs eid)
+  (view gsCompositeVDoc -> Just (Just cvdoc))
+    -> rawContentFromCompositeVDoc cvdoc
+  _ -> rcHourglass
+  where
+    rcHourglass = mkRawContent $ mkBlock hourglass :| []
 
 
 -- * cache stuff
@@ -180,16 +188,6 @@ cacheMiss = cacheMisses . pure
 -- | prefer to use this instead of 'cacheMiss'
 cacheMissId :: CacheLookup v => ID v -> a -> a
 cacheMissId i x = cacheMiss (cacheKey i) x i
-
-gsRawContent :: Getter GlobalState RawContent
-gsRawContent = to $ \case
-  gs@(view gsDocumentState -> Just (DocumentStateDiff _ _ (eid :: ID Edit) _ _))
-    -> maybe (cacheMissId eid rcHourglass) (^. editVDocVersion) (cacheLookup gs eid)
-  (view gsCompositeVDoc -> Just (Just cvdoc))
-    -> rawContentFromCompositeVDoc cvdoc
-  _ -> rcHourglass
-  where
-    rcHourglass = mkRawContent $ mkBlock hourglass :| []
 
 class CacheLookup a where
   cacheKey :: ID a -> CacheKey
