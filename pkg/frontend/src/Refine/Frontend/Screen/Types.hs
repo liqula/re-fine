@@ -14,7 +14,7 @@ data WindowSize = Desktop | Tablet | Mobile
   deriving (Show, Eq, Generic)
 
 data ScreenState = ScreenState
-  { _ssHeaderHeight           :: Int  -- ^ without toolbar
+  { _ssHeaderHeight           :: Int  -- ^ without toolbar (FIXME: this only makes sense when in a vdoc.  move it there?)
   , _ssWindowWidth            :: Int
   , _ssWindowSize             :: WindowSize
   } deriving (Show, Eq, Generic)

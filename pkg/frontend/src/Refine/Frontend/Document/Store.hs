@@ -62,11 +62,8 @@ transformEditorStoreHandler = f where
     (dispatchAndExec . DocumentAction) `mapM_` [DocumentSave (FormBegin (form, es))]
     pure $ EditorStore es
 
--- | We pass two global states into this function, the one before the
--- pure update and the one after.  Using the one after is (was?)
--- sometimes necessary, but it's a bit dangerous because it can
--- trigger thunk evaluation loops.  use old state whenever it is
--- enough.
+-- | This function takes the 'GlobalState' value to the extent it is already updated.  Call it as
+-- late as possible during the pure update!
 documentStateUpdate :: (HasCallStack)
                     => GlobalAction -> GlobalState -> DocumentState
                     -> CacheLookupT DocumentState
