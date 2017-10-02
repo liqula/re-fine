@@ -126,10 +126,23 @@ startWebSocketServer cfg toIO = websocketsOr options server
         pingLoop toIO conn
         eClientId <- handshake cfg conn logger
         case eClientId of
-          Right clientId ->
-            forever (stepWrapper toIO conn clientId (step conn clientId)
-                      >>= \case Left err -> handleUncaughtApiError conn logger err
-                                Right () -> pure ())
+          Right clientId -> do
+            let loop = stepWrapper toIO conn clientId (step conn clientId) >>= \case
+                  Right () -> loop
+
+                  -- one possible cause for 'ApiUnknownError' is that the websockets 'Connection'
+                  -- got killed inside 'AppM', and the exception got captured here.  in this case,
+                  -- we must end the loop.
+                  Left ApiUnknownError -> do
+                    logWSMessage (Just clientId) ("connection closed during app transaction" :: ST)
+                      `runReaderT` logger
+
+                  -- any other error means the connection is (probably?) still working.
+                  Left err -> do
+                    sendMessage Nothing conn (TCError err)
+                      `runReaderT` logger
+                    loop
+            loop
           Left err -> handleHandshakeError conn logger err)
         `catch` handleConnectionException conn logger
         `catch` handleAnyException conn logger
@@ -139,10 +152,6 @@ startWebSocketServer cfg toIO = websocketsOr options server
 handleHandshakeException :: Logger -> HandshakeException -> IO ()
 handleHandshakeException logger err = do
   unLogger logger LogInfo $ show err
-
-handleUncaughtApiError :: Connection -> Logger -> ApiError -> IO ()
-handleUncaughtApiError conn logger err = do
-  sendMessage Nothing conn (TCError err) `runReaderT` logger
 
 -- | thrown by 'handshake' below.
 handleHandshakeError :: Connection -> Logger -> WSError -> IO ()
