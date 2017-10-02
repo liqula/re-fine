@@ -1,6 +1,8 @@
 {-# LANGUAGE CPP #-}
 #include "language_backend.hs"
 
+{-# OPTIONS_GHC -Wno-incomplete-patterns #-}
+
 module Refine.Backend.Test.AppServer where
 #include "import_backend.hs"
 
@@ -14,7 +16,7 @@ import           Network.Wai.Test (SRequest(..), SResponse(..))
 import qualified Network.Wai.Test as Wai
 import qualified Network.Wai.Test.Internal as Wai
 
-import           Refine.Backend.App hiding (getEdit)
+import           Refine.Backend.App as App hiding (getEdit)
 import           Refine.Backend.Config
 import           Refine.Backend.Database (DB)
 import           Refine.Backend.Server
@@ -48,14 +50,29 @@ createTestSession = createTestSession' testBackendCfg
 
 testBackendCfg :: Config
 testBackendCfg = def
-        & cfgLogger     .~ LogCfg (LogCfgFile testLogfilePath) LogDebug
+        & cfgLogger     .~ LogCfg (LogCfgFile "test.log") LogDebug
         & cfgDBKind     .~ DBOnDisk "test.db"
         & cfgSmtp       .~ Nothing
         & cfgAllAreGods .~ True
 
+testLogfilePath :: FilePath
+testLogfilePath = case testBackendCfg ^. cfgLogger of LogCfg (LogCfgFile f) _ -> f
+
+readTestLogfile :: IO String
+readTestLogfile = readFile testLogfilePath
+
+
 createTestSession' :: Config -> (TestBackend -> IO ()) -> IO ()
 createTestSession' cfg action = withTempCurrentDirectory $ do
-  (backend, destroy) <- mkProdBackend cfg
+  (backend, destroy) <- mkBackend cfg
+  let schaffolding = do
+        gs <- App.getGroups
+        when (null gs) $ do
+          void . App.addGroup $ CreateGroup "default" "default group" [] [] mempty Nothing
+
+  runExceptT (backendRunApp backend $$ unsafeAsGod schaffolding)
+    >>= either (error . show) (const $ pure ())
+
   () <- action =<< (TestBackend backend <$> newMVar Wai.initState <*> newMVar Nothing)
   destroy
 
@@ -128,12 +145,6 @@ errorOnLeft :: Show e => IO (Either e a) -> IO a
 errorOnLeft action = either (throwIO . ErrorCall . show') pure =<< action
   where
     show' x = "errorOnLeft: " <> show x
-
-testLogfilePath :: FilePath
-testLogfilePath = "logfile"
-
-readTestLogfile :: IO String
-readTestLogfile = readFile testLogfilePath
 
 
 -- | Log into a 'TestBackend'.  See 'runDB'' for an explanation why this is difficult.

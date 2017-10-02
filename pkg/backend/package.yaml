@@ -26,6 +26,7 @@ dependencies:
   - data-default
   - directory
   - elim
+  - fast-logger
   - fgl
   - filepath
   - fingertree-tf

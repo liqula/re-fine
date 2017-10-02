@@ -10,7 +10,7 @@ import qualified Network.Wai.Test.Internal as Wai
 import           Test.Hspec
 import           System.Process (system)
 
-import Refine.Backend.App
+import Refine.Backend.App as App
 import Refine.Backend.Config
 import Refine.Backend.Database (DB)
 import qualified Refine.Backend.Database.Class as DB
@@ -47,10 +47,19 @@ setup action = withTempCurrentDirectory $ do
         & cfgSmtp       .~ Nothing
         & cfgAllAreGods .~ False
   (tbe, destroy) <- do
-    (be, dstr) <- mkProdBackend cfg
+    (be, dstr) <- mkBackend cfg
     wai        <- newMVar Wai.initState
     li         <- newMVar Nothing
     pure (TestBackend be wai li, dstr)
+
+  let schaffolding :: AppM DB ()
+      schaffolding = do
+        gs <- App.getGroups
+        when (null gs) $ do
+          void . App.addGroup $ CreateGroup "default" "default group" [] [] mempty Nothing
+
+  runExceptT (backendRunApp (tbe ^. testBackend) $$ unsafeAsGod schaffolding)
+    >>= either (error . show) (const $ pure ())
 
   adminID <- addUserAndLogin tbe "admin" "admin@example.com" "pass"
   aliceID <- addUserAndLogin tbe "alice" "alice@example.com" "pass"

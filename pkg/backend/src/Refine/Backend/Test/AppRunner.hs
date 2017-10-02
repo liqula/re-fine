@@ -26,7 +26,8 @@ provideAppRunner action = withTempCurrentDirectory $ do
   action runner
   destroy
 
--- | App actions run in god mode.  See 'unsafeAsGod'.
+-- | FIXME: this should almost certainly be discarded in favor of 'mkBackend', but it is subtly
+-- different: it contains a trick to avoid #389, it has no servant, config is hard-wired in, ...
 createAppRunner :: forall a. IO (AppM DB a -> ExceptT ApiError IO a, IO ())
 createAppRunner = do
   let dbFilePath = "./test.db"

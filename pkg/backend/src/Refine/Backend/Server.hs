@@ -7,7 +7,7 @@ module Refine.Backend.Server
   ( refineCookieName
   , startBackend
   , runCliAppCommand
-  , Backend(..), mkProdBackend
+  , Backend(..), mkBackend
   , refineApi
   ) where
 #include "import_backend.hs"
@@ -109,27 +109,16 @@ cacheBust = addHeader "no-cache, no-store, must-revalidate" . addHeader "0"
 
 startBackend :: Config -> IO ()
 startBackend cfg = do
-  (backend, _destroy) <- mkProdBackend cfg
+  (backend, _destroy) <- mkBackend cfg
   Warp.runSettings (warpSettings cfg) $ backendServer backend
 
 runCliAppCommand :: Config -> AppM DB a -> IO ()
 runCliAppCommand cfg cmd = do
-  (backend, _destroy) <- mkProdBackend cfg
+  (backend, _destroy) <- mkBackend cfg
   void $ (natThrowError . backendRunApp backend) $$ cmd
 
-mkProdBackend :: Config -> IO (Backend DB, IO ())
-mkProdBackend cfg = mkBackend cfg $ do
-  () <- migrateDB cfg
-  gs <- App.getGroups
-  when (null gs) $ do
-    void . addGroup $ CreateGroup "default" "default group" [] [] mempty Nothing
-                                                                   -- FIXME: don't do that any more!
-                                                                   -- we have `--init` and
-                                                                   -- `initializeDB` now!
-  pure ()
-
-mkBackend :: Config -> AppM DB a -> IO (Backend DB, IO ())
-mkBackend cfg initially = do
+mkBackend :: Config -> IO (Backend DB, IO ())
+mkBackend cfg = do
   createDataDirectories cfg
   (logchan, destroylogger) <- mkLogChan cfg
 
@@ -138,8 +127,8 @@ mkBackend cfg initially = do
   backend <- mkServerApp cfg logchan dbNat dbRunner
 
   -- setup actions like migration, intial content, ...
-  result <- runExceptT (backendRunApp backend $$ unsafeAsGod initially)
-  either (error . show) (const $ pure ()) result
+  runExceptT (backendRunApp backend $$ unsafeAsGod (migrateDB cfg))
+    >>= either (error . show) (const $ pure ())
 
   pure (backend, destroydb >> destroylogger)
 
