@@ -120,7 +120,7 @@ startWebSocketServer cfg toIO = websocketsOr options server
     logger = mkLogger cfg
 
     server :: ServerApp
-    server pendingconnection = handle (handleHandshakeException logger) $ do
+    server pendingconnection = handle (handleAcceptRequestException logger) $ do
       conn <- acceptRequest pendingconnection
       (do
         pingLoop toIO conn
@@ -149,8 +149,8 @@ startWebSocketServer cfg toIO = websocketsOr options server
 
 
 -- | thrown by 'acceptRequest'.
-handleHandshakeException :: Logger -> HandshakeException -> IO ()
-handleHandshakeException logger err = do
+handleAcceptRequestException :: Logger -> HandshakeException -> IO ()
+handleAcceptRequestException logger err = do
   unLogger logger LogInfo $ show err
 
 -- | thrown by 'handshake' below.
