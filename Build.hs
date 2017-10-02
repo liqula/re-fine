@@ -152,9 +152,9 @@ main = shakeArgs refineOptions $ do
   phony "build-frontend-hpack" $ do
     -- (needed because build.nix does not to that implicitly yet, like stack did.)
     command_ [Cwd pkgPrelude] "hpack" []
-    command_ [Cwd pkgPrelude] "cabal2nix" ["."]
+    command_ [Cwd pkgPrelude, FileStdout $ pkgPrelude </> "default.nix"] "cabal2nix" ["."]
     command_ [Cwd pkgCommon] "hpack" []
-    command_ [Cwd pkgCommon] "cabal2nix" ["."]
+    command_ [Cwd pkgCommon, FileStdout $ pkgCommon </> "default.nix"] "cabal2nix" ["."]
 
   phony "build-frontend-npm" $ do  -- if this fails, check #40.
     command_ [Cwd pkgFrontend] "node" ["--version"]
