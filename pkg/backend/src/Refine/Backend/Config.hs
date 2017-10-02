@@ -33,6 +33,8 @@ data Config = Config
                                         --   refine-frontend just needs web sockets to work.  if
                                         --   this is False, we do not set or read any cookies in the
                                         --   connecting browsers.
+  , _cfgAppMLimit     :: Maybe Timespan -- ^ how long is one request allowed to take handling?
+                                        --   (Nothing: no limit)
   }
   deriving (Eq, Show, Generic)
 
@@ -82,6 +84,7 @@ instance Default Config where
     , _cfgWSPingPeriod  = TimespanSecs 14
     , _cfgAllAreGods    = False
     , _cfgHaveRestApi   = True
+    , _cfgAppMLimit     = Nothing
     }
 
 instance Default LogCfg where

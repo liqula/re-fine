@@ -26,6 +26,7 @@ data ApiError
   | ApiMergeError ST
   | ApiRebaseError
   | ApiSmtpError
+  | ApiTimeoutError Timespan
   deriving (Eq, Show, Generic)
 
 data ApiErrorDB

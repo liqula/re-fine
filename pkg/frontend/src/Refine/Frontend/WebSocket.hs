@@ -105,6 +105,7 @@ initWebSocket = do
           ApiMergeError _                         -> ignore
           ApiRebaseError                          -> ignore
           ApiSmtpError                            -> ignore
+          ApiTimeoutError _                       -> ignore
           where
             ignore = pure ()
             reconnect = close Nothing (Just "disconnect after error") ws  -- should re-open automatically.

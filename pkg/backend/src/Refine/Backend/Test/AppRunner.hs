@@ -44,6 +44,7 @@ createAppRunner = do
         , _cfgWSPingPeriod  = TimespanSecs 1
         , _cfgAllAreGods    = True
         , _cfgHaveRestApi   = True
+        , _cfgAppMLimit     = Just (TimespanSecs 5)
         }
 
   (dbRunner, dbNat, destroy) <- createDBNat cfg

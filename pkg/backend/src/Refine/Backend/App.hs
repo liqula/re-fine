@@ -7,6 +7,8 @@ module Refine.Backend.App
   ) where
 #include "import_backend.hs"
 
+import System.Timeout
+
 import Refine.Backend.App.Access      as App
 import Refine.Backend.App.Comment     as App
 import Refine.Backend.App.Core        as App
@@ -20,7 +22,7 @@ import Refine.Backend.App.Cache       as App
 import Refine.Backend.Config
 import Refine.Backend.Database.Class (Database)
 import Refine.Backend.Logger
-import Refine.Common.Rest (ApiError)
+import Refine.Common.Rest (ApiError(..))
 
 
 runApp
@@ -35,7 +37,7 @@ runApp
   dbrunner
   logger
   cfg
-  = NT (logDuration logger . runSR . unApp)
+  = NT (limitDuration cfg . logDuration logger . runSR . unApp)
     where
       runSR
         :: forall a. StateT AppState (ReaderT (MkDBNat db, AppContext) (ExceptT AppError IO)) a
@@ -66,6 +68,11 @@ runApp
           protect :: IO (Either AppError a) -> IO (Either AppError a)
           protect = (`catch` \(SomeException e) -> pure . Left . AppUnknownError . cs . show $ e)
 
+
+limitDuration :: Config -> ExceptT ApiError IO a -> ExceptT ApiError IO a
+limitDuration cfg action@(ExceptT ioaction) = case cfg ^. cfgAppMLimit of
+  Nothing -> action
+  Just timespan -> ExceptT $ fromMaybe (Left $ ApiTimeoutError timespan) <$> timeout (timespanUs timespan) ioaction
 
 logDuration :: Logger -> ExceptT ApiError IO a -> ExceptT ApiError IO a
 logDuration logger (ExceptT action) = ExceptT $ do

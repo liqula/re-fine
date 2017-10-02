@@ -216,6 +216,7 @@ appServantErr' = \case
   ApiMergeError{}          -> err500
   ApiRebaseError{}         -> err500
   ApiSmtpError{}           -> err500
+  ApiTimeoutError{}        -> err500
 
 dbServantErr :: ApiErrorDB -> ServantErr
 dbServantErr = \case
