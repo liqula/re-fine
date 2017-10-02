@@ -343,10 +343,12 @@ instance Editable a => Editable [a] where
         revInits :: [a] -> [[a]]
         revInits = f []
           where
-            -- NOTE: the following will fail to pattern-match:
+            -- NOTE: the following is too strict for the above use case and will fail to
+            -- pattern-match:
             --
-            -- f acc (x: xs) = acc: f (x: acc) xs
-            -- f acc []      = acc: repeat undefined
+            -- f acc = (acc:) . \case
+            --     (x: xs) -> f (x: acc) xs
+            --     []      -> []
             f acc xs = acc: f (head' xs: acc) (tail' xs)
             head' (x:_) = x
             tail' (_:xs) = xs
