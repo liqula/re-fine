@@ -100,7 +100,7 @@ import Data.IntMap.Strict as P (IntMap)
 import Data.List as P ((\\), foldl', sort, nub, sortBy, insertBy, replicate)
 import Data.List.NonEmpty as P (NonEmpty(..))
 import Data.Map.Strict as P (Map)
-import Data.Maybe as P (catMaybes, fromMaybe, fromJust, isJust, isNothing, maybeToList, listToMaybe)
+import Data.Maybe as P (catMaybes, fromMaybe, isJust, isNothing, maybeToList, listToMaybe)
 import Data.Proxy as P
 import Data.Set as P (Set)
 import Data.String as P

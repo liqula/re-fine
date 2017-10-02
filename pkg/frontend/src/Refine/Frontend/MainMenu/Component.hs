@@ -470,7 +470,7 @@ mainMenuProfile editable user lst = mkPersistentStatefulView "MainMenuProfile" l
 
       _ -> do
           br_ []
-          contributionDialogTextForm (_2 . iso fromJust Just) st 1 "Description"
+          contributionDialogTextForm (_2 . iso (fromJustNote "mainMenuProfile: desc") Just) st 1 "Description"
           br_ []
 
           button_

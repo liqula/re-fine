@@ -45,6 +45,7 @@ warn = traceEvent    ==> errorDoNotUseTrace
 warn = traceMarker   ==> errorDoNotUseTrace
 warn = traceMarkerIO ==> errorDoNotUseTrace
 
+warn = fromJust      ==> fromJustNote
 warn = head          ==> headMay
 warn = last          ==> lastMay
 warn = (!!)          ==> atMay

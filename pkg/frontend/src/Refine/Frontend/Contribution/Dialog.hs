@@ -176,7 +176,7 @@ commentInput lst = mkPersistentStatefulView "CommentInput" lst Nothing $ \st ->
           span_ ["className" $= "bold"] "finish"
 
       ibutton_ $ emptyIbuttonProps (ButtonImageIcon Svg.Save ColorSchemaBright)
-                    [ ContributionAction $ SubmitComment (CommentInfo stext (fromJust smkind))
+                    [ ContributionAction $ SubmitComment (CommentInfo stext (fromJustNote "commentInput: smkind" smkind))
                     , ContributionAction ClearRange
                     , ContributionAction HideCommentEditor
                     ]
@@ -227,7 +227,7 @@ editInput (einfo, estate) = mkPersistentStatefulView "EditInput" (einfo ^. editI
     hr_ []
 
     ibutton_ $ emptyIbuttonProps (ButtonImageIcon Svg.Save ColorSchemaBright)
-      [ DocumentAction . DocumentSave $ FormComplete (EditInfo desc (fromJust mkind) rst, estate)
+      [ DocumentAction . DocumentSave $ FormComplete (EditInfo desc (fromJustNote "editInput: mkind" mkind) rst, estate)
       , DocumentAction UpdateDocumentStateView
       , ContributionAction ClearRange
       ]

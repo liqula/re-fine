@@ -194,7 +194,7 @@ setAllVerticalSpanBounds rawContent = liftIO $ do
               -- production.  write a few assert functions that can do
               -- that, and use one of those.)
 
-              let fromJust_ = fromMaybe (error "setAllVerticalSpanBounds: internal error.")
+              let fromJust_ = fromJustNote "setAllVerticalSpanBounds: internal error."
 
               topOffset    <- OffsetFromViewportTop  . fromJust_ <$> getLeafSelectorBound LeafSelectorTop    top
               bottomOffset <- OffsetFromViewportTop  . fromJust_ <$> getLeafSelectorBound LeafSelectorBottom bot
