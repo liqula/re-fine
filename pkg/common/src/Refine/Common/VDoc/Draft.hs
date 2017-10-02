@@ -145,7 +145,7 @@ getLeafSelectors rc
     f (Right (Mark m)) = Just m
     f _ = Nothing
 
--- the function should be strictly monotonic on Just values
+-- | the function must be strictly monotonic on Just values
 mapMaybeKey :: (HasCallStack, Ord k, Ord l) => (k -> Maybe l) -> Map k a -> Map l a
 mapMaybeKey f = Map.mapKeysMonotonic (fromJustNote "mapMaybeKey: impossible" . f) . Map.filterWithKey (\k _ -> isJust $ f k)
 

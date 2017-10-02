@@ -475,7 +475,8 @@ mainMenuProfile editable user lst = mkPersistentStatefulView "MainMenuProfile" l
 
           button_
             [ onClick $ \_evt _ -> simpleHandler @_ $
-              \st' -> ( [action @GlobalState . MainMenuAction . MainMenuActionOpen $ MainMenuProfile (u ^. userID, FormComplete (Right <$> (u ^. userAvatar), snd st))]
+              \st' -> ( [action @GlobalState . MainMenuAction . MainMenuActionOpen $
+                         MainMenuProfile (u ^. userID, FormComplete (Right <$> (u ^. userAvatar), snd st))]
                       , Just $ st' & _2 .~ Nothing)
             ] $ elemText "save"
           button_
