@@ -35,7 +35,7 @@ runApp
   dbrunner
   logger
   cfg
-  = NT (runSR . unApp)
+  = NT (logDuration logger . runSR . unApp)
     where
       runSR
         :: forall a. StateT AppState (ReaderT (MkDBNat db, AppContext) (ExceptT AppError IO)) a
@@ -65,3 +65,13 @@ runApp
 
           protect :: IO (Either AppError a) -> IO (Either AppError a)
           protect = (`catch` \(SomeException e) -> pure . Left . AppUnknownError . cs . show $ e)
+
+
+logDuration :: Logger -> ExceptT ApiError IO a -> ExceptT ApiError IO a
+logDuration logger (ExceptT action) = ExceptT $ do
+  starttime <- getCurrentTime
+  let logit = do
+        endtime <- getCurrentTime
+        let msg = "runApp: call took " <> show (endtime `diffUTCTime` starttime)
+        liftIO $ appLog LogDebug msg `runReaderT` logger
+  action <* logit
