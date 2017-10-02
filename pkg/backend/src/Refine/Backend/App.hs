@@ -29,15 +29,15 @@ runApp
   :: forall db. Database db
   => MkDBNat db
   -> DBRunner
-  -> Logger
+  -> LogChan
   -> Config
   -> (AppM db :~> ExceptT ApiError IO)
 runApp
   dbNat
   dbrunner
-  logger
+  logchan
   cfg
-  = NT (limitDuration cfg . logDuration logger . runSR . unApp)
+  = NT (limitDuration cfg . logDuration logchan . runSR . unApp)
     where
       runSR
         :: forall a. StateT AppState (ReaderT (MkDBNat db, AppContext) (ExceptT AppError IO)) a
@@ -46,7 +46,7 @@ runApp
               dbInit dbc
               let action' = evalStateT action $ initialAppState cfg
                   action'' = action' `runReaderT` ctx
-                  ctx = (dbNat, AppContext dbc logger cfg)
+                  ctx = (dbNat, AppContext dbc logchan cfg)
 
               -- iff exception, rollback; otherwise, commit.
               -- https://www.sqlite.org/lang_transaction.html
@@ -63,7 +63,7 @@ runApp
         where
           twist :: Either AppError a -> IO (Either ApiError a)
           twist (Right v) = pure (Right v)
-          twist (Left e)  = Left <$> toApiError e `runReaderT` logger
+          twist (Left e)  = Left <$> toApiError e `runReaderT` logchan
 
           protect :: IO (Either AppError a) -> IO (Either AppError a)
           protect = (`catch` \(SomeException e) -> pure . Left . AppUnknownError . cs . show $ e)
@@ -74,11 +74,11 @@ limitDuration cfg action@(ExceptT ioaction) = case cfg ^. cfgAppMLimit of
   Nothing -> action
   Just timespan -> ExceptT $ fromMaybe (Left $ ApiTimeoutError timespan) <$> timeout (timespanUs timespan) ioaction
 
-logDuration :: Logger -> ExceptT ApiError IO a -> ExceptT ApiError IO a
-logDuration logger (ExceptT action) = ExceptT $ do
+logDuration :: LogChan -> ExceptT ApiError IO a -> ExceptT ApiError IO a
+logDuration logchan (ExceptT action) = ExceptT $ do
   starttime <- getCurrentTime
   let logit = do
         endtime <- getCurrentTime
         let msg = "runApp: call took " <> show (endtime `diffUTCTime` starttime)
-        liftIO $ appLog LogDebug msg `runReaderT` logger
+        liftIO $ appLog LogDebug msg `runReaderT` logchan
   action <* logit

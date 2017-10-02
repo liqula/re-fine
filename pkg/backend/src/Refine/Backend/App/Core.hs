@@ -9,7 +9,7 @@ module Refine.Backend.App.Core
   , DBConnection(..)
   , AppContext(..)
   , appDBConnection
-  , appLogger
+  , appLogChan
   , appConfig
   , AppState(..)
   , initialAppState
@@ -31,6 +31,7 @@ module Refine.Backend.App.Core
 #include "import_backend.hs"
 
 import           Control.Exception
+import           Control.Concurrent
 import qualified Web.Users.Types as Users
 import qualified Web.Users.Persistent as Users
 
@@ -57,7 +58,7 @@ makeRefineType ''Users.CreateUserError
 
 data AppContext = AppContext
   { _appDBConnection  :: DBConnection
-  , _appLogger        :: Logger
+  , _appLogChan       :: LogChan
   , _appConfig        :: Config
   }
 
@@ -242,13 +243,13 @@ class MonadLog app where
 
 instance MonadLog (AppM db) where
   appLog level msg = AppM $ do
-    Logger logger <- view (_2 . appLogger)
-    liftIO $ logger level msg
+    chan <- view (_2 . appLogChan)
+    liftIO $ writeChan chan (level, msg)
 
-instance MonadLog (ReaderT Logger IO) where
+instance MonadLog (ReaderT LogChan IO) where
   appLog level msg = do
-    Logger logger <- ask
-    logger level msg
+    chan <- ask
+    liftIO $ writeChan chan (level, msg)
 
 
 -- * caching

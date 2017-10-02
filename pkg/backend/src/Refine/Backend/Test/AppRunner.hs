@@ -47,16 +47,17 @@ createAppRunner = do
         , _cfgAppMLimit     = Just (TimespanSecs 5)
         }
 
-  (dbRunner, dbNat, destroy) <- createDBNat cfg
+  (logchan, destroylogchan) <- mkLogChan cfg
+  (dbRunner, dbNat, destroydb) <- createDBNat cfg
   let guardWithGodhood = if cfg ^. cfgAllAreGods then unsafeAsGod else id
       runner :: forall b. AppM DB b -> ExceptT ApiError IO b
-      runner m = (runApp dbNat dbRunner (mkLogger cfg) cfg $$ guardWithGodhood m)
+      runner m = (runApp dbNat dbRunner logchan cfg $$ guardWithGodhood m)
         >>= liftIO . evaluate -- without evaluate we have issue #389
 
   void . throwApiErrors . runner $ do
     migrateDB cfg
     unsafeAsGod $ initializeDB [CliCreateGroup $ CreateGroup "Universe" "The group that contains everything" [] [] mempty Nothing]
-  pure (runner, destroy)
+  pure (runner, destroydb >> destroylogchan)
 
 throwApiErrors :: forall a. ExceptT ApiError IO a -> IO a
 throwApiErrors = (>>= either (throwIO . ErrorCall . show) pure) . runExceptT

@@ -131,30 +131,30 @@ mkProdBackend cfg = mkBackend cfg $ do
 mkBackend :: Config -> AppM DB a -> IO (Backend DB, IO ())
 mkBackend cfg initially = do
   createDataDirectories cfg
+  (logchan, destroylogger) <- mkLogChan cfg
 
   -- create runners
-  (dbRunner, dbNat, destroy) <- createDBNat cfg
-  backend <- mkServerApp cfg dbNat dbRunner
+  (dbRunner, dbNat, destroydb) <- createDBNat cfg
+  backend <- mkServerApp cfg logchan dbNat dbRunner
 
   -- setup actions like migration, intial content, ...
   result <- runExceptT (backendRunApp backend $$ unsafeAsGod initially)
   either (error . show) (const $ pure ()) result
 
-  pure (backend, destroy)
+  pure (backend, destroydb >> destroylogger)
 
 -- | NOTE: Static content delivery is not protected by "Servant.Cookie.Session".  To achive that, we
 -- may need to refactor, e.g. by using extra arguments in the end point types.  Iff we only serve
 -- the application code as static content, and not content that is subject to authorization, we're
 -- fine as it is.
-mkServerApp :: Config -> MkDBNat DB -> DBRunner -> IO (Backend DB)
-mkServerApp cfg dbNat dbRunner = do
+mkServerApp :: Config -> LogChan -> MkDBNat DB -> DBRunner -> IO (Backend DB)
+mkServerApp cfg logchan dbNat dbRunner = do
   let cookie = SCS.def { SCS.setCookieName = refineCookieName, SCS.setCookiePath = Just "/" }
-      logger = mkLogger cfg
 
       appNT :: AppM DB :~> ExceptT ApiError IO
       appNT = runApp dbNat
                    dbRunner
-                   logger
+                   logchan
                    cfg
 
       renderErrorNT :: ExceptT ApiError IO :~> ExceptT ServantErr IO
@@ -183,7 +183,7 @@ mkServerApp cfg dbNat dbRunner = do
   () <- resetWebSocketMVar
 
   let addWS :: Middleware
-      addWS = startWebSocketServer cfg appMToIO
+      addWS = startWebSocketServer cfg logchan appMToIO
 
       appMToIO :: AppM DB a -> IO (Either ApiError a)
       appMToIO m = runExceptT (appNT $$ m)
