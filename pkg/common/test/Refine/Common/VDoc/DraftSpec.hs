@@ -98,7 +98,7 @@ spec = do
         rc1 r = rc0 & rawContentBlocks %~ (\(h :| t) -> (h & blockStyles' %~ Set.insert r) :| t)
 
         check_ r = do
-          pendingWith "TODO"
+          pendingWith "#461"
           let Right d = rc0 `diff` rc1 (r, Bold)
               rc' = showEditAsRawContentWithMarks d rc0
           NEL.head (rc' ^.rawContentBlocks) ^. blockStyles'
