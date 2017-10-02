@@ -18,6 +18,7 @@ module Refine.Frontend.Icon.Types
   , ibImage
   , ibIndexNum
   , ibEnabled
+  , ibGrayedOut
   , ibSize
   , IbuttonState(..)
   , ibuttonMouseOver
@@ -52,6 +53,7 @@ data IbuttonProps onclick = IbuttonProps
   , _ibImage            :: ButtonImage
   , _ibIndexNum         :: Maybe Int -- ^ the number in the small black circle in the upper right corner of the button.
   , _ibEnabled          :: Bool
+  , _ibGrayedOut        :: Bool
   , _ibSize             :: IconSize
   }
   deriving (Eq, Show, Generic)

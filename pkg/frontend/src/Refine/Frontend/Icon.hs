@@ -70,7 +70,7 @@ sibutton_ stlens st props = do
 
   -- TODO: if pressable (according to props), toggle pressed state.
 
-  -- TODO: when disabled: set opacity to 50% (for both img tag and inline-svg); do not send rollover
+  -- TODO: when disabled/grayed-out: set opacity to 50% (for both img tag and inline-svg); do not send rollover
   -- to color schema; do not send onClick actions.
   -- when enabled: [ {cursor: pointer} | props ^. ibEnabled ]
 
@@ -92,6 +92,7 @@ emptyIbuttonProps img onclick = IbuttonProps
   , _ibImage            = img
   , _ibIndexNum         = Nothing
   , _ibEnabled          = True
+  , _ibGrayedOut        = False
   , _ibSize             = Large
   }
 
