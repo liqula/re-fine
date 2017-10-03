@@ -114,7 +114,7 @@ stresser :: Int -> Int -> IO (Async (Either String WSSessionId))
 stresser port rounds = async . (`catch` (\(SomeException e) -> pure . Left $ show e)) $ do
   TCGreeting cid <- runWS port $ \conn ->
     sendMessage conn (TSGreeting Nothing) >> receiveMessage conn
-  forM_ [0..rounds] $ \_ -> runWS port $ \conn -> do
+  forM_ [0.. (rounds - 1)] . const . runWS port $ \conn -> do
     when verbose_ $ hPutStr stderr "."
     sendMessage conn (TSGreeting (Just cid))
     throttle
@@ -124,7 +124,7 @@ stresser port rounds = async . (`catch` (\(SomeException e) -> pure . Left $ sho
 
 stressers :: Int -> Int -> Int -> IO ()
 stressers port agents rounds = do
-  as :: [Async (Either String WSSessionId)] <- forM [0..agents] . const $ stresser port rounds
+  as :: [Async (Either String WSSessionId)] <- forM [0.. (agents - 1)] . const $ stresser port rounds
   result <- wait `mapM` as
   filter isLeft result `shouldSatisfy` null
 
