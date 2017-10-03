@@ -45,7 +45,7 @@ createAppRunner = do
         , _cfgWSPingPeriod  = TimespanSecs 1
         , _cfgAllAreGods    = True
         , _cfgHaveRestApi   = True
-        , _cfgAppMLimit     = Just (TimespanSecs 5)
+        , _cfgAppMLimit     = TimespanSecs 1
         }
 
   (logchan, destroylogchan) <- mkLogChan cfg

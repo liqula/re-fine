@@ -70,9 +70,9 @@ runApp
 
 
 limitDuration :: Config -> ExceptT ApiError IO a -> ExceptT ApiError IO a
-limitDuration cfg action@(ExceptT ioaction) = case cfg ^. cfgAppMLimit of
-  Nothing -> action
-  Just timespan -> ExceptT $ fromMaybe (Left $ ApiTimeoutError timespan) <$> timeout (timespanUs timespan) ioaction
+limitDuration ((^. cfgAppMLimit) -> timespan) (ExceptT ioaction) = ExceptT $
+  fromMaybe (Left $ ApiTimeoutError timespan) <$>
+  timeout (timespanUs timespan) ioaction
 
 logDuration :: LogChan -> ExceptT ApiError IO a -> ExceptT ApiError IO a
 logDuration logchan (ExceptT action) = ExceptT $ do
