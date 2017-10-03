@@ -243,16 +243,12 @@ make sure we've called all of these at least once:
 
 specErrors :: Spec
 specErrors = describe "errors" . around wsBackend $ do
-  it "database lookup failure" $ \(WSBackend _ _ (Just conn)) -> do
+  it "database lookup failure" $ \(WSBackend mtbe _ (Just conn)) -> do
     TCGreeting _ <- askQuestion conn $ TSGreeting Nothing
     respLogin <- askQuestion conn $ TSLogin (Login "admin" "pass")
     show respLogin `shouldContain` "(Right (User {_userMetaID = MetaID {_miID = ID 1, _miMeta = MetaInfo {_metaCreatedBy = Anonymous"
     let noSuchGroup = ID 98691
     TCError _ <- askQuestion conn $ TSMissing [CacheKeyGroup noSuchGroup]
-    logShouldContain `mapM_` ["AppDBError (DBNotFound", show (noSuchGroup ^. unID)]
-
-
-logShouldContain :: String -> Expectation
-logShouldContain substr = do
-  pendingWith "#459"
-  readTestLogfile >>= (`shouldContain` substr)
+    case mtbe of
+      Just tbe -> tbe `shouldHaveLogged` ["AppDBError (DBNotFound", show (noSuchGroup ^. unID)]
+      Nothing  -> pendingWith "no test backend to check log in."

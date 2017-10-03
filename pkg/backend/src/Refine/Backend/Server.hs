@@ -12,7 +12,7 @@ module Refine.Backend.Server
   ) where
 #include "import_backend.hs"
 
-import           Control.Concurrent.MVar
+import           Control.Concurrent
 import           Network.HTTP.Media ((//))
 import           Network.Wai.Handler.Warp as Warp
 import           Network.Wai (Middleware)
@@ -57,6 +57,7 @@ data Backend db = Backend
                               -- ^ the http server (static content, web sockets, rest api, client config).
   , backendRunApp          :: AppM db :~> ExceptT ApiError IO
                               -- ^ the application engine.
+  , backendLogChan         :: LogChan
   }
 
 refineApi :: (Database db) => ServerT RefineAPI (AppM db)
@@ -109,18 +110,29 @@ cacheBust = addHeader "no-cache, no-store, must-revalidate" . addHeader "0"
 
 startBackend :: Config -> IO ()
 startBackend cfg = do
-  (backend, _destroy) <- mkBackend cfg
-  Warp.runSettings (warpSettings cfg) $ backendServer backend
+  (backend, destroydb) <- mkBackend cfg
+  destroylogger <- attachLogger cfg backend
+  Warp.runSettings (warpSettings cfg) (backendServer backend)
+    `finally` (destroydb >> destroylogger)
 
 runCliAppCommand :: Config -> AppM DB a -> IO ()
 runCliAppCommand cfg cmd = do
-  (backend, _destroy) <- mkBackend cfg
-  void $ (natThrowError . backendRunApp backend) $$ cmd
+  (backend, destroydb) <- mkBackend cfg
+  destroylogger <- attachLogger cfg backend
+  (void $ (natThrowError . backendRunApp backend) $$ cmd)
+    `finally` (destroydb >> destroylogger)
+
+-- | Call 'mkLogChan' and plug the log channel from 'Backend' into it.  Return destructor.
+attachLogger :: Config -> Backend DB -> IO (IO ())
+attachLogger cfg (Backend _ _ logsource) = do
+  (logsink, free) <- mkLogChan cfg
+  tid <- forkIO . forever $ readChan logsource >>= writeChan logsink
+  pure $ killThread tid >> free
 
 mkBackend :: Config -> IO (Backend DB, IO ())
 mkBackend cfg = do
   createDataDirectories cfg
-  (logchan, destroylogger) <- mkLogChan cfg
+  logchan <- newChan
 
   -- create runners
   (dbRunner, dbNat, destroydb) <- createDBNat cfg
@@ -130,7 +142,7 @@ mkBackend cfg = do
   runExceptT (backendRunApp backend $$ unsafeAsGod (migrateDB cfg))
     >>= either (error . show) (const $ pure ())
 
-  pure (backend, destroydb >> destroylogger)
+  pure (backend, destroydb)
 
 -- | NOTE: Static content delivery is not protected by "Servant.Cookie.Session".  To achive that, we
 -- may need to refactor, e.g. by using extra arguments in the end point types.  Iff we only serve
@@ -177,7 +189,7 @@ mkServerApp cfg logchan dbNat dbRunner = do
       appMToIO :: AppM DB a -> IO (Either ApiError a)
       appMToIO m = runExceptT (appNT $$ m)
 
-  pure $ Backend (addWS srvApp) appNT
+  pure $ Backend (addWS srvApp) appNT logchan
 
 
 maybeServeDirectory :: Maybe FilePath -> Server Raw

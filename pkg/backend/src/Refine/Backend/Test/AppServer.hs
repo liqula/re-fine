@@ -1,12 +1,12 @@
 {-# LANGUAGE CPP #-}
 #include "language_backend.hs"
 
-{-# OPTIONS_GHC -Wno-incomplete-patterns #-}
+{-# OPTIONS_GHC -Wno-incomplete-patterns -Wno-deprecations #-}
 
 module Refine.Backend.Test.AppServer where
 #include "import_backend.hs"
 
-import           Control.Concurrent.MVar
+import           Control.Concurrent
 import           Network.HTTP.Types (Method, Header, methodGet, methodPut, methodDelete)
 import qualified Network.HTTP.Types as HTTP
 import           Network.HTTP.Types.Status (Status(statusCode))
@@ -15,6 +15,7 @@ import           Network.Wai (requestMethod, requestHeaders, defaultRequest)
 import           Network.Wai.Test (SRequest(..), SResponse(..))
 import qualified Network.Wai.Test as Wai
 import qualified Network.Wai.Test.Internal as Wai
+import           Test.Hspec
 
 import           Refine.Backend.App as App hiding (getEdit)
 import           Refine.Backend.Config
@@ -54,13 +55,6 @@ testBackendCfg = def
         & cfgDBKind     .~ DBOnDisk "test.db"
         & cfgSmtp       .~ Nothing
         & cfgAllAreGods .~ True
-
-testLogfilePath :: FilePath
-testLogfilePath = case testBackendCfg ^. cfgLogger of LogCfg (LogCfgFile f) _ -> f
-
-readTestLogfile :: IO String
-readTestLogfile = readFile testLogfilePath
-
 
 createTestSession' :: Config -> (TestBackend -> IO ()) -> IO ()
 createTestSession' cfg action = withTempCurrentDirectory $ do
@@ -154,6 +148,44 @@ testBackendLogin (view testBackendCurrentUser -> mvar) u p = modifyMVar mvar (\_
 -- | Log out of a 'TestBackend'.  See 'runDB'' for an explanation why this is difficult.
 testBackendLogout :: TestBackend -> IO ()
 testBackendLogout (view testBackendCurrentUser -> mvar) = modifyMVar mvar (\_ -> pure (Nothing, ()))
+
+
+-- * testing and logs
+
+-- | Test if all strings are substrings of the log file contents.  The contents is flushed, and the
+-- next call will not see it again.
+shouldHaveLogged :: HasCallStack => TestBackend -> [String] -> Expectation
+shouldHaveLogged = shouldHaveLoggedOrNot True
+
+-- | See 'shouldHaveLogged'.
+shouldNotHaveLogged :: HasCallStack => TestBackend -> [String] -> Expectation
+shouldNotHaveLogged = shouldHaveLoggedOrNot False
+
+-- | See 'shouldHaveLogged'.
+shouldHaveLoggedOrNot :: Bool -> TestBackend -> [String] -> Expectation
+shouldHaveLoggedOrNot should tbe substrs = do
+  let predicate = if should then shouldContain else shouldNotContain
+  logs <- snd <$$> getChanContents' (tbe ^. testBackend . to backendLogChan)
+  (mconcat logs `predicate`) `mapM_` substrs
+  where
+    -- 'getChanContent' blocks if the 'Chan' is empty.  we should probably use
+    -- <http://hackage.haskell.org/package/stm-2.4.4.1/docs/Control-Concurrent-STM-TChan.html>
+    -- instead, but this is a test (not production) issue, and it's nicely enough handled by this
+    -- hack:
+    getChanContents' chan = isEmptyChan chan >>= \case
+      True  -> pure []
+      False ->  (:) <$> readChan chan <*> getChanContents' chan
+
+-- | useful when playing with tests interactively.
+--
+-- FUTUREWORK: if you run this in ghcid, you may accumulate channel logging threads in the
+-- background that aren't cleared up.  since their log channels are orphaned and the connected
+-- backends destroyed, this shouldn't be too big of a deal.
+streamLogToStdout :: HasCallStack => TestBackend -> IO ()
+streamLogToStdout tbe = void . forkIO $ loop
+  where
+    loop = readChan chan >>= print >> loop
+    chan = tbe ^. testBackend . to backendLogChan
 
 
 -- * test helpers

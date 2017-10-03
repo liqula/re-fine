@@ -12,7 +12,8 @@ import Refine.Backend.Config
 
 type LogChan = Chan (LogLevel, String)
 
--- | Returns a log channel and a destroy function.
+-- | Returns a log channel and a destroy function.  The log channel leads to disk, stdout, etc. via
+-- fast-logger.
 mkLogChan :: Config -> IO (LogChan, IO ())
 mkLogChan cfg = do
   chan <- newChan
@@ -28,9 +29,17 @@ mkLogChan cfg = do
   let limit :: LogLevel
       limit = cfg ^. cfgLogger . logCfgLevel
 
+      formatmsg ::  String -> FL.FormattedTime -> FL.LogStr
+      formatmsg msg time = mconcat
+        [ FL.toLogStr time
+        , FL.toLogStr (" " :: ST)
+        , FL.toLogStr msg
+        , FL.toLogStr ("\n" :: ST)
+        ]
+
       logf :: LogLevel -> String -> IO ()
       logf level msg = if level <= limit
-        then logger (\t -> FL.toLogStr t <> FL.toLogStr (" " :: ST) <> FL.toLogStr msg)
+        then logger (formatmsg msg)
         else pure ()
 
   tid <- forkIO . forever $ uncurry logf =<< readChan chan

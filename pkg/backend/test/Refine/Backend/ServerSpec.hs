@@ -381,11 +381,7 @@ specSmtp = describe "smtp" . around (createTestSessionWith addTestUserAndLogin) 
         emailSubject = "363afea9ec84d430c"
         emailBody = "969046a5ba584948471218672256dafbcb5986e3964ec49"
     () <- runDB sess $ App.sendMailTo msg
-    logs <- readTestLogfile
-    logs `shouldContain` "sendMailTo:"
-    logs `shouldContain` cs emailSubject
-    logs `shouldContain` cs emailBody
-    logs `shouldContain` show msg
+    sess `shouldHaveLogged` [cs emailSubject, cs emailBody, show msg]
 
   -- this is pretty close to an acceptance test: given one user on the system, create a doc and
   -- two edits.  upvote one edit, which triggers a merge.  then check that we get an email about
@@ -396,16 +392,10 @@ specSmtp = describe "smtp" . around (createTestSessionWith addTestUserAndLogin) 
         firstEdit :: Edit
           <- runWai sess $ postJSON (addEditUri oldHead) (CreateEdit "1st" sampleCreateVDocE1 Grammar)
         () <- trigger sess oldHead
-
-        notyet <- readTestLogfile
-        notyet `shouldNotContain` "your stuff has changed."
+        sess `shouldNotHaveLogged` ["your stuff has changed."]
 
         () <- runWai sess $ putJSON (putVoteUri (firstEdit ^. editID) Yeay) ()
-
-        butnow <- drop (length notyet) <$> readTestLogfile
-        butnow `shouldContain` "your stuff has changed."
-        butnow `shouldContain` cs testUserEmail
-        butnow `shouldContain` cs testUsername
+        sess `shouldHaveLogged` ["your stuff has changed.", cs testUserEmail, cs testUsername]
 
   itNotifiesOnRebase "when my edit gets rebased, i get an email" $ \sess base -> do
     _secondEditEdit :: Edit

@@ -38,9 +38,6 @@ setup action = withTempCurrentDirectory $ do
   let verbose_ = False
       dbFilePath = "./test.db"
       cfg = def
-        & cfgLogger     .~ (if verbose_
-                            then LogCfg LogCfgStdOut LogDebug
-                            else LogCfg (LogCfgFile testLogfilePath) LogError)
         & cfgDBKind     .~ (if verbose_
                             then DBOnDisk dbFilePath
                             else DBInMemory)
