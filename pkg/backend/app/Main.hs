@@ -34,7 +34,7 @@ runInitDB contentPath configPath = do
   content <- readCliCreate contentPath
   runCliAppCommand cfg $ do
     unsafeAsGod $ initializeDB content
-    appLog LogInfo "Run `echo .dump | sqlite3 <FILE.db>` to get a database dump."
+    appLog LogInfo `mapM_` notifyOfDBDump cfg
 
 startServer :: Maybe FilePath -> IO ()
 startServer configPath = do

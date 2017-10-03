@@ -39,8 +39,8 @@ setup action = withTempCurrentDirectory $ do
       dbFilePath = "./test.db"
       cfg = def
         & cfgDBKind     .~ (if verbose_
-                            then DBOnDisk dbFilePath
-                            else DBInMemory)
+                            then Sqlite3OnDisk dbFilePath
+                            else Sqlite3InMemory)
         & cfgSmtp       .~ Nothing
         & cfgAllAreGods .~ False
   (tbe, destroy) <- do

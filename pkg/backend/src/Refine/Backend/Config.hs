@@ -52,12 +52,22 @@ data LogTarget =
 data LogLevel = LogError | LogWarning | LogInfo | LogDebug
   deriving (Eq, Ord, Bounded, Enum, Show, Generic)
 
--- | IMPORTANT: 'DBInMemory' is fragile, it tends to lose its contents between transactions.  I
--- haven't investigated, but DBOnDisk definitely works better!
+-- | IMPORTANT: 'Sqlite3InMemory' didn't work with the test plumbing at some point in the past.  If
+-- you have issues, try on disk (works find with current dir being local temp, if a little slower
+-- than necessary), or postgres.
 data DBKind
-  = DBOnDisk FilePath
-  | DBInMemory
+  = Postgres ST
+  | Sqlite3OnDisk FilePath
+  | Sqlite3InMemory
   deriving (Eq, Show, Generic)
+
+notifyOfDBDump :: Config -> Maybe String
+notifyOfDBDump cfg = ("Run `" <>) . (<> "` to get a database dump.") <$> mcmd
+  where
+   mcmd = case _cfgDBKind cfg of
+            Postgres connstr -> Just $ "pg_dump --dbname=" <> show connstr
+            Sqlite3OnDisk fp -> Just $ "echo .dump | sqlite3 " <> show fp
+            Sqlite3InMemory  -> Nothing
 
 data SmtpCfg = SmtpCfg
   { _smtpSenderName       :: ST
@@ -96,7 +106,7 @@ instance Default LogLevel where
   def = LogInfo
 
 instance Default DBKind where
-  def = DBOnDisk "./.backend-data/refine.db"
+  def = Sqlite3OnDisk "./.backend-data/refine.db"
 
 instance Default SmtpCfg where
   def = SmtpCfg

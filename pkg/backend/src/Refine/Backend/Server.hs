@@ -41,13 +41,14 @@ refineCookieName = "refine"
 
 -- * Initialization
 
+-- | (sqlite3 on-disk only.)
 createDataDirectories :: Config -> IO ()
 createDataDirectories cfg = do
   case cfg ^. cfgDBKind of
-    DBOnDisk path -> do
+    Sqlite3OnDisk path -> do
       cpath <- canonicalizePath path
       createDirectoryIfMissing True (dropFileName cpath)
-    DBInMemory -> pure ()
+    _ -> pure ()
 
 
 -- * backend creation

@@ -14,9 +14,12 @@ module Refine.Backend.Database
 
 import Control.Monad.Logger
 import Data.Pool (Pool, withResource, destroyAllResources)
-import Database.Persist.Sqlite ( SqlBackend, persistBackend, getStmtConn, connBegin, connRollback, connCommit
-                               , SqliteConnectionInfo, mkSqliteConnectionInfo, walEnabled, createSqlitePoolFromInfo
-                               )
+import Database.Persist
+import Database.Persist.Sql
+import qualified Database.Persist.Sqlite as Sqlite
+#ifdef __WITH_POSTGRES__
+import qualified Database.Persist.Postgresql as Postgresql
+#endif
 
 import Refine.Backend.Config
 import Refine.Backend.Database.Class as DatabaseCore
@@ -38,14 +41,31 @@ type MkDBNat db = DBConnection -> DBContext -> (db :~> ExceptT DBError IO)
 
 newtype DBRunner = DBRunner { unDBRunner :: forall m a . MonadBaseControl IO m => (DBConnection -> m a) -> m a }
 
-mkSqlInfo :: String -> SqliteConnectionInfo
-mkSqlInfo = (walEnabled .~ False)  -- #291, #444
-          . mkSqliteConnectionInfo
-          . cs
+createPool :: forall m. (MonadLogger m, MonadBaseControl IO m, MonadIO m) => Config -> m (Pool SqlBackend)
+createPool cfg = case cfg ^. cfgDBKind of
+  Postgres connstr -> postgres connstr
+  Sqlite3OnDisk fp -> sqlite3 (Just fp)
+  Sqlite3InMemory  -> sqlite3 Nothing
+  where
+    postgres :: ST -> m (Pool SqlBackend)
+#ifdef __WITH_POSTGRES__
+    postgres connstr = Postgresql.createPostgresqlPool (cs connstr) (cfg ^. cfgPoolSize)
+#else
+    postgres = error "postgres: you need to compile with __WITH_POSTGRES__ if you want to use this."
+#endif
+
+    sqlite3 :: Maybe FilePath -> m (Pool SqlBackend)
+    sqlite3 Nothing = Sqlite.createSqlitePoolFromInfo (mkSqlInfo ":memory:") (cfg ^. cfgPoolSize)
+    sqlite3 (Just fp) = Sqlite.createSqlitePoolFromInfo (mkSqlInfo fp) (cfg ^. cfgPoolSize)
+
+    mkSqlInfo :: String -> Sqlite.SqliteConnectionInfo
+    mkSqlInfo = (Sqlite.walEnabled .~ False)  -- #291, #444
+              . Sqlite.mkSqliteConnectionInfo
+              . cs
 
 createDBNat :: Config -> IO (DBRunner, MkDBNat DB, IO ())
 createDBNat cfg = do
-  pool <- runLoggerT $ createSqlitePoolFromInfo (mkSqlInfo sqliteDb) (cfg ^. cfgPoolSize)
+  pool <- runLoggerT $ createPool cfg
   pure ( DBRunner (dbConnectionCont pool)
        , \dbc dbctx -> NT (wrapErrors . dbRun dbc . (`runReaderT` dbctx) . runExceptT . unDB)
        , destroyAllResources pool
@@ -53,10 +73,6 @@ createDBNat cfg = do
   where
     -- runLoggerT = runStderrLoggingT  -- for lots of debug output, but no better error messages
     runLoggerT = runNoLoggingT
-
-    sqliteDb = case cfg ^. cfgDBKind of
-      DBOnDisk fp -> fp
-      DBInMemory -> ":memory:"
 
     wrapErrors :: IO (Either DBError a) -> ExceptT DBError IO a
     wrapErrors =

@@ -51,8 +51,6 @@ createTestSession = createTestSession' testBackendCfg
 
 testBackendCfg :: Config
 testBackendCfg = def
-        & cfgLogger     .~ LogCfg (LogCfgFile "test.log") LogDebug
-        & cfgDBKind     .~ DBOnDisk "test.db"
         & cfgSmtp       .~ Nothing
         & cfgAllAreGods .~ True
 
