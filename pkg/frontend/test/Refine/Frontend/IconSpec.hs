@@ -34,6 +34,7 @@ spec = do
         , _ibImage            = ButtonImageIcon Svg.Close ColorSchemaDark
         , _ibIndexNum         = Just 3
         , _ibEnabled          = True
+        , _ibGrayedOut        = False
         , _ibSize             = Medium
         }
       contents :: String <- cs <$> html wrapper

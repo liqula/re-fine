@@ -82,7 +82,6 @@ data ToClient
 
   | TCCreateUserResp (Either ApiError User)  -- ^ response to 'TSCreateUser'
   | TCLoginResp (Either ApiError User)       -- ^ response to 'TSLogin'
-  | TCLogout                                 -- ^ e.g. in case of sesssion timeout
   | TCTranslations L10                       -- ^ response to 'TSGetTranslations'
 
   | TCGreeting WSSessionId           -- ^ first message on connect

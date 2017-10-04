@@ -26,13 +26,13 @@ instance ToJSVal BlockKey
 instance FromJSVal RawContent where fromJSVal = fromJSValViaJSON
 instance ToJSVal RawContent where toJSVal = toJSValViaJSON
 
-instance PFromJSVal RawContent where pFromJSVal = fromJust . unsafePerformIO . fromJSVal
+instance PFromJSVal RawContent where pFromJSVal = fromJustNote "instance PFromJSVal RawContent" . unsafePerformIO . fromJSVal
 instance PToJSVal RawContent where pToJSVal = unsafePerformIO . toJSVal
 
 instance FromJSVal SelectionState where fromJSVal = fromJSValViaJSON
 instance ToJSVal SelectionState where toJSVal = toJSValViaJSON
 
-instance PFromJSVal SelectionState where pFromJSVal = fromJust . unsafePerformIO . fromJSVal
+instance PFromJSVal SelectionState where pFromJSVal = fromJustNote "instance PFromJSVal SelectionState" . unsafePerformIO . fromJSVal
 instance PToJSVal SelectionState where pToJSVal = unsafePerformIO . toJSVal
 
 fromJSValViaJSON :: FromJSON v => JSVal -> IO (Maybe v)

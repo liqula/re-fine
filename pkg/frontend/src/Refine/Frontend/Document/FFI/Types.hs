@@ -52,7 +52,7 @@ import           Refine.Frontend.Util ((===))
 newtype EditorState = EditorState (NoJSONRep JSVal)
   deriving (Show, Generic, ToJSVal, FromJSVal)
 
-instance PFromJSVal EditorState where pFromJSVal = fromJust . unsafePerformIO . fromJSVal
+instance PFromJSVal EditorState where pFromJSVal = fromJustNote "instance PFromJSVal EditorState" . unsafePerformIO . fromJSVal
 instance PToJSVal EditorState where pToJSVal = unsafePerformIO . toJSVal
 
 instance Eq EditorState where
@@ -61,7 +61,7 @@ instance Eq EditorState where
 newtype ContentState = ContentState (NoJSONRep JSVal)
   deriving (Show, Generic, ToJSVal, FromJSVal)
 
-instance PFromJSVal ContentState where pFromJSVal = fromJust . unsafePerformIO . fromJSVal
+instance PFromJSVal ContentState where pFromJSVal = fromJustNote "instance PFromJSVal ContentState" . unsafePerformIO . fromJSVal
 instance PToJSVal ContentState where pToJSVal = unsafePerformIO . toJSVal
 
 makeRefineTypes [''EditorState, ''ContentState]

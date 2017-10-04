@@ -26,6 +26,9 @@ newtype RouteParseError = RouteParseError String
 deriveClasses [([''Route, ''RouteParseError], allClass)]
 
 
+defaultRoute :: Route
+defaultRoute = Groups
+
 rrender :: Route -> ST
 rrender = \case
   Help                      -> "#/help"

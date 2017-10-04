@@ -127,15 +127,15 @@ contributionDialogTextFormInner width height stateLens st' = do
 
 -- * comments
 
-addComment :: HasCallStack => Translations -> View '[AddContributionProps (LocalStateRef CommentInputState)]
-addComment __ = mkView "AddComment" $ \props -> addContributionDialogFrame
+addComment :: HasCallStack => View '[AddContributionProps (LocalStateRef CommentInputState)]
+addComment = mkView "AddComment" $ \props -> addContributionDialogFrame
   (__ add_a_comment)
   (props ^. acpRange)
   (props ^. acpWindowWidth)
   (commentInput_ $ props ^. acpLocalState)
 
-addComment_ :: HasCallStack => Translations -> AddContributionProps (LocalStateRef CommentInputState) -> ReactElementM eventHandler ()
-addComment_ __ = view_ (addComment __) "addComment_"
+addComment_ :: HasCallStack => AddContributionProps (LocalStateRef CommentInputState) -> ReactElementM eventHandler ()
+addComment_ = view_ addComment "addComment_"
 
 
 commentInput :: HasCallStack => LocalStateRef CommentInputState -> View '[]
@@ -176,7 +176,7 @@ commentInput lst = mkPersistentStatefulView "CommentInput" lst Nothing $ \st ->
           span_ ["className" $= "bold"] "finish"
 
       ibutton_ $ emptyIbuttonProps (ButtonImageIcon Svg.Save ColorSchemaBright)
-                    [ ContributionAction $ SubmitComment (CommentInfo stext (fromJust smkind))
+                    [ ContributionAction $ SubmitComment (CommentInfo stext (fromJustNote "commentInput: smkind" smkind))
                     , ContributionAction ClearRange
                     , ContributionAction HideCommentEditor
                     ]
@@ -227,7 +227,7 @@ editInput (einfo, estate) = mkPersistentStatefulView "EditInput" (einfo ^. editI
     hr_ []
 
     ibutton_ $ emptyIbuttonProps (ButtonImageIcon Svg.Save ColorSchemaBright)
-      [ DocumentAction . DocumentSave $ FormComplete (EditInfo desc (fromJust mkind) rst, estate)
+      [ DocumentAction . DocumentSave $ FormComplete (EditInfo desc (fromJustNote "editInput: mkind" mkind) rst, estate)
       , DocumentAction UpdateDocumentStateView
       , ContributionAction ClearRange
       ]

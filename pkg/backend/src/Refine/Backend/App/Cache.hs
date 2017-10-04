@@ -35,7 +35,7 @@ import Refine.Backend.App.VDoc        as App
 import Refine.Backend.Config
 import Refine.Backend.Database
 import Refine.Backend.Logger
-import Refine.Common.Rest (ApiError)
+import Refine.Common.Rest (ApiError(..))
 import Refine.Common.Types
 
 
@@ -95,9 +95,10 @@ instance (Monad m, MonadLog m, MonadIO m) => MonadWS m where
     liftIO $ sendTextData conn (cs $ encode msg :: ST)
 
   receiveMessage mclientId conn = do
-    msg <- liftIO $ receiveData conn <&> fromMaybe (error "websockets json decoding error") . decode
-    logWSMessage mclientId msg
-    pure msg
+    emsg <- liftIO $ eitherDecode <$> receiveData conn
+    case emsg of
+      Left err -> liftIO . throwIO . ErrorCall $ "could not parse client message: " <> show (mclientId, err)
+      Right msg -> logWSMessage mclientId msg >> pure msg
 
   modifyCache sid f = liftIO . modifyMVar webSocketMVar $ \m -> pure (Map.adjust (second f) sid m, ())
 
@@ -109,57 +110,63 @@ logWSMessage mclientId msg = appLog LogDebug $
 
 -- * server
 
-startWebSocketServer :: Config -> (forall a. AppM DB a -> IO (Either ApiError a)) -> Middleware
-startWebSocketServer cfg toIO = websocketsOr options server
+startWebSocketServer :: Config -> LogChan -> (forall a. AppM DB a -> IO (Either ApiError a)) -> Middleware
+startWebSocketServer cfg logchan toIO = websocketsOr options server
   where
     options :: ConnectionOptions
     options = defaultConnectionOptions
 
-    logger :: Logger
-    logger = mkLogger cfg
-
     server :: ServerApp
-    server pendingconnection = handle (handleHandshakeException logger) $ do
+    server pendingconnection = handle (handleAcceptRequestException logchan) $ do
       conn <- acceptRequest pendingconnection
       (do
         pingLoop toIO conn
-        eClientId <- handshake cfg conn logger
+        eClientId <- handshake cfg conn logchan
         case eClientId of
-          Right clientId ->
-            forever (stepWrapper toIO conn clientId (step conn clientId)
-                      >>= \case Left err -> handleUncaughtApiError conn logger err
-                                Right () -> pure ())
-          Left err -> handleHandshakeError conn logger err)
-        `catch` handleConnectionException conn logger
-        `catch` handleAnyException conn logger
+          Right clientId -> do
+            let loop = stepWrapper toIO conn clientId (step conn clientId) >>= \case
+                  Right () -> loop
+
+                  -- one possible cause for 'ApiUnknownError' is that the websockets 'Connection'
+                  -- got killed inside 'AppM', and the exception got captured here.  in this case,
+                  -- we must end the loop.
+                  Left ApiUnknownError -> do
+                    logWSMessage (Just clientId) ("connection closed during app transaction" :: ST)
+                      `runReaderT` logchan
+
+                  -- any other error means the connection is (probably?) still working.
+                  Left err -> do
+                    sendMessage Nothing conn (TCError err)
+                      `runReaderT` logchan
+                    loop
+            loop
+          Left err -> handleHandshakeError conn logchan err)
+        `catch` handleConnectionException conn logchan
+        `catch` handleAnyException conn logchan
 
 
 -- | thrown by 'acceptRequest'.
-handleHandshakeException :: Logger -> HandshakeException -> IO ()
-handleHandshakeException logger err = do
-  unLogger logger LogInfo $ show err
-
-handleUncaughtApiError :: Connection -> Logger -> ApiError -> IO ()
-handleUncaughtApiError conn logger err = do
-  sendMessage Nothing conn (TCError err) `runReaderT` logger
+handleAcceptRequestException :: LogChan -> HandshakeException -> IO ()
+handleAcceptRequestException logchan err = do
+  appLog LogInfo (show err) `runReaderT` logchan
 
 -- | thrown by 'handshake' below.
-handleHandshakeError :: Connection -> Logger -> WSError -> IO ()
-handleHandshakeError conn logger = giveup conn logger Nothing
+handleHandshakeError :: Connection -> LogChan -> WSError -> IO ()
+handleHandshakeError conn logchan = giveup conn logchan Nothing
 
 -- | FUTUREWORK: sometimes, there is a clientId here, but it's a little awkward to get access to it.
-handleConnectionException :: Connection -> Logger -> ConnectionException -> IO ()
-handleConnectionException conn logger = giveup conn logger Nothing
+handleConnectionException :: Connection -> LogChan -> ConnectionException -> IO ()
+handleConnectionException conn logchan = giveup conn logchan Nothing
 
-handleAnyException :: Connection -> Logger -> SomeException -> IO ()
-handleAnyException conn logger = giveup conn logger Nothing
+handleAnyException :: Connection -> LogChan -> SomeException -> IO ()
+handleAnyException conn logchan = giveup conn logchan Nothing
 
 -- | Given an error, log it and close the connection.  (Otherwise the client may keep waiting for us
 -- to say something.)  Note that we do not gc sessions here.  The client can still open a new
 -- connection and connect with the old clientId.
-giveup :: (Show err) => Connection -> Logger -> Maybe WSSessionId -> err -> IO ()
-giveup conn logger mClientId err = do
-  unLogger logger LogInfo $ "giveup: " <> show (mClientId, err)
+giveup :: (Show err) => Connection -> LogChan -> Maybe WSSessionId -> err -> IO ()
+giveup conn logchan mClientId err = do
+  appLog LogInfo ("giveup: " <> show (mClientId, err)) `runReaderT` logchan
   void . forkIO . dropExceptions $ do
     -- code 1011: "unexpected condition" http://tools.ietf.org/html/rfc6455#section-7.4
     sendCloseCode @ST conn 1011 "bye"
@@ -172,20 +179,20 @@ dropExceptions = handle (\(SomeException _) -> pure ())
 
 -- * handshake
 
-handshake :: Config -> Connection -> Logger -> IO (Either WSError WSSessionId)
-handshake cfg conn logger = (receiveMessage Nothing conn `runReaderT` logger) >>= \case
+handshake :: Config -> Connection -> LogChan -> IO (Either WSError WSSessionId)
+handshake cfg conn logchan = (receiveMessage Nothing conn `runReaderT` logchan) >>= \case
   -- the client is reconnected, its WSSessionId is n
   TSGreeting (Just clientId) -> do
     cmap <- takeMVar webSocketMVar
     putMVar webSocketMVar $ Map.adjust (_2 .~ mempty) clientId cmap
-    sendMessage Nothing conn (TCRestrictKeys []) `runReaderT` logger
+    sendMessage Nothing conn (TCRestrictKeys []) `runReaderT` logchan
         -- TUNING: only send this if we know something happened since the disconnect.
     pure $ Right clientId
 
   -- the first connection of the client
   TSGreeting Nothing -> do
     clientId <- openWsConn cfg conn
-    sendMessage Nothing conn (TCGreeting clientId) `runReaderT` logger
+    sendMessage Nothing conn (TCGreeting clientId) `runReaderT` logchan
     pure $ Right clientId
 
   bad -> pure . Left . WSErrorExpectedTSGreeting $ bad
@@ -207,7 +214,7 @@ stepWrapper toIO conn clientId = toIO . dostate
       Just ((_, appStateMVar), _) <- Map.lookup clientId <$> liftIO (readMVar webSocketMVar)
       put =<< liftIO (takeMVar appStateMVar)
       sessvalid <- verifyAppState
-      unless sessvalid $ sendMessage (Just clientId) conn TCLogout  -- TODO: or TCError, rather?
+      unless sessvalid $ sendMessage (Just clientId) conn (TCError ApiSessionInvalid)
       cmd
       liftIO . putMVar appStateMVar =<< get
 

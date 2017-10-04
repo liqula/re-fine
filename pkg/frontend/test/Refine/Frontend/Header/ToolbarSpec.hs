@@ -28,10 +28,10 @@ spec = do
       button <- find wrapper (StringSelector ".c-vdoc-toolbar__btn-add-annotation")
 
       _ <- simulate button Click
-      storeShouldEventuallyBe ((^. gsHeaderState . hsToolbarExtensionStatus) :: GlobalState -> ToolbarExtensionStatus) CommentToolbarExtensionWithoutRange
+      storeShouldEventuallyBe ((^?! gsHeaderState . _Just . hsToolbarExtensionStatus) :: GlobalState -> ToolbarExtensionStatus) CommentToolbarExtensionWithoutRange
 
       _ <- simulate button Click
-      storeShouldEventuallyBe ((^. gsHeaderState . hsToolbarExtensionStatus) :: GlobalState -> ToolbarExtensionStatus) ToolbarExtensionClosed
+      storeShouldEventuallyBe ((^?! gsHeaderState . _Just . hsToolbarExtensionStatus) :: GlobalState -> ToolbarExtensionStatus) ToolbarExtensionClosed
 
 
   describe "The commentToolbarExtension_ component" $ do

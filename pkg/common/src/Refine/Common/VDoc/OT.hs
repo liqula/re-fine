@@ -672,8 +672,8 @@ toRawContent (docBlocks -> dls@(_:_))
           key
       where
         (is, as) = unzip [(ST.length txt, s) | DocElem (ChangeSet s) txt <- d]
-        is' = scanl (+) 0 is
-        end = last is'
+        is'      = scanl (+) 0 is
+        (end: _) = reverse is'
 
         ss = mkRanges ((,) 0 <$> Set.toList sty_) $ zip is' as
 
@@ -738,7 +738,8 @@ styleRangeToRange d (Range x y)
     dropNewBlocks (d' :> NewBlock{}) = dropNewBlocks d'
     dropNewBlocks d' = d'
 
--- | show and edit as decorated RawContent, taking care of marks
+-- | Show an edit as decorated RawContent, taking care of marks.  The second argument is the base
+-- doc in which the location(s) of the edit are marked.
 showEditAsRawContentWithMarks :: Edit RawContent -> RawContent -> RawContent
 showEditAsRawContentWithMarks edit (fromRawContent -> doc)
   = toRawContent $ foldr (uncurry addStyleRanges) (decorateEdit dedit) transformedMarks
@@ -755,7 +756,7 @@ showEditAsRawContentWithMarks edit (fromRawContent -> doc)
 
     isMark = either (const False) (has _Mark)
 
--- | this variant do not take care of marks
+-- | like 'showEditAsRawContentWithMarks', but do not take care of marks
 showEditAsRawContent :: Edit RawContent -> RawContent -> RawContent
 showEditAsRawContent edit doc
   = toRawContent . decorateEdit $ fromEditRawContent doc edit

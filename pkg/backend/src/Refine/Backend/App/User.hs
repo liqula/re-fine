@@ -157,9 +157,12 @@ updateUser uid avatar = do
 verifyAppState :: Database db => AppM db Bool
 verifyAppState = do
   appLog LogDebug "verifyAppState"
+  let ok = appLog LogDebug "verifyAppState: ok" >> pure True
+      notok = appLog LogDebug "verifyAppState: not ok" >> pure False
+
   sessionDuration <- asks . view $ appConfig . cfgSessionLength . to timespanToNominalDiffTime
   gets (view appUserState) >>= \case
-    UserLoggedOut -> pure True
+    UserLoggedOut -> ok
     UserLoggedIn _ (UserSession sid) -> dbUsersCmd (\db_ -> Users.verifySession db_ sid sessionDuration) >>= \case
-      Nothing -> modify (appUserState .~ UserLoggedOut) >> pure False
-      Just _ -> pure True
+      Nothing -> modify (appUserState .~ UserLoggedOut) >> notok
+      Just _ -> ok

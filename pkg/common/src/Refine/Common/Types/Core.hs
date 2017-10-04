@@ -110,7 +110,7 @@ data Edit = Edit
   , _editKind         :: EditKind
   , _editSource       :: EditSource (ID Edit)
   , _editVDoc         :: ID VDoc
-  , _editVDocVersion  :: RawContent     -- FIXME: is it OK to store this in edit (consider serialization)?
+  , _editVDocVersion  :: RawContent     -- TUNING: is it OK to store this in edit (consider serialization)?
   , _editVotes        :: Votes
   , _editChildren     :: Set (ID Edit)
   , _editDiscussions' :: Map (ID Discussion) (Range Position)
@@ -803,7 +803,9 @@ treeRoot f (Node a t) = f a <&> flip Node t
 
 -- TUNING: speed this up by adding an index structure to RawContent
 mkBlockIndex :: RawContent -> Int -> BlockIndex
-mkBlockIndex rc i = BlockIndex i $ ((rc ^. rawContentBlocks) NEL.!! i) ^. blockKey
+mkBlockIndex rc i =
+  let Just h = NEL.toList (rc ^. rawContentBlocks) `atMay` i
+  in BlockIndex i $ h ^. blockKey
 
 -- TUNING: speed this up by adding an index structure to RawContent
 fromSelectionPoint :: RawContent -> SelectionPoint -> Position
@@ -829,7 +831,7 @@ surroundingPositions rc (Position (BlockIndex i _) col)
       ]
     )
   where
-    (prev, this: next) = focusList (len <$> NEL.toList (rc ^. rawContentBlocks)) !! i
+    Just (prev, this: next) = focusList (len <$> NEL.toList (rc ^. rawContentBlocks)) `atMay` i
     len b = ST.length $ b ^. blockText
 
 -- TUNING: speed this up by adding an index structure to RawContent
@@ -839,7 +841,9 @@ toStylePosition rc p_@(Position (BlockIndex i_ _) col)
     | col == lb_ = StylePosition p_ $ f 0 bs_
     | otherwise  = StylePosition p_ 0
   where
-    (rev, b_: bs_) = focusList (NEL.toList $ rc ^. rawContentBlocks) !! i_
+    (rev, b_: bs_) = case focusList (NEL.toList $ rc ^. rawContentBlocks) `atMay` i_ of
+      Just ok -> ok
+      Nothing -> error $ "toStylePosition: position outside content: " <> show (rc, p_)
     lb_ = len b_
 
     f m [] = m
@@ -860,21 +864,21 @@ toStylePosition rc p_@(Position (BlockIndex i_ _) col)
 surroundingStylePositions :: RawContent -> StylePosition -> ([StylePosition]{-previous, reversed-}, [StylePosition]{-next-})
 surroundingStylePositions rc sp
   = surroundingPositions rc (basePosition sp)
-  & both %~ fmap head . group . fmap (toStylePosition rc)
+  & both %~ fmap (\(x: _) -> x) . group . fmap (toStylePosition rc)
 
 -- TUNING: speed this up
 toStyleRanges :: RawContent -> Ranges Position -> Ranges StylePosition
 toStyleRanges rc rs = mconcat $ (rangesFromRange False . fmap (toStylePosition rc)) <$> unRanges rs
 
 -- all positions which maps to the same style position
-stylePositions :: RawContent -> StylePosition -> [Position]
+stylePositions :: RawContent -> StylePosition -> NonEmpty Position
 stylePositions rc (StylePosition p@(Position (BlockIndex i _) _) m)
-    = p: [Position (mkBlockIndex rc j) 0 | j <- [i+1..i+m]]
+    = p :| [Position (mkBlockIndex rc j) 0 | j <- [i+1..i+m]]
 
 -- this computes the minimal selection range
 fromStyleRange :: RawContent -> Range StylePosition -> Range Position
 fromStyleRange rc (Range a b)
-  | a < b = RangeInner (last $ stylePositions rc a) (basePosition b)
+  | a < b = RangeInner (NEL.last $ stylePositions rc a) (basePosition b)
   | a == b = RangeInner (basePosition a) (basePosition a)
   | otherwise = error "range invariant failed"
 
@@ -882,7 +886,7 @@ fromStyleRange rc (Range a b)
 toLeafSelector :: Bool -> RawContent -> Position -> (LeafSelector, Int)
 toLeafSelector top rc (Position (BlockIndex i key) col) = (Position key (SpanIndex dec_ sp_), col - beg)
   where
-    DocBlock _ _ _ es_ = rawContentToDoc rc NEL.!! i
+    Just (DocBlock _ _ _ es_) = NEL.toList (rawContentToDoc rc) `atMay` i
 
     (((beg, _), (dec_, sp_)): _)
         = dropWhile (cmp top . fst) . zip (zip lengths $ tail lengths) $ mkSelectors 0 0 es_
@@ -901,7 +905,7 @@ toLeafSelector top rc (Position (BlockIndex i key) col) = (Position key (SpanInd
 styleRangeToLeafSelectors :: RawContent -> Range StylePosition -> Range LeafSelector
 styleRangeToLeafSelectors rc (Range a b) | a < b = RangeInner a' b'
   where
-    (a', 0) = toLeafSelector True rc . last $ stylePositions rc a
+    (a', 0) = toLeafSelector True rc . NEL.last $ stylePositions rc a
     (b', _) = toLeafSelector False rc $ basePosition b
 
 lineElemLength :: LineElem -> Int

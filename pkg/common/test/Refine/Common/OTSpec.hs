@@ -19,7 +19,7 @@ class (Editable d, Arbitrary d, Eq d, Show d, Show (EEdit d)) => GenEdit d where
     -- TUNING: return the edited structure too
     genEdit :: d -> Gen (Edit d)
 
-runTest :: forall d. (Typeable d, GenEdit d) => [(String, d -> Gen Property)] -> Spec
+runTest :: forall d. (HasCallStack, Typeable d, GenEdit d) => [(String, d -> Gen Property)] -> Spec
 runTest = runTest' $ RunTestConfig Nothing Nothing
 
 data RunTestConfig = RunTestConfig
@@ -28,7 +28,7 @@ data RunTestConfig = RunTestConfig
   }
   deriving (Eq, Ord, Show)
 
-runTest' :: forall d. (Typeable d, GenEdit d) => RunTestConfig -> [(String, d -> Gen Property)] -> Spec
+runTest' :: forall d. (HasCallStack, Typeable d, GenEdit d) => RunTestConfig -> [(String, d -> Gen Property)] -> Spec
 runTest' (RunTestConfig mrescale mmaxsuccess) tests
     = describe ("Editable instance for " <> show (typeRep (Proxy :: Proxy d)))
     . forM_ tests $ \(name, test) -> itWith mmaxsuccess name
@@ -44,7 +44,7 @@ runTest' (RunTestConfig mrescale mmaxsuccess) tests
 
 ---------------------
 
-fastTests :: GenEdit d => [(String, d -> Gen Property)]
+fastTests :: (HasCallStack, GenEdit d) => [(String, d -> Gen Property)]
 fastTests =
     [ (,) "edit composition"    test_edit_composition
     , (,) "diamond"             test_diamond
@@ -55,27 +55,27 @@ fastTests =
     , (,) "inverted diamond"    test_inverse_diamond
     ]
 
-hardTests :: GenEdit d => [(String, d -> Gen Property)]
+hardTests :: (HasCallStack, GenEdit d) => [(String, d -> Gen Property)]
 hardTests =
     [ (,) "diff" test_diff
     , (,) "diff (2)" test_diff2
     ]
 
-allTests :: GenEdit d => [(String, d -> Gen Property)]
+allTests :: (HasCallStack, GenEdit d) => [(String, d -> Gen Property)]
 allTests = fastTests <> hardTests
 
 ---------------------
 
 -- | compare two edits by effect
-equalEdit :: (Editable d, Eq d) => Edit d -> Edit d -> d -> Bool
+equalEdit :: (HasCallStack, Editable d, Eq d) => Edit d -> Edit d -> d -> Bool
 equalEdit e0 e1 d = patch e0 d == patch e1 d
 
-failPrint :: (Show a, Testable prop) => a -> prop -> Gen Property
+failPrint :: (HasCallStack, Show a, Testable prop) => a -> prop -> Gen Property
 failPrint a p = pure $ whenFail (print a) p
 
 ---------------------
 
-test_edit_composition :: GenEdit d => d -> Gen Property
+test_edit_composition :: (HasCallStack, GenEdit d) => d -> Gen Property
 test_edit_composition d = do
     a <- genEdit d
     let d' = patch a d
@@ -86,7 +86,7 @@ test_edit_composition d = do
   a//\b  =  a/\\b
    \\/       \//
 -}
-test_diamond :: GenEdit d => d -> Gen Property
+test_diamond :: (HasCallStack, GenEdit d) => d -> Gen Property
 test_diamond d = do
     a <- genEdit d
     b <- genEdit d
@@ -97,13 +97,13 @@ test_diamond d = do
          \/\c     \ \
           \//      \//
 -}
-test_diamond_right_join :: GenEdit d => d -> Gen Property
+test_diamond_right_join :: (HasCallStack, GenEdit d) => d -> Gen Property
 test_diamond_right_join d = do
     (a, b, d', c) <- genPatchesForDiamondJoin d
     failPrint (a, b, c) $ equalEdit (snd $ merge d' (snd $ merge d a b) c) (snd $ merge d a (b <> c)) (patch c d')
 
 -- | FIXME: I had to add this helper function only because hlint complained about duplicate code
-genPatchesForDiamondJoin :: GenEdit d => d -> Gen (Edit d, Edit d, d, Edit d)
+genPatchesForDiamondJoin :: (HasCallStack, GenEdit d) => d -> Gen (Edit d, Edit d, d, Edit d)
 genPatchesForDiamondJoin d = do
     a <- genEdit d
     b <- genEdit d
@@ -117,23 +117,23 @@ genPatchesForDiamondJoin d = do
        c/\/        / /
        \\/        \\/
 -}
-test_diamond_left_join :: GenEdit d => d -> Gen Property
+test_diamond_left_join :: (HasCallStack, GenEdit d) => d -> Gen Property
 test_diamond_left_join d = do
     (a, b, d', c) <- genPatchesForDiamondJoin d
     failPrint (a, b, c) $ equalEdit (fst $ merge d' c (fst $ merge d b a)) (fst $ merge d (b <> c) a) (patch c d')
 
-test_inverse :: GenEdit d => d -> Gen Property
+test_inverse :: (HasCallStack, GenEdit d) => d -> Gen Property
 test_inverse d = do
     a <- genEdit d
     failPrint (a, inverse d a) $ equalEdit (a <> inverse d a) mempty d
 
-test_inverse_inverse :: GenEdit d => d -> Gen Property
+test_inverse_inverse :: (HasCallStack, GenEdit d) => d -> Gen Property
 test_inverse_inverse d = do
     a <- genEdit d
     failPrint a $ equalEdit (inverse (patch a d) (inverse d a)) a d
 
 -- | this law is derivable
-test_inverse_diamond :: GenEdit d => d -> Gen Property
+test_inverse_diamond :: (HasCallStack, GenEdit d) => d -> Gen Property
 test_inverse_diamond d = do
     a <- genEdit d
     b <- genEdit d
@@ -141,13 +141,13 @@ test_inverse_diamond d = do
         d' = patch (a <> a2) d
     failPrint (a, b) $ equalEdit (inverse d (a <> a2)) (inverse d (b <> b2)) d'
 
-test_diff :: GenEdit d => d -> Gen Property
+test_diff :: (HasCallStack, GenEdit d) => d -> Gen Property
 test_diff d = do
     p <- genEdit d
     let p' = diff d (patch p d)
     failPrint (p, patch p d, p') $ either (const True) (\pp -> equalEdit p pp d) p'
 
-test_diff2 :: GenEdit d => d -> Gen Property
+test_diff2 :: (HasCallStack, GenEdit d) => d -> Gen Property
 test_diff2 d = do
     d' <- arbitrary
     let p' = diff d d'
@@ -322,7 +322,7 @@ instance (GenEdit a, GenEdit b, Splitable b) => GenEdit (Segments a b) where
 
 ---------------------- test Splitable type class laws
 
-testSplitable :: forall d. (Typeable d, Splitable d, Eq d, Arbitrary d, Show d) => Proxy d -> Spec
+testSplitable :: forall d. (HasCallStack, Typeable d, Splitable d, Eq d, Arbitrary d, Show d) => Proxy d -> Spec
 testSplitable p
     = describe ("Splitable instance for " <> show (typeRep p)) $ do
         it "splitLength >= 0"    $ property test_splitLength

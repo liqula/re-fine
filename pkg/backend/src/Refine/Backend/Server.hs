@@ -7,12 +7,12 @@ module Refine.Backend.Server
   ( refineCookieName
   , startBackend
   , runCliAppCommand
-  , Backend(..), mkProdBackend
+  , Backend(..), mkBackend
   , refineApi
   ) where
 #include "import_backend.hs"
 
-import           Control.Concurrent.MVar
+import           Control.Concurrent
 import           Network.HTTP.Media ((//))
 import           Network.Wai.Handler.Warp as Warp
 import           Network.Wai (Middleware)
@@ -41,13 +41,14 @@ refineCookieName = "refine"
 
 -- * Initialization
 
+-- | (sqlite3 on-disk only.)
 createDataDirectories :: Config -> IO ()
 createDataDirectories cfg = do
   case cfg ^. cfgDBKind of
-    DBOnDisk path -> do
+    Sqlite3OnDisk path -> do
       cpath <- canonicalizePath path
       createDirectoryIfMissing True (dropFileName cpath)
-    DBInMemory -> pure ()
+    _ -> pure ()
 
 
 -- * backend creation
@@ -57,6 +58,7 @@ data Backend db = Backend
                               -- ^ the http server (static content, web sockets, rest api, client config).
   , backendRunApp          :: AppM db :~> ExceptT ApiError IO
                               -- ^ the application engine.
+  , backendLogChan         :: LogChan
   }
 
 refineApi :: (Database db) => ServerT RefineAPI (AppM db)
@@ -109,52 +111,52 @@ cacheBust = addHeader "no-cache, no-store, must-revalidate" . addHeader "0"
 
 startBackend :: Config -> IO ()
 startBackend cfg = do
-  (backend, _destroy) <- mkProdBackend cfg
-  Warp.runSettings (warpSettings cfg) $ backendServer backend
+  (backend, destroydb) <- mkBackend cfg
+  destroylogger <- attachLogger cfg backend
+  Warp.runSettings (warpSettings cfg) (backendServer backend)
+    `finally` (destroydb >> destroylogger)
 
 runCliAppCommand :: Config -> AppM DB a -> IO ()
 runCliAppCommand cfg cmd = do
-  (backend, _destroy) <- mkProdBackend cfg
-  void $ (natThrowError . backendRunApp backend) $$ cmd
+  (backend, destroydb) <- mkBackend cfg
+  destroylogger <- attachLogger cfg backend
+  void ((natThrowError . backendRunApp backend) $$ cmd)
+    `finally` (destroydb >> destroylogger)
 
-mkProdBackend :: Config -> IO (Backend DB, IO ())
-mkProdBackend cfg = mkBackend cfg $ do
-  () <- migrateDB cfg
-  gs <- App.getGroups
-  when (null gs) $ do
-    void . addGroup $ CreateGroup "default" "default group" [] [] mempty Nothing
-                                                                   -- FIXME: don't do that any more!
-                                                                   -- we have `--init` and
-                                                                   -- `initializeDB` now!
-  pure ()
+-- | Call 'mkLogChan' and plug the log channel from 'Backend' into it.  Return destructor.
+attachLogger :: Config -> Backend DB -> IO (IO ())
+attachLogger cfg (Backend _ _ logsource) = do
+  (logsink, free) <- mkLogChan cfg
+  tid <- forkIO . forever $ readChan logsource >>= writeChan logsink
+  pure $ killThread tid >> free
 
-mkBackend :: Config -> AppM DB a -> IO (Backend DB, IO ())
-mkBackend cfg initially = do
+mkBackend :: Config -> IO (Backend DB, IO ())
+mkBackend cfg = do
   createDataDirectories cfg
+  logchan <- newChan
 
   -- create runners
-  (dbRunner, dbNat, destroy) <- createDBNat cfg
-  backend <- mkServerApp cfg dbNat dbRunner
+  (dbRunner, dbNat, destroydb) <- createDBNat cfg
+  backend <- mkServerApp cfg logchan dbNat dbRunner
 
   -- setup actions like migration, intial content, ...
-  result <- runExceptT (backendRunApp backend $$ unsafeAsGod initially)
-  either (error . show) (const $ pure ()) result
+  runExceptT (backendRunApp backend $$ unsafeAsGod (migrateDB cfg))
+    >>= either (error . show) (const $ pure ())
 
-  pure (backend, destroy)
+  pure (backend, destroydb)
 
 -- | NOTE: Static content delivery is not protected by "Servant.Cookie.Session".  To achive that, we
 -- may need to refactor, e.g. by using extra arguments in the end point types.  Iff we only serve
 -- the application code as static content, and not content that is subject to authorization, we're
 -- fine as it is.
-mkServerApp :: Config -> MkDBNat DB -> DBRunner -> IO (Backend DB)
-mkServerApp cfg dbNat dbRunner = do
+mkServerApp :: Config -> LogChan -> MkDBNat DB -> DBRunner -> IO (Backend DB)
+mkServerApp cfg logchan dbNat dbRunner = do
   let cookie = SCS.def { SCS.setCookieName = refineCookieName, SCS.setCookiePath = Just "/" }
-      logger = mkLogger cfg
 
       appNT :: AppM DB :~> ExceptT ApiError IO
       appNT = runApp dbNat
                    dbRunner
-                   logger
+                   logchan
                    cfg
 
       renderErrorNT :: ExceptT ApiError IO :~> ExceptT ServantErr IO
@@ -183,12 +185,12 @@ mkServerApp cfg dbNat dbRunner = do
   () <- resetWebSocketMVar
 
   let addWS :: Middleware
-      addWS = startWebSocketServer cfg appMToIO
+      addWS = startWebSocketServer cfg logchan appMToIO
 
       appMToIO :: AppM DB a -> IO (Either ApiError a)
       appMToIO m = runExceptT (appNT $$ m)
 
-  pure $ Backend (addWS srvApp) appNT
+  pure $ Backend (addWS srvApp) appNT logchan
 
 
 maybeServeDirectory :: Maybe FilePath -> Server Raw
@@ -202,22 +204,21 @@ appServantErr err = throwError $ (appServantErr' err) { errBody = encode err }
 
 appServantErr' :: ApiError -> ServantErr
 appServantErr' = \case
-  ApiUnknownError _        -> err500
+  ApiUnknownError          -> err500
   ApiVDocVersionError      -> err409
   ApiDBError dbe           -> dbServantErr dbe
   ApiUserNotFound _        -> err404
   ApiUserNotLoggedIn       -> err403
   ApiUserCreationError uce -> userCreationError uce
   ApiCsrfError _           -> err403
-  ApiSessionTimedout       -> err403
   ApiSessionInvalid        -> err403
   ApiSanityCheckError _    -> err409
-  ApiUserHandleError _     -> err500
   ApiL10ParseErrors _      -> err500
   ApiUnauthorized _        -> err403
   ApiMergeError{}          -> err500
   ApiRebaseError{}         -> err500
   ApiSmtpError{}           -> err500
+  ApiTimeoutError{}        -> err500
 
 dbServantErr :: ApiErrorDB -> ServantErr
 dbServantErr = \case

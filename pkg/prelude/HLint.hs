@@ -5,6 +5,7 @@ import           Data.String (fromString)
 import           Data.String.Conversions (cs)
 import qualified Data.Text as ST
 import           Debug.Trace
+import           Safe
 
 import "hlint" HLint.Default
 import "hlint" HLint.Dollar
@@ -12,15 +13,16 @@ import "hlint" HLint.Generalise
 import "hlint" HLint.HLint
 
 ignore "Redundant do"
-ignore "Use String"
-ignore "Use const"
-ignore "Use fmap"
-ignore "Use list literal"
-ignore "Use record patterns"
 ignore "Unused LANGUAGE pragma"  -- tried to that with `{-# ANN module ... #-}`, but then ghc-8.0.1
                                  -- couldn't find the module keyword any more.
-ignore "Use =<<" -- Do not change concatMap into =<< for sake of readibility.
 ignore "Use &&"
+ignore "Use const"
+ignore "Use =<<" -- Do not change concatMap into =<< for sake of readibility.
+ignore "Use fmap"
+ignore "Use fromMaybe"
+ignore "Use list literal"
+ignore "Use record patterns"
+ignore "Use String"
 
 warn = listToMaybe (filter f xs) ==> find f xs
 warn = isJust $ find f xs ==> any f xs
@@ -42,3 +44,10 @@ warn = traceEventIO  ==> errorDoNotUseTrace
 warn = traceEvent    ==> errorDoNotUseTrace
 warn = traceMarker   ==> errorDoNotUseTrace
 warn = traceMarkerIO ==> errorDoNotUseTrace
+
+warn = fromJust      ==> fromJustNote
+warn = head          ==> headMay
+warn = last          ==> lastMay
+warn = (!!)          ==> atMay
+warn = a !! b        ==> atMay  -- like @let Just x = a `atMay` b in x@: pattern match failures
+                                -- produce easily locatable errors.

@@ -34,21 +34,16 @@ defaultMainMenuErrors = MainMenuErrors
   }
 
 data MainMenuState = MainMenuState
-  { _mmState  :: MainMenu
+  { _mmState  :: MainMenuTabState
   , _mmErrors :: MainMenuErrors
   }
   deriving (Eq, Show, Generic)
 
 emptyMainMenuState :: HasCallStack => MainMenuState
 emptyMainMenuState = MainMenuState
-  { _mmState  = MainMenuOpen $ MainMenuLogin MainMenuSubTabLogin
+  { _mmState  = MainMenuLogin MainMenuSubTabLogin
   , _mmErrors = defaultMainMenuErrors
   }
-
-data MainMenu
-  = MainMenuClosed
-  | MainMenuOpen { _mainMenuOpenTab :: MainMenuTabState }
-  deriving (Eq, Show, Generic)
 
 type MainMenuTabState = (MainMenuTab
       ()
@@ -157,6 +152,6 @@ data MainMenuProcessShortProps = MainMenuProcessShortProps
 
 
 makeRefineTypes [ ''MainMenuAction, ''MainMenuErrors, ''MainMenuState
-                , ''MainMenu, ''MainMenuTab, ''MainMenuGroup, ''MainMenuSubTabLogin, ''MainMenuProcessShortProps
+                , ''MainMenuTab, ''MainMenuGroup, ''MainMenuSubTabLogin, ''MainMenuProcessShortProps
                 , ''GroupProps, ''GroupsProps
                 ]

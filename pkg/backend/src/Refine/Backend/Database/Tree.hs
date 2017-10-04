@@ -24,6 +24,6 @@ buildTree parent key xs = node root
 
     childrenMap =
       Map.unionsWith (++) -- O(m*log(n/m + 1))
-      . map (uncurry Map.singleton . first fromJust) -- O(n)
+      . map (uncurry Map.singleton . first (fromJustNote "Refine.Backend.Database.Tree")) -- O(n)
       . filter (isJust . fst)    -- O(n)
       $ map (parent &&& pure) xs -- O(n)

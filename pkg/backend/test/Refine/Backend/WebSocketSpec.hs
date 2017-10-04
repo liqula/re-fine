@@ -29,7 +29,16 @@ import Refine.Common.Types
 -- * config
 
 verbose_ :: Bool
-verbose_ = True
+verbose_ = False
+
+-- | Do not start server in 'wsBackend', but reference one that is already running elsewhere,
+-- outside the test suide.  Could be a staging or even production system that we want to stress
+-- test, for instance.
+useExternalBackend :: Bool
+useExternalBackend = False
+
+timeoutVal :: Timespan
+timeoutVal = TimespanSecs 3
 
 
 -- * primitives
@@ -48,6 +57,11 @@ askQuestion conn question
 timeout' :: Timespan -> IO a -> IO (Maybe a)
 timeout' = timeout . timespanUs
 
+timeout'' :: Timespan -> IO () -> IO ()
+timeout'' timespan action = do
+  Just () <- timeout' timespan action
+  pure ()
+
 runWS :: HasCallStack => Int -> (Connection -> IO a) -> IO a
 runWS port action = do
   let host :: String = "localhost"
@@ -62,27 +76,20 @@ runWS port action = do
 -- FUTUREWORK: a) integrate this with the code in "Refine.Backend.Test.AppServer"; b) multiple
 -- connections for multiple users.
 wsBackend :: (WSBackend -> IO ()) -> IO ()
-wsBackend = if useExternalBackend then externalServer else builtinServer
+wsBackend = timeout'' timeoutVal
+          . if useExternalBackend then externalServer 3000 else builtinServer
   where
-    builtinServer = wsBackend' (TimespanSecs 3)
-    externalServer = ($ WSBackend Nothing 3000 Nothing)
+    builtinServer = wsBackend'
+    externalServer port act = runWS port $ \conn -> act $ WSBackend Nothing port (Just conn)
 
--- | Do not start server in 'wsBackend', but reference one that is already running elsewhere,
--- outside the test suide.  Could be a staging or even production system that we want to stress
--- test, for instance.
-useExternalBackend :: Bool
-useExternalBackend = False
-
-wsBackend' :: Timespan -> (WSBackend -> IO ()) -> IO ()
-wsBackend' timespan action = do
-  Just () <- timeout' timespan $ do
+wsBackend' :: (WSBackend -> IO ()) -> IO ()
+wsBackend' action = do
     let cfg = wsBackendCfg
     createTestSession' cfg $ \(tbe :: TestBackend) -> do
       testWithApplication (pure . backendServer . view testBackend $ tbe) $ \port -> do
         runWS port $ \conn -> do
           runDB tbe . unsafeAsGod $ initializeDB sampleContent
           action $ WSBackend (Just tbe) port (Just conn)
-  pure ()
 
 wsBackendCfg :: Config
 wsBackendCfg = testBackendCfg
@@ -107,7 +114,7 @@ stresser :: Int -> Int -> IO (Async (Either String WSSessionId))
 stresser port rounds = async . (`catch` (\(SomeException e) -> pure . Left $ show e)) $ do
   TCGreeting cid <- runWS port $ \conn ->
     sendMessage conn (TSGreeting Nothing) >> receiveMessage conn
-  forM_ [0..rounds] $ \_ -> runWS port $ \conn -> do
+  forM_ [0.. (rounds - 1)] . const . runWS port $ \conn -> do
     when verbose_ $ hPutStr stderr "."
     sendMessage conn (TSGreeting (Just cid))
     throttle
@@ -117,7 +124,7 @@ stresser port rounds = async . (`catch` (\(SomeException e) -> pure . Left $ sho
 
 stressers :: Int -> Int -> Int -> IO ()
 stressers port agents rounds = do
-  as :: [Async (Either String WSSessionId)] <- forM [0..agents] . const $ stresser port rounds
+  as :: [Async (Either String WSSessionId)] <- forM [0.. (agents - 1)] . const $ stresser port rounds
   result <- wait `mapM` as
   filter isLeft result `shouldSatisfy` null
 
@@ -236,16 +243,12 @@ make sure we've called all of these at least once:
 
 specErrors :: Spec
 specErrors = describe "errors" . around wsBackend $ do
-  it "database lookup failure" $ \(WSBackend _ _ (Just conn)) -> do
+  it "database lookup failure" $ \(WSBackend mtbe _ (Just conn)) -> do
     TCGreeting _ <- askQuestion conn $ TSGreeting Nothing
     respLogin <- askQuestion conn $ TSLogin (Login "admin" "pass")
     show respLogin `shouldContain` "(Right (User {_userMetaID = MetaID {_miID = ID 1, _miMeta = MetaInfo {_metaCreatedBy = Anonymous"
     let noSuchGroup = ID 98691
     TCError _ <- askQuestion conn $ TSMissing [CacheKeyGroup noSuchGroup]
-    logShouldContain `mapM_` ["AppDBError (DBNotFound", show (noSuchGroup ^. unID)]
-
-
-logShouldContain :: String -> Expectation
-logShouldContain substr = do
-  pendingWith "#459"
-  readTestLogfile >>= (`shouldContain` substr)
+    case mtbe of
+      Just tbe -> tbe `shouldHaveLogged` ["AppDBError (DBNotFound", show (noSuchGroup ^. unID)]
+      Nothing  -> pendingWith "no test backend to check log in."

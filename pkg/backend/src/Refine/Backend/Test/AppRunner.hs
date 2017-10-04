@@ -26,13 +26,14 @@ provideAppRunner action = withTempCurrentDirectory $ do
   action runner
   destroy
 
--- | App actions run in god mode.  See 'unsafeAsGod'.
+-- | FIXME: this should almost certainly be discarded in favor of 'mkBackend', but it is subtly
+-- different: it contains a trick to avoid #389, it has no servant, config is hard-wired in, ...
 createAppRunner :: forall a. IO (AppM DB a -> ExceptT ApiError IO a, IO ())
 createAppRunner = do
   let dbFilePath = "./test.db"
       cfg = Config
         { _cfgLogger        = LogCfg LogCfgDevNull LogWarning
-        , _cfgDBKind        = DBOnDisk dbFilePath
+        , _cfgDBKind        = Sqlite3OnDisk dbFilePath
         , _cfgPoolSize      = 5
         , _cfgFileServeRoot = Nothing
         , _cfgWarpSettings  = def
@@ -44,18 +45,20 @@ createAppRunner = do
         , _cfgWSPingPeriod  = TimespanSecs 1
         , _cfgAllAreGods    = True
         , _cfgHaveRestApi   = True
+        , _cfgAppMLimit     = TimespanSecs 1
         }
 
-  (dbRunner, dbNat, destroy) <- createDBNat cfg
+  (logchan, destroylogchan) <- mkLogChan cfg
+  (dbRunner, dbNat, destroydb) <- createDBNat cfg
   let guardWithGodhood = if cfg ^. cfgAllAreGods then unsafeAsGod else id
       runner :: forall b. AppM DB b -> ExceptT ApiError IO b
-      runner m = (runApp dbNat dbRunner (mkLogger cfg) cfg $$ guardWithGodhood m)
+      runner m = (runApp dbNat dbRunner logchan cfg $$ guardWithGodhood m)
         >>= liftIO . evaluate -- without evaluate we have issue #389
 
   void . throwApiErrors . runner $ do
     migrateDB cfg
     unsafeAsGod $ initializeDB [CliCreateGroup $ CreateGroup "Universe" "The group that contains everything" [] [] mempty Nothing]
-  pure (runner, destroy)
+  pure (runner, destroydb >> destroylogchan)
 
 throwApiErrors :: forall a. ExceptT ApiError IO a -> IO a
 throwApiErrors = (>>= either (throwIO . ErrorCall . show) pure) . runExceptT

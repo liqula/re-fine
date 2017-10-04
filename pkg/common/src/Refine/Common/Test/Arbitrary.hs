@@ -298,7 +298,7 @@ instance Arbitrary NonEmptyST where
   arbitrary = NonEmptyST . ST.pack <$> scale (`div` 2) (listOf1 $ arbitrary `suchThat` legalChar)
 
 instance (Arbitrary a, Arbitrary b, Eq a, Splitable b) => Arbitrary (Segments a b) where
-  arbitrary = Segments . map (\xs -> (fst (head xs), foldr1 joinItems $ snd <$> xs)) . groupBy ((==) `on` fst)
+  arbitrary = Segments . map (\xs@(x:_) -> (fst x, foldr1 joinItems $ snd <$> xs)) . groupBy ((==) `on` fst)
         <$> arbitrary
 
 instance (Ord a, EqProp a) => EqProp (Range a) where Range a b =-= Range c d = a =-= c .&. b =-= d

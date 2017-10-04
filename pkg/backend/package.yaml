@@ -15,6 +15,12 @@ category:            Web
 
 ghc-options: -j -Wall -Wno-redundant-constraints -Wno-unused-imports -Werror
 
+flags:
+  psql:
+    description: "support for postgresql"
+    manual: true
+    default: false
+
 dependencies:
   - aeson
   - aeson-pretty
@@ -26,6 +32,7 @@ dependencies:
   - data-default
   - directory
   - elim
+  - fast-logger
   - fgl
   - filepath
   - fingertree-tf
@@ -78,6 +85,13 @@ library:
     - src
   include-dirs:
     - src
+  when:
+    - condition: flag(psql)
+      then:
+        cpp-options: -D__WITH_POSTGRES__
+        dependencies: [persistent-postgresql]
+      else:
+        cpp-options: -D__WITHOUT_POSTGRES__
 
 executables:
   refine:

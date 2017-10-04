@@ -18,7 +18,9 @@ import Refine.Common.Test.Arbitrary ()
 import Refine.Common.Types.Core hiding (Edit)
 import Refine.Common.VDoc.OT
 
-{-# ANN module ("HLint: ignore Use cs" :: String) #-}
+{-# ANN module ("HLint: ignore Use headMay" :: String) #-}
+{-# ANN module ("HLint: ignore Use lastMay" :: String) #-}
+{-# ANN module ("HLint: ignore Use atMay" :: String) #-}
 
 -- do not insert more than 4 elems into a Style set
 instance HasEnoughInhabitants (Atom Style) where numOfInhabitants _ = Just 4
@@ -126,7 +128,7 @@ spec = parallel $ do
             wipeBlockKeys = rawContentBlocks %~ fmap (blockKey .~ BlockKey "0")
             toBlock '.' = DocBlock NormalText (BlockDepth 0) (block0 ^. blockIndexKey) [((Atom . Just $ EntityImage dotDotDotPngUri, mempty), "...")]
             toBlock c   = DocBlock NormalText (BlockDepth 0) (block0 ^. blockIndexKey)
-                            [((Atom Nothing, Set.fromList [Atom StyleChanged | isUpper c]), fromString [c])]
+                            [((Atom Nothing, Set.fromList [Atom StyleChanged | isUpper c]), cs [c])]
         wipeBlockKeys (hideUnchangedParts (toRC "aBcdefGH") 0 0) `shouldBe` wipeBlockKeys (toRC ".B.GH")
         wipeBlockKeys (hideUnchangedParts (toRC "aBcdefGH") 1 1) `shouldBe` wipeBlockKeys (toRC "aBc.fGH")
         wipeBlockKeys (hideUnchangedParts (toRC "aBcdefGH") 2 1) `shouldBe` wipeBlockKeys (toRC "aBc.efGH")

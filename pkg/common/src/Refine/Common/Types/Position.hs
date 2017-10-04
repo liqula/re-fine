@@ -25,7 +25,7 @@ mapBlockIndex f (Position a c) = Position (f a) c
 
 -- ** Specific Positions
 
--- The preferred position to use
+-- | The preferred position to use
 type Position = GPosition BlockIndex Int
 
 -- | `key` attribute of the 'Block'.  'SelectionState' uses this to refer to blocks.  If in doubt
@@ -205,9 +205,10 @@ intersectionRanges as_ bs_ = RangesInner $ f (unRanges as_) (unRanges bs_)
 
 -- | The smallest range which contains all ranges in input
 rangesClosure :: Ranges a -> Maybe (Range a)
-rangesClosure rs = case unRanges rs of
-    [] -> Nothing
-    xs -> Just $ RangeInner (_rangeBegin $ head xs) (_rangeEnd $ last xs)
+rangesClosure (RangesInner rs) = do
+  h <- headMay rs
+  l <- lastMay rs
+  pure $ RangeInner (_rangeBegin h) (_rangeEnd l)
 
 
 -- | Use only when interfacing with Draft

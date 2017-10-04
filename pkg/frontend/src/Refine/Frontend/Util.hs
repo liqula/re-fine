@@ -13,6 +13,10 @@ import Language.Css.Pretty
 import Language.Css.Syntax
 
 
+__ :: Common.TKey -> ST
+__ _ = "Add a comment"  -- FIXME: #191
+
+
 class Css a where
   css :: a -> [Decl]
 

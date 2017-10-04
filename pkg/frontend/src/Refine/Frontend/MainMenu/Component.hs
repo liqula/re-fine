@@ -237,7 +237,6 @@ mainMenuGroup = mkView "mainMenuGroup" $ \case
           & ibListKey .~ "subgroups"
           & ibIndexNum .~ Nothing
           & ibSize .~ XXXLarge
-          & ibEnabled .~ False
 
         ibutton_ $ emptyIbuttonProps (ButtonImageIcon Svg.Process ColorSchemaDark)
             [ MainMenuAction . MainMenuActionOpen
@@ -471,12 +470,13 @@ mainMenuProfile editable user lst = mkPersistentStatefulView "MainMenuProfile" l
 
       _ -> do
           br_ []
-          contributionDialogTextForm (_2 . iso fromJust Just) st 1 "Description"
+          contributionDialogTextForm (_2 . iso (fromJustNote "mainMenuProfile: desc") Just) st 1 "Description"
           br_ []
 
           button_
             [ onClick $ \_evt _ -> simpleHandler @_ $
-              \st' -> ( [action @GlobalState . MainMenuAction . MainMenuActionOpen $ MainMenuProfile (u ^. userID, FormComplete (Right <$> (u ^. userAvatar), snd st))]
+              \st' -> ( [action @GlobalState . MainMenuAction . MainMenuActionOpen $
+                         MainMenuProfile (u ^. userID, FormComplete (Right <$> (u ^. userAvatar), snd st))]
                       , Just $ st' & _2 .~ Nothing)
             ] $ elemText "save"
           button_

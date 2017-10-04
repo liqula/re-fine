@@ -307,9 +307,12 @@ instance Editable a => Editable [a] where
 
     ePatch (DeleteRange i l) xs = take i xs <> drop (i+l) xs
     ePatch (InsertItem i x) xs = take i xs <> (x: drop i xs)
-    ePatch (EditItem   i x) xs = take i xs <> (patch x (xs !! i): drop (i+1) xs)
+    ePatch (EditItem   i x) xs = take i xs <> (patch x (let Just h = xs `atMay` i in h): drop (i+1) xs)
 
-    diff s1 s2 = pure . snd . snd $ triangle !! (length s1 + lenS2) !! lenS2
+    diff s1 s2 = pure . snd . snd
+               $ (let Just x = triangle `atMay` (lenS1 + lenS2)
+                      Just y = x `atMay` lenS2
+                 in y)
       where
         triangle = scanl ff [(error "impossible", mk [])] $ zip (revInits $ reverse s1) s2''
 
@@ -331,6 +334,7 @@ instance Editable a => Editable [a] where
                 dxy = diff x y
         ff [] _ = error "impossible"
 
+        lenS1 = length s1
         lenS2 = length s2
 
         mk x = (cost x, x)
@@ -339,12 +343,20 @@ instance Editable a => Editable [a] where
         revInits :: [a] -> [[a]]
         revInits = f []
           where
-            f acc xs = acc: f (head xs: acc) (tail xs)
+            -- NOTE: the following is too strict for the above use case and will fail to
+            -- pattern-match:
+            --
+            -- f acc = (acc:) . \case
+            --     (x: xs) -> f (x: acc) xs
+            --     []      -> []
+            f acc xs = acc: f (head' xs: acc) (tail' xs)
+            head' (x:_) = x
+            tail' (_:xs) = xs
 
-    eMerge d (EditItem i x) (EditItem i' y) | i == i' = editItem i *** editItem i $ merge (d !! i) x y
+    eMerge d (EditItem i x) (EditItem i' y) | i == i' = editItem i *** editItem i $ merge (let Just h = d `atMay` i in h) x y
     eMerge _ (EditItem i _) (DeleteRange i' l) | i >= i' && i < i'+l = ([DeleteRange i' l], [])      -- information lost!
     eMerge d (DeleteRange i' l) (EditItem i x) | i >= i' && i < i'+l
-        = ( InsertItem i' (d !! i): editItem i' x
+        = ( InsertItem i' (let Just h = d `atMay` i in h): editItem i' x
           , deleteRange i' (max 0 $ i - i') <> deleteRange (i'+1) (max 0 $ l - (i - i') - 1)
           )
     eMerge _ (DeleteRange i l) (DeleteRange i' l')
@@ -372,7 +384,7 @@ instance Editable a => Editable [a] where
                 EditItem{}     -> i
 
     eInverse d = \case
-        EditItem i x   -> editItem i $ inverse (d !! i) x
+        EditItem i x   -> editItem i $ inverse (let Just y = d `atMay` i in y) x
         DeleteRange i l -> InsertItem i <$> (reverse . take l $ drop i d)
         InsertItem i _ -> deleteRange i 1
 
@@ -813,7 +825,7 @@ instance (Editable a, Editable b, Splitable b, Eq a) => Editable (Segments a b) 
 
     eInverse (Segments d) = \case
         SegmentListEdit e -> SegmentListEdit <$> eInverse d e
-        JoinItems i   -> [SplitItem i . splitLength . snd $ d !! i]
+        JoinItems i   -> [SplitItem i . splitLength . snd $ let Just x = d `atMay` i in x]
         SplitItem i _ -> [JoinItems i]
 
 deriving instance (Show a, Show (EEdit a), Show b, Show (EEdit b)) => Show (EEdit (Segments a b))

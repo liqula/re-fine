@@ -20,7 +20,7 @@ import           Refine.Frontend.Document.Store (setAllVerticalSpanBounds, docum
 import           Refine.Frontend.Document.Types
 import           Refine.Frontend.Header.Store (headerStateUpdate)
 import           Refine.Frontend.Header.Types
-import           Refine.Frontend.MainMenu.Store (mainMenuUpdate)
+import           Refine.Frontend.MainMenu.Store (mainMenuUpdate, mainMenuOpen)
 import           Refine.Frontend.MainMenu.Types
 import qualified Refine.Frontend.Route as Route
 import           Refine.Frontend.Screen.Store (screenStateUpdate)
@@ -80,8 +80,8 @@ transformGlobalState = transf
 
       -- scrolling
       case act of
-        ContributionAction ShowCommentEditor                            -> scrollToCurrentSelection (st ^. gsContributionState)
-        DocumentAction (DocumentSave (FormBegin (EditIsNotInitial, _))) -> scrollToCurrentSelection (st ^. gsContributionState)
+        ContributionAction ShowCommentEditor                            -> scrollToCurrentSelection `mapM_` (st ^. gsContributionState)
+        DocumentAction (DocumentSave (FormBegin (EditIsNotInitial, _))) -> scrollToCurrentSelection `mapM_` (st ^. gsContributionState)
         HeaderAction (ScrollToBlockKey (Common.BlockKey k))             -> liftIO . js_scrollToBlockKey $ cs k
         HeaderAction ScrollToPageTop                                    -> liftIO js_scrollToPageTop
         _ -> pure ()
@@ -113,7 +113,7 @@ transformGlobalState = transf
             Nothing -> pure ()
             Just rangeEvent -> do
               reDispatchM $ ContributionAction rangeEvent
-              when (st ^. gsHeaderState . hsToolbarExtensionStatus == CommentToolbarExtensionWithRange) $ do
+              when (st ^? gsHeaderState . _Just . hsToolbarExtensionStatus == Just CommentToolbarExtensionWithRange) $ do
                 -- (if the comment editor (or dialog) is started via the toolbar
                 -- extension, this is where it should be started.  assume that this can
                 -- only happen if rangeEvent is SetRange, not ClearRange.)
@@ -141,16 +141,13 @@ transformGlobalState = transf
         dispatchAndExec act
         pure st
      where
+      -- the order in which this happens is relevant!
       fm :: GlobalState -> CacheLookupT GlobalState
       fm =    gsServerCache         (pure . serverCacheUpdate act)
-          >=> gsVDocID              (pure . vdocIDUpdate act)
-          >=> gsContributionState   (pure . contributionStateUpdate act)
-          >=> gsHeaderState         (pure . headerStateUpdate act)
           >=> gsScreenState         (pure . maybe id screenStateUpdate (act ^? _ScreenAction))
-          >=> gsMainMenuState       (pure . mainMenuUpdate act (isJust $ st ^. gsVDocID))
           >=> gsTranslations        (pure . translationsUpdate act)
           >=> gsDevState            (pure . devStateUpdate act)
-          >=> (\st' -> gsDocumentState (documentStateUpdate act st') st')
+          >=> (\st' -> gsPageState (pageStateUpdate act st') st')
 
 initRouting :: IO ()
 initRouting = do
@@ -162,7 +159,7 @@ initRouting = do
 -- right order, since later ones can be true even though earlier ones should fire.)
 routeFromState :: GlobalState -> Route.Route
 routeFromState st
-  | MainMenuOpen tab <- st ^. gsMainMenuState . mmState = case tab of
+  | PageStateMainMenu mm _ <- st ^. gsPageState = case mm ^. mmState of
       MainMenuHelp                              -> Route.Help
       MainMenuLogin MainMenuSubTabLogin         -> Route.Login
       MainMenuLogin MainMenuSubTabRegistration  -> Route.Register
@@ -218,7 +215,10 @@ handleRouteChange _ r = do
     Right (Route.Process vid)        -> exec $ LoadVDoc vid
     Left _                           -> exec . MainMenuAction . MainMenuActionOpen $ defaultMainMenuTab
   where
-    exec = void . forkIO . executeAction . action @GlobalState
+    exec = void . reactFluxWorkAroundForkIO . executeAction . action @GlobalState
+      -- FIXME: this means we double-fork, once in reactFluxWorkAroundForkIO and once in
+      -- executeAction.  but if we skip either one it won't work any more.  react-hs really needs to
+      -- get more stable.
     emptyGroupForm = FormBegin $ newLocalStateRef (CreateGroup mempty mempty mempty mempty mempty Nothing) r
 
 flushCacheMisses :: IO ()
@@ -230,10 +230,6 @@ flushCacheMisses = do
     sendTS msg
     consoleLogJSStringM "WS" . cs $ show msg
 
-vdocIDUpdate :: GlobalAction -> Maybe (ID Common.VDoc) -> Maybe (ID Common.VDoc)
-vdocIDUpdate (LoadVDoc cvd) _ = Just cvd
-vdocIDUpdate _ st = st
-
 serverCacheUpdate :: GlobalAction -> ServerCache -> ServerCache
 serverCacheUpdate (CacheAction a) c = case a of
   RefreshServerCache c' -> c' <> c
@@ -242,7 +238,30 @@ serverCacheUpdate (CacheAction a) c = case a of
 serverCacheUpdate _ c = c
 
 
--- * pure updates
+-- * pure updates (well, with cache update effects)
+
+pageStateUpdate :: forall s. s ~ PageState DocumentState
+                   => GlobalAction -> GlobalState -> s -> CacheLookupT s
+pageStateUpdate (LoadVDoc vid) _ _ = pure . PageStateVDoc $ emptyProcessState vid
+pageStateUpdate UnloadVDoc _ _ = pure emptyPageState
+
+pageStateUpdate (MainMenuAction (MainMenuActionOpen tab)) _ lastpage@(PageStateVDoc _) =
+  pure $ PageStateMainMenu (mainMenuOpen emptyMainMenuState tab) (Just lastpage)
+
+pageStateUpdate (MainMenuAction MainMenuActionClose) _ (PageStateMainMenu _ mlastpage) =
+  pure $ maybe emptyPageState id mlastpage
+
+pageStateUpdate act gs (PageStateVDoc ps) = PageStateVDoc <$> fm ps
+  where
+    fm :: forall s'. s' ~ ProcessState DocumentState
+       => s' -> CacheLookupT s'
+    fm =    psContributionState (pure . contributionStateUpdate act)
+        >=> psHeaderState       (pure . headerStateUpdate act)
+        >=> psDocumentState     (documentStateUpdate act gs)
+
+pageStateUpdate act _ (PageStateMainMenu mm mlastpage) =
+  pure $ PageStateMainMenu (mainMenuUpdate act mm) mlastpage
+
 
 -- | Only touches the 'DevState' if it is 'Just'.  In production, 'gsDevState' should always be
 -- 'Nothing'.  Use 'weAreInDevMode' to decide whether you want to initialize it, or, when writing
@@ -297,7 +316,7 @@ emitBackendCallsFor act st = case act of
 
     DocumentAction (DocumentSave (FormBegin (EditIsInitial, estate)))
       -> do
-        let DocumentStateEdit _ (Just baseEdit) = st ^. gsDocumentState
+        let Just (DocumentStateEdit _ (Just baseEdit)) = st ^. gsDocumentState
             cedit = Common.CreateEdit
                   { Common._createEditDesc        = "initial content"
                   , Common._createEditVDocVersion = getCurrentRawContent estate
@@ -308,7 +327,7 @@ emitBackendCallsFor act st = case act of
         dispatchAndExec $ DocumentAction UpdateDocumentStateView
 
     DocumentAction (DocumentSave (FormComplete (info, estate)))
-      | DocumentStateEdit _ baseEdit_ <- st ^. gsDocumentState
+      | Just (DocumentStateEdit _ baseEdit_) <- st ^. gsDocumentState
       -> do
         let baseEdit :: Common.ID Common.Edit
             (baseEdit:_) = catMaybes [baseEdit_, st ^? gsEditID . _Just . _Just]

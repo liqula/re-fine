@@ -40,8 +40,8 @@ instance SometimesLoggable EditorStoreAction where
 transformEditorStore :: EditorStoreAction -> EditorStore -> IO EditorStore
 transformEditorStore act st = do
   consoleLogGlobalAction act
-  st' <- transformEditorStoreHandler act st
-  consoleLogGlobalStateWith (\(EditorStore (EditorState (NoJSONRep j))) -> j) (st /= st') st'
+  st'@(EditorStore (getCurrentRawContent -> rc)) <- transformEditorStoreHandler act st
+  consoleLogGlobalState (st /= st') rc
   pure st'
 
 transformEditorStoreHandler :: EditorStoreAction -> EditorStore -> IO EditorStore
@@ -62,11 +62,8 @@ transformEditorStoreHandler = f where
     (dispatchAndExec . DocumentAction) `mapM_` [DocumentSave (FormBegin (form, es))]
     pure $ EditorStore es
 
--- | We pass two global states into this function, the one before the
--- pure update and the one after.  Using the one after is (was?)
--- sometimes necessary, but it's a bit dangerous because it can
--- trigger thunk evaluation loops.  use old state whenever it is
--- enough.
+-- | This function takes the 'GlobalState' value to the extent it is already updated.  Call it as
+-- late as possible during the pure update!
 documentStateUpdate :: (HasCallStack)
                     => GlobalAction -> GlobalState -> DocumentState
                     -> CacheLookupT DocumentState
@@ -197,7 +194,7 @@ setAllVerticalSpanBounds rawContent = liftIO $ do
               -- production.  write a few assert functions that can do
               -- that, and use one of those.)
 
-              let fromJust_ = fromMaybe (error "setAllVerticalSpanBounds: internal error.")
+              let fromJust_ = fromJustNote "setAllVerticalSpanBounds: internal error."
 
               topOffset    <- OffsetFromViewportTop  . fromJust_ <$> getLeafSelectorBound LeafSelectorTop    top
               bottomOffset <- OffsetFromViewportTop  . fromJust_ <$> getLeafSelectorBound LeafSelectorBottom bot

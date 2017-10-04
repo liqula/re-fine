@@ -156,7 +156,7 @@ webdriver cnf appurl = sessionWith cnf "@webdriver" . using allBrowsers $ do
                                              -- proper html attribute yet; it that's the case we
                                              -- will have to think of something else.)
     onEl [xpathButton "Process_add"] click
-    onEls [ByXPath "//*[@id='o-vdoc-overlay-content__textarea-annotation']"] $ sendKeys titleText . head
+    onEls [ByXPath "//*[@id='o-vdoc-overlay-content__textarea-annotation']"] $ \(h:_) -> sendKeys titleText h
     onEl [xpathButton "Save"] click
     onEls [ByCSS "h1"] $ \els -> do
       txt <- mconcat <$> (getText `mapM` els)
@@ -168,8 +168,8 @@ webdriver cnf appurl = sessionWith cnf "@webdriver" . using allBrowsers $ do
       addTextToDraft block [block1Text, block2Text, block3Text]
 
   it "create, save initial content (2)" . runWD $ do
-    onEls [ByCSS ".public-DraftEditor-content", ByXPath "//div[@data-contents='true']/child::node()"] $ \blocks -> do
-      click $ last blocks
+    onEls [ByCSS ".public-DraftEditor-content", ByXPath "//div[@data-contents='true']/child::node()"] $
+      \(reverse -> (block:_)) -> click block
 
   it "create, save initial content (3)" . runWD $ do
     onEl [xpathButton "Edit_toolbar_h1"] click
@@ -191,14 +191,16 @@ webdriver cnf appurl = sessionWith cnf "@webdriver" . using allBrowsers $ do
       block3Text `shouldSatisfy` (`ST.isInfixOf` editableText)
 
   it "adding two tokens in the first and last draft.js block, resp." . runWD $ do
-    onEls [ByCSS ".public-DraftEditor-content", ByXPath "//div[@data-contents='true']/child::node()"] $ \blocks -> do
-      addTextToDraft (head blocks) [textA]
-    onEls [ByCSS ".public-DraftEditor-content", ByXPath "//div[@data-contents='true']/child::node()"] $ \blocks -> do
-      addTextToDraft (last blocks) [textB]
+    onEls [ByCSS ".public-DraftEditor-content", ByXPath "//div[@data-contents='true']/child::node()"] $
+      \(block:_) -> do
+        addTextToDraft block [textA]
+    onEls [ByCSS ".public-DraftEditor-content", ByXPath "//div[@data-contents='true']/child::node()"] $
+      \(reverse -> block:_) -> do
+        addTextToDraft block [textB]
 
     onEls [ByCSS ".public-DraftEditor-content", ByXPath "//div[@data-contents='true']/child::node()"] $ \blocks -> do
-      h <- getText $ head blocks
-      t <- getText $ last blocks
+      (h: _) <- getText <$> blocks
+      (t: _) <- getText <$> reverse blocks
       textA `shouldSatisfy` (`ST.isInfixOf` h)
       textB `shouldSatisfy` (`ST.isInfixOf` t)
 
@@ -207,7 +209,7 @@ webdriver cnf appurl = sessionWith cnf "@webdriver" . using allBrowsers $ do
     onEl  [xpathButton "Save"] click
 
   it "save edit (2)" . runWD $ do
-    onEls [ByCSS ".skylight-dialog", xpathButton "New_Edit"] (click . head)
+    onEls [ByCSS ".skylight-dialog", xpathButton "New_Edit"] $ \(el: _) -> click el
 
   it "save edit (3)" . runWD $ do
     onEl [ByCSS ".skylight-dialog", ByXPath "//textarea"] (sendKeys "bloorp")

@@ -11,4 +11,4 @@ class MonadSmtp app where
   sendMailTo :: (IsEmailMessage msg, Show msg) => msg -> app ()
 
 class IsEmailMessage msg where
-  renderEmail :: SmtpCfg -> msg -> RandomGen g => g -> (LBS, g)
+  renderEmail :: SmtpCfg -> msg -> RandomGen g => g -> ([LBS], g)

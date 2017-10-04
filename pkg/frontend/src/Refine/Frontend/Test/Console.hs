@@ -78,11 +78,10 @@ consoleLogGlobalStateWith = consoleLogGlobalState' consoleLogJSValM
 
 consoleLogGlobalState' :: (HasCallStack, Monad m, Typeable st)
                       => (JSString -> a -> m ()) -> (st -> a) -> Bool -> st -> m ()
-consoleLogGlobalState' logger trans hasChanged st = do
+consoleLogGlobalState' _ _ False _ = pure ()
+consoleLogGlobalState' logger trans True st = do
   let msg = "New " <> (cs . show . typeOf $ st) <> ": "
-  if hasChanged
-    then logger msg (trans st)
-    else consoleLogJSStringM msg "[UNCHANGED]"
+  logger msg (trans st)
 
 consoleLogGlobalAction :: (HasCallStack, Monad m, SometimesLoggable act, Typeable act, ToJSON act, Show act)
                        => act -> m ()

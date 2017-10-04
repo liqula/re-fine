@@ -10,7 +10,7 @@ import qualified Network.Wai.Test.Internal as Wai
 import           Test.Hspec
 import           System.Process (system)
 
-import Refine.Backend.App
+import Refine.Backend.App as App
 import Refine.Backend.Config
 import Refine.Backend.Database (DB)
 import qualified Refine.Backend.Database.Class as DB
@@ -24,7 +24,9 @@ import Refine.Common.Types
 import Refine.Common.VDoc.Draft
 
 {-# ANN module ("HLint: ignore Reduce duplication" :: String) #-}
-
+{-# ANN module ("HLint: ignore Use headMay" :: String) #-}
+{-# ANN module ("HLint: ignore Use lastMay" :: String) #-}
+{-# ANN module ("HLint: ignore Use atMay" :: String) #-}
 
 type SwitchUser = SessUser -> IO ()
 type GetUid = SessUser -> ID User
@@ -36,19 +38,25 @@ setup action = withTempCurrentDirectory $ do
   let verbose_ = False
       dbFilePath = "./test.db"
       cfg = def
-        & cfgLogger     .~ (if verbose_
-                            then LogCfg LogCfgStdOut LogDebug
-                            else LogCfg (LogCfgFile testLogfilePath) LogError)
         & cfgDBKind     .~ (if verbose_
-                            then DBOnDisk dbFilePath
-                            else DBInMemory)
+                            then Sqlite3OnDisk dbFilePath
+                            else Sqlite3InMemory)
         & cfgSmtp       .~ Nothing
         & cfgAllAreGods .~ False
   (tbe, destroy) <- do
-    (be, dstr) <- mkProdBackend cfg
+    (be, dstr) <- mkBackend cfg
     wai        <- newMVar Wai.initState
     li         <- newMVar Nothing
     pure (TestBackend be wai li, dstr)
+
+  let schaffolding :: AppM DB ()
+      schaffolding = do
+        gs <- App.getGroups
+        when (null gs) $ do
+          void . App.addGroup $ CreateGroup "default" "default group" [] [] mempty Nothing
+
+  runExceptT (backendRunApp (tbe ^. testBackend) $$ unsafeAsGod schaffolding)
+    >>= either (error . show) (const $ pure ())
 
   adminID <- addUserAndLogin tbe "admin" "admin@example.com" "pass"
   aliceID <- addUserAndLogin tbe "alice" "alice@example.com" "pass"

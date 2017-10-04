@@ -93,7 +93,7 @@ updateEdit eid edit = do
             -- - this should be an 'AppError', but it happens in the DB monad.
             -- - since we 'error' out sloppily, the backend console says 'SQLite3 returned ErrorError
             --   while attempting to perform step.' and the frontend says 'Error in $: Failed
-            --   reading: not a valid json value'.
+            --   reading: not a valid json value'.  (this comment is applicable to the sqlite3 backend.)
         OT.diff (deleteMarksFromRawContent olddoc) (deleteMarksFromRawContent new)
     DB.updateEdit eid edit
     DB.updateEditSource eid $ \_ e -> e <> dff
@@ -108,12 +108,7 @@ addEdit baseeid edit = do
     rid <- DB.vdocOfEdit baseeid
     olddoc :: RawContent <- DB.getVersion baseeid
     dff <- either error pure $
-            -- error reporting is not great:
-            -- - this is an internal error, and it may be possible to rule it out on the type level.
-            -- - this should be an 'AppError', but it happens in the DB monad.
-            -- - since we 'error' out sloppily, the backend console says 'SQLite3 returned ErrorError
-            --   while attempting to perform step.' and the frontend says 'Error in $: Failed
-            --   reading: not a valid json value'.
+            -- error reporting is not great (see comment in updateEdit).
         OT.diff (deleteMarksFromRawContent olddoc)
                 (deleteMarksFromRawContent $ edit ^. createEditVDocVersion)
     DB.createEdit rid (EditSource [(dff, baseeid)]) edit
@@ -177,7 +172,7 @@ mergeEditAndRebaseAllSiblings eid = do
   movedCommentOwners :: [MetaInfo] <- db $ do
     edit <- DB.getEdit eid
     base <- DB.getEdit hid
-    let diff = head [di | (di, d) <- edit ^. editSource . unEditSource, d == hid]
+    let (diff: _) = [di | (di, d) <- edit ^. editSource . unEditSource, d == hid]
         trRange = transformRangeOTDoc
                   (concat (coerce diff :: [OT.Edit OTDoc]))
                   (rawContentToDoc $ base ^. editVDocVersion)

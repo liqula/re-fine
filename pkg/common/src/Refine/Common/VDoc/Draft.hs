@@ -16,23 +16,28 @@ import Refine.Common.VDoc.OT (docRanges, docEditRanges)
 emptyRawContent :: RawContent
 emptyRawContent = mkRawContent $ emptyBlock :| []
 
--- | Collect all characters (non-newline whitespace is treates no different from letters) between
+rawContentFromST :: ST -> RawContent
+rawContentFromST (ST.lines . (<> "\n") -> txt@(_:_)) = mkRawContent $ mkBlock <$> NEL.fromList txt
+
+-- | Collect all characters (non-newline whitespace is treated no different from letters) between
 -- two selection points.
 --
 -- Two points worth nothing here:
 --
 -- (1) 'SelectionState' is always defined, even if nothing is selected.  If `window.getSelection()`
 -- yields nothing, the selection state value in the editor state contains the empty selection (start
--- point == end point).
+-- point == end point == beginning of document).
 --
 -- (2) Since blocks can be empty, empty selections can range over many lines.
 rangeText :: BlockBoundary -> RawContent -> Range Position -> ST
 rangeText blockBoundary (RawContent bs _) ss@(Range s e) = case selectedBlocks ss (NEL.toList bs) of
-      []        -> ""
-      [b]       -> ST.drop (s ^. columnIndex) . ST.take (e ^. columnIndex) $ b ^. blockText
-      (b : bs') -> combine $
-                         ST.drop (s ^. columnIndex) (b ^. blockText)
-                       : (((^. blockText) <$> init bs') <> [ST.take (e ^. columnIndex) (last bs' ^. blockText)])
+      [] -> ""
+      [b] -> ST.drop (s ^. columnIndex) . ST.take (e ^. columnIndex) $ b ^. blockText
+      (b : bs'@(reverse -> lastblock:_)) ->
+        let firsttxt   = ST.drop (s ^. columnIndex) (b ^. blockText)
+            middletxts = ((^. blockText) <$> init bs')
+            lasttxt    = ST.take (e ^. columnIndex) (lastblock ^. blockText)
+        in combine $ firsttxt : middletxts <> [lasttxt]
   where
     combine = case blockBoundary of
       BlockBoundaryIsNewline -> ST.intercalate "\n"
@@ -67,7 +72,7 @@ rangeIsEmpty rc = isEmptyRange . fmap (toStylePosition rc)
 -- * vdoc
 
 rawContentFromCompositeVDoc :: CompositeVDoc -> RawContent
-rawContentFromCompositeVDoc (CompositeVDoc _ base edits discussions) =
+rawContentFromCompositeVDoc cvdoc@(CompositeVDoc _ base edits discussions) =
   addMarksToRawContent marks rawContent
   where
     rawContent = base ^. editVDocVersion
@@ -82,7 +87,8 @@ rawContentFromCompositeVDoc (CompositeVDoc _ base edits discussions) =
         Range x y = toStylePosition rawContent <$> r
 
         next (_: z: _) = z
-        next zs = head zs
+        next (z: _)    = z
+        next []        = error $ "rawContentFromCompositeVDoc: " <> show cvdoc
 
     marks :: [(MarkID, Range Position)]
     marks = [ (MarkContribution (ContribIDEdit k) i, s)
@@ -139,9 +145,9 @@ getLeafSelectors rc
     f (Right (Mark m)) = Just m
     f _ = Nothing
 
--- the function should be strictly monotonic on Just values
+-- | the function must be strictly monotonic on Just values
 mapMaybeKey :: (HasCallStack, Ord k, Ord l) => (k -> Maybe l) -> Map k a -> Map l a
-mapMaybeKey f = Map.mapKeysMonotonic (fromJust . f) . Map.filterWithKey (\k _ -> isJust $ f k)
+mapMaybeKey f = Map.mapKeysMonotonic (fromJustNote "mapMaybeKey: impossible" . f) . Map.filterWithKey (\k _ -> isJust $ f k)
 
 
 ---------------------- separate style representation
