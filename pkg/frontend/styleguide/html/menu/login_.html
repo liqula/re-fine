@@ -1,21 +1,30 @@
 <!DOCTYPE html>
 <html>
 <head>
+  <meta charset="utf-8">
   <title>liqlua style guide</title>
   <link rel="stylesheet" media="all" href="../main.css">
 </head>
 <body>
-  <div>
-    <h1>Login</h1>
-    <form target="#" action="POST">
-      <input type="text" id="login-username" placeholder="Username"
-      style=
-      "border-radius: 5px; background-color: rgb(246, 247, 249); margin: 12px;"><br>
-
-      <input type="password" id="login-password" placeholder=
-      "Password" style=
-      "border-radius: 5px; background-color: rgb(246, 247, 249); margin: 12px;">
-      <br>
+  <div class="menu-form m-t-1">
+    <div class="menu-form-header">
+      <div class="left-column">
+        <div class="inner-column-1">
+          <div class="menu-form-header__label">
+            Login
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="menu-form__input-div m-b-1">
+      <input type="text" class="menu-form__input" id=
+      "login-username" placeholder="Username">
+    </div>
+    <div class="menu-form__input-div m-b-1">
+      <input type="password" class="menu-form__input" id=
+      "login-password" placeholder="Password">
+    </div>
+    <div class="menu-form-submenu m-b-1">
       <div class="ibutton_large margin1" style=
       "pointer-events: all; cursor: pointer;">
         <svg xmlns="http://www.w3.org/2000/svg" viewbox=
@@ -26,7 +35,7 @@
         "M88.21,14.08a8.42,8.42,0,0,0-11.57,2.83L44.55,69.79,22.78,42.13A8.43,8.43,0,0,0,9.54,52.55L38.32,89.13A8.4,8.4,0,0,0,44.41,93h.21a8.4,8.4,0,0,0,1.19,0c.25,0,.49,0,.74-.07l.51-.09a8.13,8.13,0,0,0,6-4.56L91,25.66A8.43,8.43,0,0,0,88.21,14.08Z">
         </path></svg>
       </div>
-    </form>
+    </div>
   </div>
 </body>
 </html>

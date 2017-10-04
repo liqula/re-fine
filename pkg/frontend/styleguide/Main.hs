@@ -177,6 +177,7 @@ wrapHtml nm ctx = (unlines header <>) . (<> unlines footer)
       "<!DOCTYPE html>" :
       "<html>" :
       "<head>" :
+      "  <meta charset=\"utf-8\">" :
       "  <title>liqlua style guide</title>" :
       "  <link rel=\"stylesheet\" media=\"all\" href=\"" <> cssSource <> "\" />" :
       "</head>" :
