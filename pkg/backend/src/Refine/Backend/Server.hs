@@ -120,7 +120,7 @@ runCliAppCommand :: Config -> AppM DB a -> IO ()
 runCliAppCommand cfg cmd = do
   (backend, destroydb) <- mkBackend cfg
   destroylogger <- attachLogger cfg backend
-  (void $ (natThrowError . backendRunApp backend) $$ cmd)
+  void ((natThrowError . backendRunApp backend) $$ cmd)
     `finally` (destroydb >> destroylogger)
 
 -- | Call 'mkLogChan' and plug the log channel from 'Backend' into it.  Return destructor.
