@@ -4,7 +4,6 @@
 module Refine.Backend.App.AccessSpec where
 #include "import_backend.hs"
 
-import           Control.Concurrent.MVar
 import           Data.Either (isRight)
 import qualified Network.Wai.Test.Internal as Wai
 import           Test.Hspec
@@ -18,7 +17,6 @@ import Refine.Backend.Server
 import Refine.Backend.Test.AppServer
 import Refine.Backend.Test.Util (withTempCurrentDirectory)
 import Refine.Common.ChangeAPI
-import Refine.Common.Rest
 import Refine.Common.Test
 import Refine.Common.Types
 import Refine.Common.VDoc.Draft
@@ -44,10 +42,9 @@ setup action = withTempCurrentDirectory $ do
         & cfgSmtp       .~ Nothing
         & cfgAllAreGods .~ False
   (tbe, destroy) <- do
-    (be, dstr) <- mkBackend cfg
-    wai        <- newMVar Wai.initState
+    (be, dstr) <- mkBackend False cfg
     li         <- newMVar Nothing
-    pure (TestBackend be wai li, dstr)
+    pure (TestBackend be li, dstr)
 
   let schaffolding :: AppM DB ()
       schaffolding = do
@@ -55,8 +52,9 @@ setup action = withTempCurrentDirectory $ do
         when (null gs) $ do
           void . App.addGroup $ CreateGroup "default" "default group" [] [] mempty Nothing
 
-  runExceptT (backendRunApp (tbe ^. testBackend) $$ unsafeAsGod schaffolding)
-    >>= either (error . show) (const $ pure ())
+  (clientChan, destroyClientChan) <- clientChanSink (tbe ^. testBackend . backendLogChan)
+  runApp' (tbe ^. testBackend . backendRunApp) clientChan (unsafeAsGod schaffolding)
+  destroyClientChan
 
   adminID <- addUserAndLogin tbe "admin" "admin@example.com" "pass"
   aliceID <- addUserAndLogin tbe "alice" "alice@example.com" "pass"

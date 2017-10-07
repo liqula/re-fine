@@ -9,7 +9,6 @@ import Refine.Backend.App.Core  as App
 import Refine.Backend.App.Group as App
 import Refine.Backend.Database
 import Refine.Backend.Test.AppRunner
-import Refine.Common.Rest
 import Refine.Common.Types
 import Refine.Common.Types.Prelude (ID(..))
 

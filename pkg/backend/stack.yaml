@@ -1,4 +1,4 @@
-resolver: lts-8.11
+resolver: lts-9.6
 
 packages:
 - '.'
@@ -20,26 +20,13 @@ packages:
   extra-dep: true
 
 extra-deps:
-- basic-sop-0.2.0.1
-- functor-infix-0.0.4
-- i18n-0.4.0.0
-- json-sop-0.2.0.2
-- lens-sop-0.2.0.1
-
+- basic-sop-0.2.0.2
 - fingertree-tf-0.1.0.0
-- lens-properties-4.11
-
-- wai-extra-3.0.20.0
-  # LTS Haskell 8.19:            3.0.19.1
-  # Stackage Nightly 2017-06-22: 3.0.19.1
-  # Latest on Hackage:           3.0.20.0
-
-- persistent-2.7.0
-- persistent-sqlite-2.6.2
+- functor-infix-0.0.5
+- i18n-0.4.0.0
+- json-sop-0.2.0.3
+- lens-sop-0.2.0.2
 - users-persistent-0.5.0.2
-- esqueleto-2.5.3
-  # persistent packages have been tweaked to younger-than lts-8.11 in
-  # order to fix #291.  not sure whether it'll work yet.
 
 flags: {}
 

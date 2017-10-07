@@ -154,7 +154,7 @@ updateUser uid avatar = do
 
 -- | Set 'AppUserState' to logged out if session is valid.  Returns 'False' if session is no longer
 -- valid.
-verifyAppState :: Database db => AppM db Bool
+verifyAppState :: App Bool
 verifyAppState = do
   appLog LogDebug "verifyAppState"
   let ok = appLog LogDebug "verifyAppState: ok" >> pure True

@@ -89,3 +89,41 @@ sampleGroup2 = Group
 -- this fails, we need to be smarter about constructing the test cases here.
 defaultGroupID :: ID Group
 defaultGroupID = ID 1
+
+
+sampleCreateVDoc0 :: CreateVDoc
+sampleCreateVDoc0 = CreateVDoc
+  (Title "[title]")
+  (Abstract "[abstract]")
+  sampleCreateVDocE0
+  defaultGroupID
+  Nothing
+
+sampleCreateVDocE0 :: RawContent
+sampleCreateVDocE0 = mkRawContent $ mkBlock "[versioned content]" :| []
+
+sampleCreateVDocE1 :: RawContent
+sampleCreateVDocE1 = mkRawContent $ mkBlock "[versioned content, edit1]" :| []
+
+sampleCreateVDocE2 :: RawContent
+sampleCreateVDocE2 = mkRawContent $ mkBlock "[versioned, edit2, content]" :| []
+
+
+testUsername :: Username
+testUsername = "testUsername"
+
+testUserEmail :: Email
+testUserEmail = "testUsername@email.com"
+
+testPassword :: Password
+testPassword = "testPassword"
+
+
+sampleCreateUser :: CreateUser
+sampleCreateUser = CreateUser
+  { _cuName        = testUsername
+  , _cuMail        = testUserEmail
+  , _cuPwd         = testPassword
+  , _cuAvatar      = Nothing
+  , _cuDescription = "i am a test"
+  }

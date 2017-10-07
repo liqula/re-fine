@@ -24,6 +24,7 @@ flags:
 dependencies:
   - aeson
   - aeson-pretty
+  - async
   - base
   - bytestring
   - containers
@@ -62,8 +63,8 @@ dependencies:
   - resource-pool
   - resourcet
   - servant
-  - servant-cookie-session
   - servant-server
+  - stm
   - string-conversions
   - temporary
   - text
@@ -114,7 +115,6 @@ tests:
     ghc-options: -threaded -rtsopts -with-rtsopts=-N
     dependencies:
       - aeson
-      - async
       - containers
       - directory
       - hspec

@@ -4,44 +4,44 @@
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
 module Refine.Backend.Server
-  ( refineCookieName
-  , startBackend
+  ( startBackend
   , runCliAppCommand
-  , Backend(..), mkBackend
-  , refineApi
+  , mkBackend
+
+  , Backend(..)
+  , backendServer
+  , backendRunApp
+  , backendLogChan
+  , backendWSSessionMap
+  , backendCacheInvalidateQ
+  , backendCacheInvalidateS
+  , backendSessionGCS
+
+  , wssAppState
+  , wssToClientQ
+  , wssLastSeen
+
+  , clientChanSink
   ) where
 #include "import_backend.hs"
 
-import           Control.Concurrent
-import           Network.HTTP.Media ((//))
-import           Network.Wai.Handler.Warp as Warp
-import           Network.Wai (Middleware)
-import qualified Servant.Cookie.Session as SCS
-import           Servant.Server.Internal (responseServantErr)
-import           Servant.Utils.StaticFiles (serveDirectory)
-import           System.Directory (canonicalizePath, createDirectoryIfMissing)
-import           System.FilePath (dropFileName)
+import Network.HTTP.Media ((//))
+import Network.Wai.Handler.Warp as Warp
+import Network.Wai (Middleware)
 
 import Refine.Backend.App as App
 import Refine.Backend.App.MigrateDB (migrateDB)
 import Refine.Backend.Config
 import Refine.Backend.Database
 import Refine.Backend.Logger
-import Refine.Backend.Natural
-import Refine.Backend.Types
-import Refine.Common.Rest
+import Refine.Backend.Server.Types
+import Refine.Backend.Server.WebSocket
 import Refine.Common.Types
 
 
--- * Constants
+-- * services
 
-refineCookieName :: SBS
-refineCookieName = "refine"
-
-
--- * Initialization
-
--- | (sqlite3 on-disk only.)
+-- | Create 'Sqlite3OnDisk' directory.  (If not applicable, do nothing.)
 createDataDirectories :: Config -> IO ()
 createDataDirectories cfg = do
   case cfg ^. cfgDBKind of
@@ -49,45 +49,6 @@ createDataDirectories cfg = do
       cpath <- canonicalizePath path
       createDirectoryIfMissing True (dropFileName cpath)
     _ -> pure ()
-
-
--- * backend creation
-
-data Backend db = Backend
-  { backendServer          :: Application
-                              -- ^ the http server (static content, web sockets, rest api, client config).
-  , backendRunApp          :: AppM db :~> ExceptT ApiError IO
-                              -- ^ the application engine.
-  , backendLogChan         :: LogChan
-  }
-
-refineApi :: (Database db) => ServerT RefineAPI (AppM db)
-refineApi =
-       App.getVDoc
-  :<|> App.createVDoc
-  :<|> App.updateVDoc
-  :<|> App.addEdit
-  :<|> App.getEdit
-  :<|> App.mergeEditAndRebaseAllSiblings
-  :<|> App.updateEdit
-  :<|> App.addDiscussion
-  :<|> App.getDiscussion
-  :<|> App.addStatement
-  :<|> App.updateStatement
-  :<|> App.createUser
-  :<|> App.getUser
-  :<|> App.login
-  :<|> App.logout
-  :<|> App.getTranslations
-  :<|> App.addGroup
-  :<|> App.getGroup
-  :<|> App.modifyGroup
-  :<|> App.getGroups
-  :<|> App.changeSubGroup
-  :<|> App.changeRole
-  :<|> ((void .) . App.toggleSimpleVoteOnEdit)
-  :<|> App.deleteSimpleVoteOnEdit
-  :<|> App.getSimpleVotesOnEdit
 
 
 data JSViaRest
@@ -109,166 +70,88 @@ type CacheBust = Headers '[Header "Cache-Control" ST, Header "Expires" ST]
 cacheBust :: a -> CacheBust a
 cacheBust = addHeader "no-cache, no-store, must-revalidate" . addHeader "0"
 
+
 startBackend :: Config -> IO ()
 startBackend cfg = do
-  (backend, destroydb) <- mkBackend cfg
-  destroylogger <- attachLogger cfg backend
-  Warp.runSettings (warpSettings cfg) (backendServer backend)
-    `finally` (destroydb >> destroylogger)
+  (backend, destroydb) <- mkBackend False cfg
+  asyncLogger <- attachLogger cfg (backend ^. backendLogChan)
+  Warp.runSettings (warpSettings cfg) (backend ^?! backendServer . _Right)
+    `finally` (destroydb >> cancel asyncLogger)
 
+-- | run App action via command line, e.g. for schaffolding.  any 'ToClient' messages sent by the
+-- action will be logged ('LogInfo') and dropped.
 runCliAppCommand :: Config -> AppM DB a -> IO ()
 runCliAppCommand cfg cmd = do
-  (backend, destroydb) <- mkBackend cfg
-  destroylogger <- attachLogger cfg backend
-  void ((natThrowError . backendRunApp backend) $$ cmd)
-    `finally` (destroydb >> destroylogger)
+  (backend, destroyDb)            <- mkBackend False cfg  -- FIXME: this shouldn't start any network
+                                                          -- services!  Backend needs to be more
+                                                          -- configurable, appearently.
+  asyncLogger                     <- attachLogger cfg (backend ^. backendLogChan)
+  (clientChan, destroyClientChan) <- clientChanSink (backend ^. backendLogChan)
+  void (runApp' (backend ^. backendRunApp) clientChan cmd)
+    `finally` (destroyDb >> destroyClientChan >> cancel asyncLogger)
 
 -- | Call 'mkLogChan' and plug the log channel from 'Backend' into it.  Return destructor.
-attachLogger :: Config -> Backend DB -> IO (IO ())
-attachLogger cfg (Backend _ _ logsource) = do
+attachLogger :: Config -> LogChan -> IO (Async ())
+attachLogger cfg logsource = do
   (logsink, free) <- mkLogChan cfg
-  tid <- forkIO . forever $ readChan logsource >>= writeChan logsink
-  pure $ killThread tid >> free
+  asyncChanPipe' logsource (atomically . writeTChan logsink) free
 
-mkBackend :: Config -> IO (Backend DB, IO ())
-mkBackend cfg = do
+-- | FUTUREWORK: this can probably be done more nicely using the @with*@ pattern.  and it should
+-- move to some util module together with 'asyncChanPipe'.
+clientChanSink :: LogChan -> IO (TChan ToClient, IO ())
+clientChanSink sink = do
+  source <- newTChanIO
+  as <- asyncChanPipe source (atomically . writeTChan sink . (LogInfo,) . show)
+  pure (source, cancel as)
+
+
+mkBackend :: Bool -> Config -> IO (Backend DB, IO ())
+mkBackend plainWebSocks cfg = do
   createDataDirectories cfg
-  logchan <- newChan
+  logchan <- newTChanIO
+  cachechan <- newTChanIO
 
   -- create runners
   (dbRunner, dbNat, destroydb) <- createDBNat cfg
-  backend <- mkServerApp cfg logchan dbNat dbRunner
+  backend :: Backend DB <- mkServerApp plainWebSocks cfg logchan cachechan dbNat dbRunner
 
   -- setup actions like migration, intial content, ...
-  runExceptT (backendRunApp backend $$ unsafeAsGod (migrateDB cfg))
-    >>= either (error . show) (const $ pure ())
+  ([], Right ()) <- runAppTC (backend ^. backendRunApp) (unsafeAsGod (migrateDB cfg))
 
-  pure (backend, destroydb)
+  let free = do
+        destroydb
+        cancel `mapM_` [ backend ^. backendCacheInvalidateS
+                       , backend ^. backendSessionGCS
+                       ]
+        either cancel (const $ pure ()) $ backend ^. backendServer
+  pure (backend, free)
+
 
 -- | NOTE: Static content delivery is not protected by "Servant.Cookie.Session".  To achive that, we
 -- may need to refactor, e.g. by using extra arguments in the end point types.  Iff we only serve
 -- the application code as static content, and not content that is subject to authorization, we're
 -- fine as it is.
-mkServerApp :: Config -> LogChan -> MkDBNat DB -> DBRunner -> IO (Backend DB)
-mkServerApp cfg logchan dbNat dbRunner = do
-  let cookie = SCS.def { SCS.setCookieName = refineCookieName, SCS.setCookiePath = Just "/" }
+mkServerApp :: Bool -> Config -> LogChan -> TChan (Set CacheKey) -> MkDBNat DB -> DBRunner -> IO (Backend DB)
+mkServerApp plainWebSocks cfg logchan cachechan dbNat dbRunner = do
+  wssessionmap <- newMVar mempty
 
-      appNT :: AppM DB :~> ExceptT ApiError IO
-      appNT = runApp dbNat
-                   dbRunner
-                   logchan
-                   cfg
+  let rapp :: RunApp DB
+      rapp = RunApp cfg dbNat dbRunner logchan cachechan
 
-      renderErrorNT :: ExceptT ApiError IO :~> ExceptT ServantErr IO
-      renderErrorNT = NT $ \(ExceptT m) -> ExceptT $ m >>= \case
-        (Right v) -> pure $ Right v
-        (Left e)  -> pure $ appServantErr e
+  ciserv <- websocketCacheInvalidationService wssessionmap cachechan
+  gcserv <- websocketGCService cfg wssessionmap
 
-  srvApp :: Application
-      <- if cfg ^. cfgHaveRestApi
-
-           -- with rest api, cookies, everything.
-           then fst <$> SCS.serveAction
-              (Proxy :: Proxy (RefineAPI :<|> ClientConfigAPI))
-              (Proxy :: Proxy AppState)
-              cookie
-              (Nat liftIO)
-              (cnToSn $ renderErrorNT . appNT)
-              (refineApi :<|> clientConfigApi (cfg ^. cfgClient))
-              (Just (serve (Proxy :: Proxy Raw) (maybeServeDirectory (cfg ^. cfgFileServeRoot))))
-
-           -- just anonymous client code and client config delivery.
-           else pure $ serve
+  let srvApp :: Application
+      srvApp = serve
               (Proxy :: Proxy (ClientConfigAPI :<|> Raw))
-              (clientConfigApi (cfg ^. cfgClient) :<|> maybeServeDirectory (cfg ^. cfgFileServeRoot))
+              (clientConfigApi (cfg ^. cfgClient) :<|> serveDirectoryWebApp (cfg ^. cfgFileServeRoot))
 
-  () <- resetWebSocketMVar
+      addWS :: Middleware
+      addWS = websocketMiddleware cfg logchan rapp wssessionmap
 
-  let addWS :: Middleware
-      addWS = startWebSocketServer cfg logchan appMToIO
+  srv :: Either (Async ()) Application
+    <- if plainWebSocks
+         then Left <$> websocketServer cfg logchan rapp wssessionmap
+         else pure . Right $ addWS srvApp
 
-      appMToIO :: AppM DB a -> IO (Either ApiError a)
-      appMToIO m = runExceptT (appNT $$ m)
-
-  pure $ Backend (addWS srvApp) appNT logchan
-
-
-maybeServeDirectory :: Maybe FilePath -> Server Raw
-maybeServeDirectory = maybe (\_ respond -> respond $ responseServantErr err404) serveDirectory
-
--- | Convert 'ApiError' (internal to backend) to 'ServantError' (passed over HTTP).  Conversion from
--- 'AppError' to 'ApiError' and logging is left to 'tryApp', 'toApiError'.  This function just
--- handles the HTTP-specific stuff like response code and body encoding.
-appServantErr :: ApiError -> (Monad m, MonadError ServantErr m) => m a
-appServantErr err = throwError $ (appServantErr' err) { errBody = encode err }
-
-appServantErr' :: ApiError -> ServantErr
-appServantErr' = \case
-  ApiUnknownError          -> err500
-  ApiVDocVersionError      -> err409
-  ApiDBError dbe           -> dbServantErr dbe
-  ApiUserNotFound _        -> err404
-  ApiUserNotLoggedIn       -> err403
-  ApiUserCreationError uce -> userCreationError uce
-  ApiCsrfError _           -> err403
-  ApiSessionInvalid        -> err403
-  ApiSanityCheckError _    -> err409
-  ApiL10ParseErrors _      -> err500
-  ApiUnauthorized _        -> err403
-  ApiMergeError{}          -> err500
-  ApiRebaseError{}         -> err500
-  ApiSmtpError{}           -> err500
-  ApiTimeoutError{}        -> err500
-
-dbServantErr :: ApiErrorDB -> ServantErr
-dbServantErr = \case
-  ApiDBUnknownError       _ -> err500
-  ApiDBNotFound           _ -> err404
-  ApiDBNotUnique          _ -> err409
-  ApiDBException          _ -> err500
-  ApiDBUserNotLoggedIn      -> err403
-  ApiDBMigrationParseErrors -> err500
-  ApiDBUnsafeMigration      -> err500
-
-userCreationError :: ApiErrorCreateUser -> ServantErr
-userCreationError = \case
-  ApiErrorInvalidPassword              -> err400
-  ApiErrorUsernameAlreadyTaken         -> err409
-  ApiErrorEmailAlreadyTaken            -> err409
-  ApiErrorUsernameAndEmailAlreadyTaken -> err409
-
-
--- * Instances for Servant.Cookie.Session
-
-instance SCS.MonadRandom (AppM db) where
-  getRandomBytes = liftIO . SCS.getRandomBytes
-
-instance SCS.ThrowError500 AppError where
-  error500 = prism' toAppError fromAppError
-    where
-      toAppError :: String -> AppError
-      toAppError = AppCsrfError . cs
-
-      fromAppError :: AppError -> Maybe String
-      fromAppError (AppCsrfError e) = Just $ cs e
-      fromAppError _                = Nothing
-
-instance SCS.HasSessionCsrfToken AppState where
-  sessionCsrfToken = appCsrfToken . csrfTokenIso
-    where
-      fromSCS = CsrfToken . cs . SCS.fromCsrfToken
-      toSCS   = SCS.CsrfToken . cs . _csrfToken
-      csrfTokenIso = iso (fmap toSCS) (fmap fromSCS)
-
-instance SCS.GetCsrfSecret AppContext where
-  csrfSecret = appConfig . cfgCsrfSecret
-             . to (Refine.Backend.Types.CsrfSecret . cs)
-             . Refine.Backend.Types.csrfSecret
-             . to (Just . SCS.CsrfSecret . cs)
-    -- (FUTUREWORK: this looks like Config should not carry around the string, but one of the many
-    -- types alled 'CsrfSecret'.  but i'm not going to investigate this now.)
-
-instance SCS.GetSessionToken AppState where
-  getSessionToken = appUserState . to (\case
-    UserLoggedIn _user session -> Just . SCS.SessionToken $ userSessionText session
-    UserLoggedOut              -> Nothing)
+  pure $ Backend srv rapp logchan wssessionmap cachechan ciserv gcserv

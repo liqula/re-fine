@@ -6,7 +6,7 @@ module Refine.Frontend.MainMenu.Types where
 
 import React.Flux.Missing
 import Refine.Common.Types
-import Refine.Common.Rest (ApiError)
+import Refine.Common.Error (ApiError)
 import Refine.Common.Types.Prelude (Username)
 import Refine.Frontend.Types
 import Refine.Frontend.Login.Types

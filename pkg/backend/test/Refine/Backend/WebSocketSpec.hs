@@ -4,18 +4,15 @@
 module Refine.Backend.WebSocketSpec where
 #include "import_backend.hs"
 
-import Control.Concurrent
-import Control.Concurrent.Async
-import Control.Exception
 import Data.Set (findMin)
-import Network.Wai.Handler.Warp
+import Network.Wai.Handler.Warp (withApplication, testWithApplication)
 import Network.WebSockets
 import System.Random
 import System.Timeout
 import Test.Hspec
 
 import Refine.Backend.App.Access
-import Refine.Backend.App.Cache (mkWSSessionId)
+import Refine.Backend.Server.WebSocket (mkWSSessionId)
 import Refine.Backend.App.MigrateDB (initializeDB)
 import Refine.Backend.Config
 import Refine.Backend.Server (backendServer)
@@ -43,16 +40,14 @@ timeoutVal = TimespanSecs 3
 
 -- * primitives
 
-sendMessage :: HasCallStack => Connection -> ToServer -> IO ()
+sendMessage :: (HasCallStack, ToJSON msg) => Connection -> msg -> IO ()
 sendMessage conn msg = sendTextData conn (cs $ encode msg :: ST)
 
-receiveMessage :: HasCallStack => Connection -> IO ToClient
-receiveMessage conn = receiveData conn <&> fromMaybe (error "websockets json decoding error") . decode
+receiveMessage :: (HasCallStack, FromJSON msg) => Connection -> IO msg
+receiveMessage conn = receiveData conn >>= either (throwIO . ErrorCall . show) pure . eitherDecode
 
-askQuestion :: HasCallStack => Connection -> ToServer -> IO ToClient
-askQuestion conn question
-  = fromMaybe (error $ "askQuestion timed out: " <> show question)
-    <$> timeout' (TimespanSecs 1) (sendMessage conn question >> receiveMessage conn)
+askQuestion :: (HasCallStack, Show tosrv, ToJSON tosrv, FromJSON toclnt) => Connection -> tosrv -> IO toclnt
+askQuestion conn question = sendMessage conn question >> receiveMessage conn
 
 timeout' :: Timespan -> IO a -> IO (Maybe a)
 timeout' = timeout . timespanUs
@@ -85,11 +80,17 @@ wsBackend = timeout'' timeoutVal
 wsBackend' :: (WSBackend -> IO ()) -> IO ()
 wsBackend' action = do
     let cfg = wsBackendCfg
-    createTestSession' cfg $ \(tbe :: TestBackend) -> do
-      testWithApplication (pure . backendServer . view testBackend $ tbe) $ \port -> do
-        runWS port $ \conn -> do
-          runDB tbe . unsafeAsGod $ initializeDB sampleContent
-          action $ WSBackend (Just tbe) port (Just conn)
+        plainWebSocks = False
+
+    createTestSession' plainWebSocks cfg $ \(tbe :: TestBackend) -> do
+      let runner :: Int -> IO ()
+          runner port = do
+            runWS port $ \conn -> do
+              runDB tbe . unsafeAsGod $ initializeDB sampleContent
+              action $ WSBackend (Just tbe) port (Just conn)
+      if plainWebSocks
+        then runner $ cfg ^. cfgWarpSettings . warpSettingsPort
+        else testWithApplication (pure $ tbe ^?! testBackend . backendServer . _Right) runner
 
 wsBackendCfg :: Config
 wsBackendCfg = testBackendCfg
@@ -108,18 +109,18 @@ data WSBackend = WSBackend
 -- ** stress testing
 
 throttle :: IO ()
-throttle = threadDelay =<< randomRIO (1, 1000000)
+throttle = threadDelay =<< randomRIO (1, 100 * 1000)
 
 stresser :: Int -> Int -> IO (Async (Either String WSSessionId))
 stresser port rounds = async . (`catch` (\(SomeException e) -> pure . Left $ show e)) $ do
-  TCGreeting cid <- runWS port $ \conn ->
-    sendMessage conn (TSGreeting Nothing) >> receiveMessage conn
+  HandshakeToClientAcceptNew cid <- runWS port $ \conn -> askQuestion conn HandshakeToServerSyn
   forM_ [0.. (rounds - 1)] . const . runWS port $ \conn -> do
     when verbose_ $ hPutStr stderr "."
-    sendMessage conn (TSGreeting (Just cid))
+    HandshakeToClientAccept cid' [] <- askQuestion conn $ HandshakeToServerSynWith cid
+    cid' `shouldBe` cid
     throttle
-    TCRestrictKeys [] <- receiveMessage conn
-    throttle
+    TCCreateUserResp uresp <- askQuestion conn $ TSCreateUser sampleCreateUser
+    show uresp `shouldNotBe` mempty  -- (uresp will be 'Left' in all but the first call by the first agent.)
   pure $ Right cid
 
 stressers :: Int -> Int -> Int -> IO ()
@@ -137,14 +138,30 @@ isLeft (Right _) = False
 
 spec :: Spec
 spec = do
-  -- specStories  # FIXME: #458
-  specErrors
+  -- specStories  -- FIXME: #458.
+  -- specErrors   -- FIXME: #458.
+  pure ()
 
 specStories :: Spec
 specStories = describe "stories" . around wsBackend $ do
+  it "connect & handshake" $
+    \(WSBackend _ port _) -> do
+      cid <- runWS port $ \conn -> do
+        HandshakeToClientAcceptNew cid <- askQuestion conn HandshakeToServerSyn
+        pure cid
+      runWS port $ \conn -> do
+        HandshakeToClientAccept cid' [] <- askQuestion conn (HandshakeToServerSynWith cid)
+        cid' `shouldBe` cid
+      runWS port $ \conn -> do
+        let cid'' = WSSessionId "<invalid>"
+        HandshakeToClientAcceptNew cid' <- askQuestion conn (HandshakeToServerSynWith cid'')
+        cid' `shouldNotBe` cid''
+
+  it "disconnect" $ do
+    \_ -> pendingWith "how do you test this?"
+
   it "works with many concurrent, high-volume sessions" $ do
     \(WSBackend _ port _) -> do
-      pendingWith "This test passes only if @useExternalBackend == True@."
       stressers port 100 3
 
   it "generating session ids is not too expensive" $ \_ -> do
@@ -156,10 +173,13 @@ specStories = describe "stories" . around wsBackend $ do
     when verbose_ $ print =<< getCurrentTime
     length sids `shouldBe` n
 
+  it "cache invalidation propagation" $ do
+    \_ -> pendingWith "how do you test this?"
+
   it "story 1" $ do
     \(WSBackend _ _ (Just conn)) -> do
-      TCGreeting _ <- askQuestion conn $ TSGreeting Nothing
-      respLogin <- askQuestion conn $ TSLogin (Login "admin" "pass")
+      HandshakeToClientAcceptNew _ <- askQuestion conn HandshakeToServerSyn
+      respLogin :: ToClient <- askQuestion conn $ TSLogin (Login "admin" "pass")
       show respLogin `shouldContain` "(Right (User {_userMetaID = MetaID {_miID = ID 1, _miMeta = MetaInfo {_metaCreatedBy = Anonymous"
 
       -- create document
@@ -211,44 +231,29 @@ specStories = describe "stories" . around wsBackend $ do
     -- votes
     -- ranges
 
-
-  -- run test server from within these tests.  perhaps for speedup, run it beforeall, and make the
-  -- tests self-contained.  or whichever is faster to implement and maintain.
-
-
-
-{-
-
-make sure we've called all of these at least once:
-
-  | TSClearCache
-  | TSUpdateVDoc (ID VDoc) UpdateVDoc
-  | TSUpdateEdit (ID Edit) CreateEdit
-  | TSUpdateGroup (ID Group) CreateGroup
-  | TSMergeEdit (ID Edit)
-  | TSToggleVote ContributionID Vote
-  | TSDeleteVote (ID Edit) -- not used yet
-  | TSAddGroup CreateGroup
-  | TSAddEditAndMerge (ID Edit){-parent-} CreateEdit
-  | TSCreateUser CreateUser
-  | TSLogout
-  | TSGetTranslations GetTranslations
-
--}
-
-
-
-  -- do all this with examples, no arbitrary!
+    -- make sure every 'ToServer' constructor is at least called once.
 
 
 specErrors :: Spec
 specErrors = describe "errors" . around wsBackend $ do
   it "database lookup failure" $ \(WSBackend mtbe _ (Just conn)) -> do
-    TCGreeting _ <- askQuestion conn $ TSGreeting Nothing
-    respLogin <- askQuestion conn $ TSLogin (Login "admin" "pass")
+    HandshakeToClientAcceptNew _ <- askQuestion conn HandshakeToServerSyn
+    respLogin :: ToClient <- askQuestion conn $ TSLogin (Login "admin" "pass")
     show respLogin `shouldContain` "(Right (User {_userMetaID = MetaID {_miID = ID 1, _miMeta = MetaInfo {_metaCreatedBy = Anonymous"
     let noSuchGroup = ID 98691
     TCError _ <- askQuestion conn $ TSMissing [CacheKeyGroup noSuchGroup]
     case mtbe of
       Just tbe -> tbe `shouldHaveLogged` ["AppDBError (DBNotFound", show (noSuchGroup ^. unID)]
       Nothing  -> pendingWith "no test backend to check log in."
+
+
+-- TODO: race condition: a) cache item gets updated in DB; b) somebody loads it; c) invalidation
+-- gets sent.  this is just a performance issue, and not too likely (i think).  are there other race
+-- conditions?
+
+
+-- TODO: test gc (how?)
+
+
+-- TODO: take all timespan values fixed in Server.WebSocket to Config (for easier testing in the
+-- future).  some of them depend on each other.
