@@ -1,7 +1,7 @@
 {-# LANGUAGE CPP #-}
 #include "language_backend.hs"
 
-module Refine.Backend.Test.AppRunner where
+module Refine.Backend.Test.AppRunner (provideAppRunner, throwApiErrors, monadicApp) where
 #include "import_backend.hs"
 
 import Test.Hspec
@@ -13,9 +13,8 @@ import Refine.Backend.App.MigrateDB
 import Refine.Backend.Config
 import Refine.Backend.Database
 import Refine.Backend.Logger
-import Refine.Backend.Natural
+import Refine.Backend.Server
 import Refine.Backend.Test.Util
-import Refine.Common.Rest
 import Refine.Common.Types
 
 
@@ -26,39 +25,35 @@ provideAppRunner action = withTempCurrentDirectory $ do
   action runner
   destroy
 
--- | FIXME: this should almost certainly be discarded in favor of 'mkBackend', but it is subtly
--- different: it contains a trick to avoid #389, it has no servant, config is hard-wired in, ...
 createAppRunner :: forall a. IO (AppM DB a -> ExceptT ApiError IO a, IO ())
 createAppRunner = do
-  let dbFilePath = "./test.db"
-      cfg = Config
+  let cfg = Config
         { _cfgLogger        = LogCfg LogCfgDevNull LogWarning
-        , _cfgDBKind        = Sqlite3OnDisk dbFilePath
+        , _cfgDBKind        = Sqlite3OnDisk "./test.db"
         , _cfgPoolSize      = 5
-        , _cfgFileServeRoot = Nothing
+        , _cfgFileServeRoot = "."
         , _cfgWarpSettings  = def
-        , _cfgCsrfSecret    = "CSRF-SECRET"
         , _cfgSessionLength = TimespanSecs 30
         , _cfgPoFilesRoot   = "."
         , _cfgSmtp          = Nothing
         , _cfgClient        = def
         , _cfgWSPingPeriod  = TimespanSecs 1
         , _cfgAllAreGods    = True
-        , _cfgHaveRestApi   = True
         , _cfgAppMLimit     = TimespanSecs 1
         }
 
-  (logchan, destroylogchan) <- mkLogChan cfg
-  (dbRunner, dbNat, destroydb) <- createDBNat cfg
-  let guardWithGodhood = if cfg ^. cfgAllAreGods then unsafeAsGod else id
-      runner :: forall b. AppM DB b -> ExceptT ApiError IO b
-      runner m = (runApp dbNat dbRunner logchan cfg $$ guardWithGodhood m)
-        >>= liftIO . evaluate -- without evaluate we have issue #389
+  (tbe, destroytbe) <- mkBackend False cfg
+  (clientChan, destroyClientChan) <- clientChanSink (tbe ^. backendLogChan)
+
+  let runner :: forall b. AppM DB b -> ExceptT ApiError IO b
+      runner = runApp (tbe ^. backendRunApp) clientChan
 
   void . throwApiErrors . runner $ do
     migrateDB cfg
     unsafeAsGod $ initializeDB [CliCreateGroup $ CreateGroup "Universe" "The group that contains everything" [] [] mempty Nothing]
-  pure (runner, destroydb >> destroylogchan)
+
+  pure (runner, destroytbe >> destroyClientChan)
+
 
 throwApiErrors :: forall a. ExceptT ApiError IO a -> IO a
 throwApiErrors = (>>= either (throwIO . ErrorCall . show) pure) . runExceptT

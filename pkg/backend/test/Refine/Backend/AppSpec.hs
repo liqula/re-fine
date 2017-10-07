@@ -4,7 +4,6 @@
 module Refine.Backend.AppSpec where
 #include "import_backend.hs"
 
-import           Control.Concurrent.MVar
 import           Test.Hspec
 import           Test.QuickCheck
 import           Test.QuickCheck.Monadic as QuickCheck
@@ -12,7 +11,6 @@ import           Test.QuickCheck.Monadic as QuickCheck
 import Refine.Backend.App as App
 import Refine.Backend.Database
 import Refine.Backend.Test.AppRunner
-import Refine.Common.Rest
 import Refine.Common.Test
 import Refine.Common.Types
 

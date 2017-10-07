@@ -323,3 +323,73 @@ instance (Ord a, EqProp a) => EqProp (Ranges a) where (=-=) = (=-=) `on` unRange
 -- https://hackage.haskell.org/package/hspec-checkers-0.1.0.2
 testBatch :: TestBatch -> Spec
 testBatch (batchName, tests) = describe ("laws for: " <> batchName) $ mapM_ (uncurry it) tests
+
+
+instance Arbitrary ServerCache where
+  arbitrary = ServerCache
+    <$> (Map.fromList . fmap (, undefined) <$> arbitrary)
+    <*> (Map.fromList . fmap (, undefined) <$> arbitrary)
+    <*> (Map.fromList . fmap (, undefined) <$> arbitrary)
+    <*> (Map.fromList . fmap (, undefined) <$> arbitrary)
+    <*> (Map.fromList . fmap (, undefined) <$> arbitrary)
+    <*> arbitrary
+    <*> arbitrary
+  shrink (ServerCache a b c d e f g) = ServerCache
+    <$> shrinkMap a
+    <*> shrinkMap b
+    <*> shrinkMap c
+    <*> shrinkMap d
+    <*> shrinkMap e
+    <*> shrink f
+    <*> shrink g
+
+shrinkMap :: forall a b. (Ord a, Arbitrary a) => Map a b -> [Map a b]
+shrinkMap m = chop <$> shrink (Map.keys m)
+  where
+    chop :: [a] -> Map a b
+    chop = Map.fromList . fmap (\k -> (k, (\(Just v) -> v) $ Map.lookup k m))
+
+-- | Collect all cache keys that occur in server cache as a set.
+allKeysInServerCache :: ServerCache -> [CacheKey]
+allKeysInServerCache = nub . sort . mconcat . fingerprintServerCache
+
+-- | Collect all cache keys that occur in server cache in a list of cache.  (Output is different if
+-- cache key is in a different part of the cache in the input.)
+fingerprintServerCache :: ServerCache -> [[CacheKey]]
+fingerprintServerCache sc =
+  [ sort . fmap CacheKeyVDoc . Map.keys $ sc ^. scVDocs
+  , sort . fmap CacheKeyEdit . Map.keys $ sc ^. scEdits
+  , sort . fmap CacheKeyDiscussion . Map.keys $ sc ^. scDiscussions
+  , sort . fmap CacheKeyUser . Map.keys $ sc ^. scUsers
+  , sort . fmap CacheKeyGroup . Map.keys $ sc ^. scGroups
+  , sort . fmap CacheKeyGroup . maybe [] Set.toList $ sc ^. scGroupIds
+  , sort . fmap CacheKeyUser . maybe [] Set.toList $ sc ^. scUserIds
+  ]
+
+arbitrarySubset :: (Ord a) => Set a -> Gen (Set a)
+arbitrarySubset oldset@(Set.size -> oldsize) = do
+  newsize <- choose (0, oldsize)
+  newixs :: [Int] <- take newsize <$> permutationGen oldsize
+  pure . Set.fromList $ (Set.toList oldset !!) <$> newixs
+
+permutationGen :: Int -> Gen [Int]
+permutationGen 0 = pure []
+permutationGen i = (:) <$> choose (0, i-1) <*> permutationGen (i-1)
+
+
+data ServerCacheWithKeys = ServerCacheWithKeys ServerCache (Set CacheKey)
+
+instance Eq ServerCacheWithKeys where
+  ServerCacheWithKeys sc keys == ServerCacheWithKeys sc' keys' =
+    fingerprintServerCache sc == fingerprintServerCache sc' && keys == keys'
+
+instance Show ServerCacheWithKeys where
+  show (ServerCacheWithKeys sc keys) = show (fingerprintServerCache sc, keys)
+
+instance Arbitrary ServerCacheWithKeys where
+  arbitrary = do
+    sc <- arbitrary
+    ServerCacheWithKeys sc <$> arbitrarySubset (Set.fromList $ [CacheKeyGroupIds, CacheKeyUserIds] <> allKeysInServerCache sc)
+  shrink (ServerCacheWithKeys sc keys) = pruneKeys <$> shrink sc
+    where
+      pruneKeys sc' = ServerCacheWithKeys sc' (keys `Set.intersection` Set.fromList (allKeysInServerCache sc'))

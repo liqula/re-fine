@@ -1,12 +1,11 @@
 {-# LANGUAGE CPP #-}
 #include "language_backend.hs"
 
-{-# OPTIONS_GHC -Wno-incomplete-patterns -Wno-deprecations #-}
+{-# OPTIONS_GHC -Wno-incomplete-patterns #-}
 
 module Refine.Backend.Test.AppServer where
 #include "import_backend.hs"
 
-import           Control.Concurrent
 import           Network.HTTP.Types (Method, Header, methodGet, methodPut, methodDelete)
 import qualified Network.HTTP.Types as HTTP
 import           Network.HTTP.Types.Status (Status(statusCode))
@@ -16,30 +15,27 @@ import           Network.Wai.Test (SRequest(..), SResponse(..))
 import qualified Network.Wai.Test as Wai
 import qualified Network.Wai.Test.Internal as Wai
 import           Test.Hspec
+import           System.Timeout
 
 import           Refine.Backend.App as App hiding (getEdit)
 import           Refine.Backend.Config
 import           Refine.Backend.Database (DB)
 import           Refine.Backend.Server
 import           Refine.Backend.Test.Util (withTempCurrentDirectory)
-import           Refine.Common.Rest
 import           Refine.Common.Types as Common
+import           Refine.Common.Test.Samples
 
 {-# ANN module ("HLint: ignore Reduce duplication" :: String) #-}
 
 
--- | This type carries a 'Backend' (which contains of an 'AppM' and an 'Application'), plus a wai
--- test client.  (It is only used in this module, so it does not need to go to
--- "Refine.Backend.Test.AppRunner", where an 'AppM' tester is provided.)
+-- | This type carries a 'Backend' (which contains of an 'AppM' and an 'Application'), plus login
+-- state.
 --
--- FUTUREWORK: actually, i think that "Refine.Backend.Test.AppRunner" and the code here could
--- benefit from some refactoring to reduce code duplication.
+-- FUTUREWORK: "Refine.Backend.Test.AppRunner" and the code here could benefit from some refactoring
+-- to reduce code duplication.
 data TestBackend = TestBackend
   { _testBackend            :: Backend DB
-  , _testBackendState       :: MVar Wai.ClientState
   , _testBackendCurrentUser :: MVar (Maybe (Username, Password))
-                       -- ^ work-around for FIXME in 'runDB''.  maintained by 'testBackendLogin',
-                       -- 'testBackendLogout'.
   }
 
 makeLenses ''TestBackend
@@ -47,26 +43,26 @@ makeLenses ''TestBackend
 -- | Create session via 'mkProdBackend'.  Note that there is no network listener and 'WarpSettings'
 -- are meaningless; the session only creates an 'AppM' runner and an 'Application'.
 createTestSession :: (TestBackend -> IO ()) -> IO ()
-createTestSession = createTestSession' testBackendCfg
+createTestSession = createTestSession' False testBackendCfg
 
 testBackendCfg :: Config
 testBackendCfg = def
         & cfgSmtp       .~ Nothing
         & cfgAllAreGods .~ True
 
-createTestSession' :: Config -> (TestBackend -> IO ()) -> IO ()
-createTestSession' cfg action = withTempCurrentDirectory $ do
-  (backend, destroy) <- mkBackend cfg
+createTestSession' :: Bool -> Config -> (TestBackend -> IO ()) -> IO ()
+createTestSession' plainWebSocks cfg action = withTempCurrentDirectory $ do
+  (backend, destroyBackend) <- mkBackend plainWebSocks cfg
   let schaffolding = do
         gs <- App.getGroups
         when (null gs) $ do
           void . App.addGroup $ CreateGroup "default" "default group" [] [] mempty Nothing
 
-  runExceptT (backendRunApp backend $$ unsafeAsGod schaffolding)
-    >>= either (error . show) (const $ pure ())
+  (clientChan, destroyClientChan) <- clientChanSink (backend ^. backendLogChan)
+  runApp' (backend ^. backendRunApp) clientChan (unsafeAsGod schaffolding)
 
-  () <- action =<< (TestBackend backend <$> newMVar Wai.initState <*> newMVar Nothing)
-  destroy
+  () <- action =<< (TestBackend backend <$> newMVar Nothing)
+  destroyBackend >> destroyClientChan
 
 createTestSessionWith :: (TestBackend -> IO ()) -> (TestBackend -> IO ()) -> IO ()
 createTestSessionWith initAction action = createTestSession $ \sess -> do
@@ -74,64 +70,21 @@ createTestSessionWith initAction action = createTestSession $ \sess -> do
   () <- action sess
   pure ()
 
-runWai :: TestBackend -> Wai.Session a -> IO a
-runWai sess m = do
-  st <- takeMVar (sess ^. testBackendState)
-  (a, st') <- Wai.runSessionWith st m (backendServer (sess ^. testBackend))
-  putMVar (sess ^. testBackendState) st'
-  pure a
-
--- | Call 'runWai' and throw an error if the expected type cannot be read, discard the
--- response, keep only the body.
-runWaiJSON :: FromJSON a => TestBackend -> Wai.Session SResponse -> IO a
-runWaiJSON sess m = do
-  resp <- runWai sess m
-  case eitherDecode $ simpleBody resp of
-    Left err -> throwIO . ErrorCall $ unwords [show err, show (simpleHeaders resp), cs (simpleBody resp)]
-    Right x  -> pure x
-
 -- | Call 'runDB'' and crash on 'Left'.
 runDB :: TestBackend -> AppM DB a -> IO a
 runDB sess = errorOnLeft . runDB' sess
 
 -- | Call an 'App' action.
---
--- FIXME: This does not share session state with the rest api
--- interface in @backendServer (sess ^. testBackend)@.  the functions
--- to establish that are *almost* done, but to finish them we need to
--- understand how servant-cookie-session uses vault to store data in
--- cookies, and either emulate that or (preferably) call the
--- resp. functions.  If this is resolved, '_testBackendCurrentUser'
--- won't be needed any more.
 runDB' :: TestBackend -> AppM DB a -> IO (Either ApiError a)
 runDB' sess action = do
   testlogin :: AppM DB () <- do
     readMVar (sess ^. testBackendCurrentUser) >>= pure . \case
       Nothing -> pure ()
       Just (u, p) -> void $ login (Login u p)
-  runExceptT . unwrapNT (backendRunApp (sess ^. testBackend)) $ testlogin >> action
-{-
-runDB' sess = do
-    storeAppState sess
-    action
-    recoverAppState sess
-  where
-    storeAppState :: TestBackend uh -> AppM db uh ()
-    storeAppState sess = do
-      st :: AppState <- appIO $ parseCookies <$> readMVar (sess ^. testBackendState)
-      State.put st
-      where
-        parseCookies :: Wai.ClientState -> AppState
-        parseCookies _ = _  -- AppState Nothing UserLoggedOut
-
-    recoverAppState :: TestBackend uh -> AppM db uh ()
-    recoverAppState sess = do
-      st' :: AppState <- State.get
-      appIO $ putMVar (sess ^. testBackendState) (resetCookies st')
-      where
-        resetCookies :: AppState -> Wai.ClientState
-        resetCookies _ = _  -- Wai.ClientState mempty
--}
+  (clientChan, destroyClientChan) <- clientChanSink (sess ^. testBackend . backendLogChan)
+  result <- runExceptT . runApp (sess ^. testBackend . backendRunApp) clientChan $ testlogin >> action
+  destroyClientChan
+  pure result
 
 errorOnLeft :: Show e => IO (Either e a) -> IO a
 errorOnLeft action = either (throwIO . ErrorCall . show') pure =<< action
@@ -162,172 +115,49 @@ shouldNotHaveLogged = shouldHaveLoggedOrNot False
 -- | See 'shouldHaveLogged'.
 shouldHaveLoggedOrNot :: Bool -> TestBackend -> [String] -> Expectation
 shouldHaveLoggedOrNot should tbe substrs = do
-  let predicate = if should then shouldContain else shouldNotContain
-  logs <- snd <$$> getChanContents' (tbe ^. testBackend . to backendLogChan)
-  (mconcat logs `predicate`) `mapM_` substrs
+  logs <- getTChanContents' (tbe ^. testBackend . backendLogChan)
+  expect (mconcat (snd <$> logs)) `mapM_` substrs
   where
-    -- 'getChanContent' blocks if the 'Chan' is empty.  we should probably use
-    -- <http://hackage.haskell.org/package/stm-2.4.4.1/docs/Control-Concurrent-STM-TChan.html>
-    -- instead, but this is a test (not production) issue, and it's nicely enough handled by this
-    -- hack:
-    getChanContents' chan = isEmptyChan chan >>= \case
-      True  -> pure []
-      False ->  (:) <$> readChan chan <*> getChanContents' chan
+    expect hay needle = if should
+      then hay `shouldContain` needle
+      else hay `shouldNotContain` needle
+
+    getTChanContents' chan = atomically (tryReadTChan chan) >>= \case
+      Nothing -> pure []
+      Just e  -> (e:) <$> getTChanContents' chan
+
+-- | call 'dumpLog' in a loop every 100ms.  this makes hspec test cases hang, it takes a timeout
+-- after which it stops gracefully.  useful when playing with tests interactively.
+--
+-- FIXME: this still blocks?!  even if nothing else happens in the test case?  'dumpLog' seems to
+-- work fine.  very strange.
+streamLog :: HasCallStack => Timespan -> TestBackend -> IO ()
+streamLog timespan tbe = void . forkIO . void . timeout (timespanUs timespan) . forever $
+  dumpLog tbe >> threadDelay (100 * 1000)
 
 -- | useful when playing with tests interactively.
---
--- FUTUREWORK: if you run this in ghcid, you may accumulate channel logging threads in the
--- background that aren't cleared up.  since their log channels are orphaned and the connected
--- backends destroyed, this shouldn't be too big of a deal.
-streamLogToStdout :: HasCallStack => TestBackend -> IO ()
-streamLogToStdout tbe = void . forkIO $ loop
+dumpLog :: HasCallStack => TestBackend -> IO ()
+dumpLog = flushLog >=> putStr
+
+-- | useful when playing with tests interactively.
+flushLog :: HasCallStack => TestBackend -> IO String
+flushLog tbe = unlines . fmap show <$> loop
   where
-    loop = readChan chan >>= print >> loop
-    chan = tbe ^. testBackend . to backendLogChan
+    loop = atomically (tryReadTChan chan) >>= \case
+      Nothing -> pure mempty
+      Just e  -> (e:) <$> loop
+    chan = tbe ^. testBackend . backendLogChan
 
 
--- * test helpers
-
--- (see also: https://hackage.haskell.org/package/wai-extra/docs/Network-Wai-Test.html)
-
-respCode :: SResponse -> Int
-respCode = statusCode . simpleStatus
-
-wget :: SBS -> Wai.Session SResponse
-wget path = request methodGet path [] ""
-
-wput :: SBS -> Wai.Session SResponse
-wput path = request methodPut path [] ""
-
-wdel :: SBS -> Wai.Session SResponse
-wdel path = request methodDelete path [] ""
-
-post :: (ToJSON a) => SBS -> a -> Wai.Session SResponse
-post path js = request "POST" path [("Content-Type", "application/json")] (encode js)
-
-putJSON :: forall a b . (Typeable a, ToJSON a, FromJSON b) => SBS -> a -> Wai.Session b
-putJSON = rqJSON "PUT"
-
-postJSON :: forall a b . (Typeable a, ToJSON a, FromJSON b) => SBS -> a -> Wai.Session b
-postJSON = rqJSON "POST"
-
-rqJSON :: forall a b . (Typeable a, ToJSON a, FromJSON b) => SBS -> SBS -> a -> Wai.Session b
-rqJSON method path js = do
-  resp <- request method path [("Content-Type", "application/json")] (encode js)
-  liftIO $ case eitherDecode $ simpleBody resp of
-    Left err -> throwIO . ErrorCall $ unlines [cs path, show (typeOf js), show resp, show err]
-    Right x  -> pure x
-
--- | This is from hspec-wai, but we modified it to work on 'Wai.Session' directly.  'WaiSession'
--- does not keep the cookies in the 'Session' between requests.
-request :: Method -> SBS -> [HTTP.Header] -> LBS -> Wai.Session SResponse
-request method path headers body = Wai.srequest $ SRequest req body
-  where
-    req = Wai.setPath defaultRequest {requestMethod = method, requestHeaders = headers} path
-
-
--- * endpoints
-
-uriStr :: URI -> SBS
-uriStr u =  cs $ "/" <> uriToString id u ""
-
-getVDocUri :: ID VDoc -> SBS
-getVDocUri = uriStr . safeLink (Proxy :: Proxy RefineAPI) (Proxy :: Proxy SGetVDocSimple)
-
-createVDocUri :: SBS
-createVDocUri = uriStr $ safeLink (Proxy :: Proxy RefineAPI) (Proxy :: Proxy SCreateVDoc)
-
-updateVDocUri :: ID VDoc -> SBS
-updateVDocUri = uriStr . safeLink (Proxy :: Proxy RefineAPI) (Proxy :: Proxy SUpdateVDoc)
-
-addEditUri :: ID Edit -> SBS
-addEditUri = uriStr . safeLink (Proxy :: Proxy RefineAPI) (Proxy :: Proxy SAddEdit)
-
-updateEditUri :: ID Edit -> SBS
-updateEditUri = uriStr . safeLink (Proxy :: Proxy RefineAPI) (Proxy :: Proxy SUpdateEdit)
-
-addDiscussionUri :: ID Edit -> SBS
-addDiscussionUri = uriStr . safeLink (Proxy :: Proxy RefineAPI) (Proxy :: Proxy SAddDiscussion)
-
-createUserUri :: SBS
-createUserUri = uriStr $ safeLink (Proxy :: Proxy RefineAPI) (Proxy :: Proxy SCreateUser)
-
-loginUri :: SBS
-loginUri = uriStr $ safeLink (Proxy :: Proxy RefineAPI) (Proxy :: Proxy SLogin)
-
-logoutUri :: SBS
-logoutUri = uriStr $ safeLink (Proxy :: Proxy RefineAPI) (Proxy :: Proxy SLogout)
-
-changeRoleUri :: SBS
-changeRoleUri = uriStr $ safeLink (Proxy :: Proxy RefineAPI) (Proxy :: Proxy SChangeRole)
-
-putVoteUri :: ID Edit -> Vote -> SBS
-putVoteUri eid v = uriStr $ safeLink (Proxy :: Proxy RefineAPI) (Proxy :: Proxy SPutSimpleVoteOnEdit) eid v
-
-deleteVoteUri :: ID Edit ->  SBS
-deleteVoteUri eid = uriStr $ safeLink (Proxy :: Proxy RefineAPI) (Proxy :: Proxy SDeleteSimpleVoteOnEdit) eid
-
-getVotesUri :: ID Edit -> SBS
-getVotesUri eid = uriStr $ safeLink (Proxy :: Proxy RefineAPI) (Proxy :: Proxy SGetSimpleVotesOnEdit) eid
-
-addGroupUri :: SBS
-addGroupUri = uriStr $ safeLink (Proxy :: Proxy RefineAPI) (Proxy :: Proxy SAddGroup)
-
-getGroupUri :: ID Group -> SBS
-getGroupUri = uriStr . safeLink (Proxy :: Proxy RefineAPI) (Proxy :: Proxy SGetGroup)
-
-updateGroupUri :: ID Group -> SBS
-updateGroupUri = uriStr . safeLink (Proxy :: Proxy RefineAPI) (Proxy :: Proxy SUpdateGroup)
-
-getGroupsUri :: SBS
-getGroupsUri = uriStr $ safeLink (Proxy :: Proxy RefineAPI) (Proxy :: Proxy SGetGroups)
-
-
--- * sample data
-
-sampleCreateVDoc0 :: CreateVDoc
-sampleCreateVDoc0 = CreateVDoc
-  (Title "[title]")
-  (Abstract "[abstract]")
-  sampleCreateVDocE0
-  defaultGroupID
-  Nothing
-
-sampleCreateVDocE0 :: RawContent
-sampleCreateVDocE0 = mkRawContent $ mkBlock "[versioned content]" :| []
-
-sampleCreateVDocE1 :: RawContent
-sampleCreateVDocE1 = mkRawContent $ mkBlock "[versioned content, edit1]" :| []
-
-sampleCreateVDocE2 :: RawContent
-sampleCreateVDocE2 = mkRawContent $ mkBlock "[versioned, edit2, content]" :| []
-
-mkCVDoc :: TestBackend -> CreateVDoc -> IO VDoc
-mkCVDoc sess vdoc = runWai sess $ postJSON createVDocUri vdoc
-
-mkEdit :: TestBackend -> IO (ID Edit)
-mkEdit = fmap (^. vdocHeadEdit) . (`mkCVDoc` sampleCreateVDoc0)
-
-
-testUsername :: Username
-testUsername = "testUsername"
-
-testUserEmail :: Email
-testUserEmail = "testUsername@email.com"
-
-testPassword :: Password
-testPassword = "testPassword"
+-- * user handling
 
 addUserAndLogin :: TestBackend -> Username -> Email -> Password -> IO (ID User)
 addUserAndLogin sess username useremail userpass = do
-  r1 :: User <- runDB sess . unsafeAsGod $ createUser (CreateUser username useremail userpass Nothing "")
-  uid <- runWai sess $ do
-    r2 <- post loginUri $ Login username userpass
-    if respCode r2 >= 300
-      then error $ "addUserAndLogin: " <> show (username, r1, r2)
-      else pure (r1 ^. userID)
+  user :: User <- runDB sess $ do
+    _ <- unsafeAsGod $ createUser (CreateUser username useremail userpass Nothing "")
+    login (Login username userpass)
   testBackendLogin sess username userpass
-  pure uid
+  pure (user ^. userID)
 
 addTestUserAndLogin :: TestBackend -> IO ()
 addTestUserAndLogin sess = void $ addUserAndLogin sess testUsername testUserEmail testPassword
@@ -335,7 +165,9 @@ addTestUserAndLogin sess = void $ addUserAndLogin sess testUsername testUserEmai
 mkTestUserAndEditAndLogin :: TestBackend -> IO (ID Edit)
 mkTestUserAndEditAndLogin sess = addTestUserAndLogin sess >> mkEdit sess
 
--- | we're just hoping this is the ID of the default group that is created in 'mkProdBackend'.  if
--- this fails, we need to be smarter about constructing the test cases here.
-defaultGroupID :: ID Group
-defaultGroupID = ID 1
+
+mkCVDoc :: TestBackend -> CreateVDoc -> IO VDoc
+mkCVDoc sess vdoc = runDB sess $ createVDoc vdoc
+
+mkEdit :: TestBackend -> IO (ID Edit)
+mkEdit = fmap (^. vdocHeadEdit) . (`mkCVDoc` sampleCreateVDoc0)

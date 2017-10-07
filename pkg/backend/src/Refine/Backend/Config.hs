@@ -19,9 +19,8 @@ data Config = Config
   { _cfgLogger        :: LogCfg         -- ^ logging
   , _cfgDBKind        :: DBKind         -- ^ SQLite database, memory or file on the disk
   , _cfgPoolSize      :: Int            -- ^ The size of the connection pool towards the database
-  , _cfgFileServeRoot :: Maybe FilePath -- ^ Directory for the static files
+  , _cfgFileServeRoot :: FilePath       -- ^ Directory for the static files
   , _cfgWarpSettings  :: WarpSettings   -- ^ check test suite for examples of what can be put in here.
-  , _cfgCsrfSecret    :: ST             -- ^ The secret for csrf
   , _cfgSessionLength :: Timespan       -- ^ Session cookie life expectancy
   , _cfgPoFilesRoot   :: FilePath       -- ^ The directory of Po translation files
   , _cfgSmtp          :: Maybe SmtpCfg  -- ^ for sending notification emails to users
@@ -29,10 +28,6 @@ data Config = Config
   , _cfgWSPingPeriod  :: Timespan       -- ^ how long between two pings to every connected client
   , _cfgAllAreGods    :: Bool           -- ^ run 'unsafeBeAGod' in the beginning of every servant
                                         --   and websockets transaction (See #358)
-  , _cfgHaveRestApi   :: Bool           -- ^ whether we want to talk to client via servant at all.
-                                        --   refine-frontend just needs web sockets to work.  if
-                                        --   this is False, we do not set or read any cookies in the
-                                        --   connecting browsers.
   , _cfgAppMLimit     :: Timespan       -- ^ how long is one request allowed to take handling?
   }
   deriving (Eq, Show, Generic)
@@ -83,16 +78,14 @@ instance Default Config where
     { _cfgLogger        = def
     , _cfgDBKind        = def
     , _cfgPoolSize      = 5
-    , _cfgFileServeRoot = Just "../frontend/js-build"
+    , _cfgFileServeRoot = "../frontend/js-build"
     , _cfgWarpSettings  = def
-    , _cfgCsrfSecret    = "CSRF-SECRET"
     , _cfgSessionLength = TimespanHours 72
     , _cfgPoFilesRoot   = "./po"
     , _cfgSmtp          = Nothing
     , _cfgClient        = def
     , _cfgWSPingPeriod  = TimespanSecs 14
     , _cfgAllAreGods    = False
-    , _cfgHaveRestApi   = True
     , _cfgAppMLimit     = TimespanSecs 3
     }
 

@@ -75,7 +75,7 @@ import Control.Lens as P
     , _1, _2, _3, both, at, ix, to, has
     , view, set
     , lengthOf, folded, filtered
-    , _Just
+    , _Just, _Left, _Right
     , makeLenses, makePrisms
     )
 import Control.Monad as P ((>=>), (<=<), mapM, mapM_, forM, forM_, void, foldM, join, when, unless, guard)

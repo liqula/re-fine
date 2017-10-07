@@ -1,22 +1,21 @@
 {-# LANGUAGE CPP #-}
 #include "language_backend.hs"
-module Refine.Backend.Logger (mkLogChan, LogChan) where
+module Refine.Backend.Logger (LogChan, mkLogChan, asyncChanPipe, asyncChanPipe') where
 #include "import_backend.hs"
 
-import Control.Concurrent
 import System.IO.Unsafe (unsafePerformIO)
 import qualified System.Log.FastLogger as FL
 
 import Refine.Backend.Config
 
 
-type LogChan = Chan (LogLevel, String)
+type LogChan = TChan (LogLevel, String)
 
 -- | Returns a log channel and a destroy function.  The log channel leads to disk, stdout, etc. via
 -- fast-logger.
 mkLogChan :: Config -> IO (LogChan, IO ())
 mkLogChan cfg = do
-  chan <- newChan
+  chan <- newTChanIO
 
   (logger, freelogger) <- do
     timecache <- FL.newTimeCache FL.simpleTimeFormat
@@ -42,5 +41,20 @@ mkLogChan cfg = do
         then logger (formatmsg msg)
         else pure ()
 
-  tid <- forkIO . forever $ uncurry logf =<< readChan chan
-  pure (chan, killThread tid >> freelogger)
+  as <- asyncChanPipe chan (uncurry logf)
+  pure (chan, cancel as >> freelogger)
+
+
+-- | Take a source 'TChan', a sink function, and plug the former into the latter.  If the resulting
+-- 'Async' thread gets cancelled, the source gets flushed one more time.
+asyncChanPipe :: TChan a -> (a -> IO ()) -> IO (Async ())
+asyncChanPipe source sink = asyncChanPipe' source sink (pure ())
+
+-- | Variant of 'asyncChanPipe' that takes an extra cleanup action.
+asyncChanPipe' :: TChan a -> (a -> IO ()) -> IO () -> IO (Async ())
+asyncChanPipe' source sink cleanup = do
+  let pushone = sink =<< atomically (readTChan source)
+      finallyflush = atomically (tryReadTChan source) >>= \case
+        Nothing -> cleanup
+        Just e  -> sink e >> finallyflush
+  async $ forever pushone `finally` finallyflush

@@ -10,11 +10,13 @@ module Refine.Backend.App.Core
   , AppContext(..)
   , appDBConnection
   , appLogChan
+  , appToClientChan
+  , appCacheInvalidationChan
   , appConfig
   , AppState(..)
   , initialAppState
-  , appCsrfToken
   , appUserState
+  , appCacheState
   , appIAmGod
   , AppUserState(..)
   , App
@@ -27,11 +29,10 @@ module Refine.Backend.App.Core
   , MonadAppDB(dbWithFilters), db, dbUsersCmd
   , MonadLog(appLog)
   , MonadCache(..)
+  , MonadToClient(..)
   ) where
 #include "import_backend.hs"
 
-import           Control.Exception
-import           Control.Concurrent
 import qualified Web.Users.Types as Users
 import qualified Web.Users.Persistent as Users
 
@@ -42,7 +43,6 @@ import Refine.Backend.Database
 import Refine.Backend.Logger
 import Refine.Backend.Types
 import Refine.Common.Access
-import Refine.Common.Rest
 import Refine.Common.Types as Types
 
 
@@ -57,15 +57,17 @@ makeRefineType ''Users.CreateUserError
 
 
 data AppContext = AppContext
-  { _appDBConnection  :: DBConnection
-  , _appLogChan       :: LogChan
-  , _appConfig        :: Config
+  { _appDBConnection           :: DBConnection
+  , _appLogChan                :: LogChan
+  , _appToClientChan           :: TChan ToClient
+  , _appCacheInvalidationChan  :: TChan (Set CacheKey)
+  , _appConfig                 :: Config
   }
 
 data AppState = AppState
-  { _appCsrfToken :: Maybe CsrfToken
-  , _appUserState :: AppUserState
-  , _appIAmGod    :: Bool
+  { _appUserState  :: AppUserState
+  , _appCacheState :: Set CacheKey
+  , _appIAmGod     :: Bool
   }
   deriving (Eq, Show)
 
@@ -76,7 +78,7 @@ data AppUserState
   deriving (Eq, Show)
 
 initialAppState :: Config -> AppState
-initialAppState = AppState Nothing UserLoggedOut . view cfgAllAreGods
+initialAppState = AppState UserLoggedOut mempty . view cfgAllAreGods
 
 makeLenses ''AppContext
 makeLenses ''AppState
@@ -115,6 +117,7 @@ type MonadApp app =
   , MonadAppDB app
   , MonadLog app
   , MonadSmtp app
+  , MonadToClient app
   , MonadCache app
   , MonadAccess app
   , MonadI18n app
@@ -137,7 +140,7 @@ data AppError
   | AppUserNotFound ST
   | AppUserNotLoggedIn
   | AppUserCreationError Users.CreateUserError
-  | AppCsrfError ST
+  | AppSessionInvalid
   | AppSanityCheckError ST
   | AppL10ParseErrors [ST]
   | AppUnauthorized Creds
@@ -166,7 +169,7 @@ toApiError err = l err >> pure (c err)
       AppUserNotFound _          -> appLog LogInfo  $ "AppError: " <> show err
       AppUserNotLoggedIn         -> appLog LogInfo  $ "AppError: " <> show err
       AppUserCreationError _     -> appLog LogInfo  $ "AppError: " <> show err
-      AppCsrfError _             -> appLog LogError $ "AppError: " <> show err
+      AppSessionInvalid          -> appLog LogInfo  $ "AppError: " <> show err
       AppSanityCheckError _      -> appLog LogError $ "AppError: " <> show err
       AppL10ParseErrors _        -> appLog LogError $ "AppError: " <> show err
       AppUnauthorized _          -> appLog LogInfo  $ "AppError: " <> show err
@@ -181,7 +184,7 @@ toApiError err = l err >> pure (c err)
       AppUserNotFound e          -> ApiUserNotFound e
       AppUserNotLoggedIn         -> ApiUserNotLoggedIn
       AppUserCreationError e     -> ApiUserCreationError $ createUserErrorToApiError e
-      AppCsrfError e             -> ApiCsrfError e
+      AppSessionInvalid          -> ApiSessionInvalid
       AppSanityCheckError e      -> ApiSanityCheckError e
       AppL10ParseErrors e        -> ApiL10ParseErrors e
       AppUnauthorized info       -> ApiUnauthorized (cs $ show info)
@@ -244,18 +247,36 @@ class MonadLog app where
 instance MonadLog (AppM db) where
   appLog level msg = AppM $ do
     chan <- view (_2 . appLogChan)
-    liftIO $ writeChan chan (level, msg)
+    liftIO . atomically $ writeTChan chan (level, msg)
 
 instance MonadLog (ReaderT LogChan IO) where
   appLog level msg = do
     chan <- ask
-    liftIO $ writeChan chan (level, msg)
+    liftIO . atomically $ writeTChan chan (level, msg)
+
+
+-- * sending messages to client
+
+class MonadToClient app where
+  sendToClient :: ToClient -> app ()
+
+instance MonadToClient (AppM db) where
+  sendToClient msg = do
+    chan <- asks $ view appToClientChan
+    liftIO (atomically (writeTChan chan msg))
 
 
 -- * caching
 
 class MonadCache app where
+  -- send notification to central invalidation TChan about invalid items.
   invalidateCaches :: Set CacheKey -> app ()
+
+  -- ask client to destroy all cache items and and update 'AppState'.
+  clearCache :: app ()
+
+  -- send fresh cache items to client and update 'AppState'.
+  fetchCache :: Set CacheKey -> app ()
 
 
 -- * lens/TH
