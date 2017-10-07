@@ -18,13 +18,6 @@ import           Refine.Frontend.Util
 
 -- * Helper
 
-inputFieldStyles :: HasCallStack => [Decl]
-inputFieldStyles =
-  [ decl "borderRadius" (Px 5)
-  , decl "margin" (Px 12)
-  , decl "backgroundColor" (Ident "rgba(246, 247, 249, 1)")
-  ]
-
 inputFieldWithKeyExtra
   :: (FromJSVal c)
   => [PropertyOrHandler ('StatefulEventHandlerCode s)]
@@ -33,7 +26,6 @@ inputFieldWithKeyExtra
 inputFieldWithKeyExtra extra fieldId fieldType fieldPlaceholder fieldKey asetter =
   input_ $ extra <>
          [ "id" $= fieldId
-         , "style" @@= inputFieldStyles
          , "type" $= fieldType
          , "placeholder" $= fieldPlaceholder
          , onChange $ \evt -> simpleHandler $ \st -> ([], Just (st & asetter .~ target evt fieldKey))
@@ -102,18 +94,23 @@ loginStyles = defaultStyles
 
 login :: HasCallStack => FormError -> View '[]
 login errors = mkStatefulView "Login" (LoginForm "" "" errors) $ \curState ->
-  div_ ["style" @@= loginStyles] $ do
-    h1_ "Login"
+  div_ ["className" $= "menu-form m-t-1"] $ do
+    div_ ["className" $= "menu-form-header"] .
+      div_ ["className" $= "left-column"] .
+        div_ ["className" $= "inner-column-1"] .
+          div_ ["className" $= "menu-form-header__label"] $
+            "Login"
 
-    form_ [ "target" $= "#"
-          , "action" $= "POST" ] $ do
+    mapM_ (p_ . elemCS)
+      (curState ^. loginFormErrors)
 
-      mapM_ (p_ . elemCS)
-        (curState ^. loginFormErrors)
+    div_ ["className" $= "menu-form__input-div m-b-1"] $
+      inputFieldWithKeyExtra ["className" $= "menu-form__input"] "login-username" "text" "Username" "value" loginFormUsername
 
-      inputField "login-username" "text"     "Username" loginFormUsername >> br_ []
-      inputField "login-password" "password" "Password" loginFormPassword >> br_ []
+    div_ ["className" $= "menu-form__input-div m-b-1"] $
+      inputFieldWithKeyExtra ["className" $= "menu-form__input"] "login-password" "password" "Password" "value" loginFormPassword
 
+    div_ ["className" $= "menu-form-submenu m-b-1"] .
       ibutton_ $ emptyIbuttonProps
         (ButtonImageIcon Svg.Save ColorSchemaDark)
         -- TODO: create new svg file for this.  open issue, put it on the list of icons to be fixed.

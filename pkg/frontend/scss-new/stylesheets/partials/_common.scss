@@ -98,7 +98,7 @@ body {
 }
 
 $spaceamounts: (1,2,3,4); 
-$sides: (top, bottom); // Leave this variable alone
+$sides: (top, bottom, left, right); // Leave this variable alone
 
 @each $space in $spaceamounts {
   @each $side in $sides {

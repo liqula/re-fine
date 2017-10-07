@@ -17,24 +17,19 @@ include "new/daniel_user.php";
 
 	<div class="menupage-container c_bg_blue_light">
 		<?php include "new/menupage-header.php"; ?>
-		<div class="menupage-hr m-b-2"></div>
-		<div class="group-tile-row m-b-2">
+		<div class="menupage-hr"></div>
+		<div class="group-tile-container">
 			<?php include "new/group-tile.php"; ?>
 			<?php include "new/group-tile-svg.php"; ?>
 			<?php include "new/group-tile.php"; ?>
 			<?php include "new/group-tile-svg.php"; ?>
-		</div>
-		<div class="group-tile-row m-b-2">
 			<?php include "new/group-tile.php"; ?>
 			<?php include "new/group-tile-svg.php"; ?>
 			<?php include "new/group-tile.php"; ?>
 			<?php include "new/group-tile-svg.php"; ?>
-		</div>
-		<div class="group-tile-row">
 			<?php include "new/group-tile.php"; ?>
 			<?php include "new/group-tile-svg.php"; ?>
 			<?php include "new/group-tile.php"; ?>
-			<?php include "new/group-tile-svg.php"; ?>
 		</div>
 	</div>
 
