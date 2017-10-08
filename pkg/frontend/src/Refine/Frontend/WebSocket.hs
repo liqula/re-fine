@@ -19,7 +19,6 @@ import Refine.Common.Types
 import Refine.Frontend.Access
 import Refine.Frontend.Document.Types
 import Refine.Frontend.Login.Types
-import {-# SOURCE #-} Refine.Frontend.Login.Status
 import Refine.Frontend.MainMenu.Types
 import Refine.Frontend.Route
 import Refine.Frontend.Store.Types

@@ -29,11 +29,3 @@ loginStatusButton_ schema pressed cu = div_ $ do
 
     mkIcon (UserLoggedIn (Right ((^. userAvatar) -> Just img))) = ButtonImageInline img
     mkIcon _ = ButtonImageIcon Svg.Login schema
-
-
-onLoginClick :: CurrentUser (Lookup User) -> [GlobalAction]
-onLoginClick UserLoggedOut              = [MainMenuAction $ MainMenuActionOpen (MainMenuLogin MainMenuSubTabLogin)]
-onLoginClick (UserLoggedIn (Left _uid)) = []
-onLoginClick (UserLoggedIn (Right usr)) = [MainMenuAction $ MainMenuActionOpen (MainMenuProfile (usr ^. userID, formstate))]
-  where
-    formstate = FormBegin $ newLocalStateRef (Nothing, Nothing) usr
