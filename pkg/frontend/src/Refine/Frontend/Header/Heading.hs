@@ -53,7 +53,8 @@ mainHeader_ props = React.viewWithSKey mainHeader "mainHeader" props mempty
 
 -- | FIXME: make this a component, not just an element.
 mainHeaderToolbar_ :: HasCallStack => MainHeaderToolbarProps -> ReactElementM eventHandler ()
-mainHeaderToolbar_ props = case props ^. mainHeaderToolbarPropsDocumentState of
+mainHeaderToolbar_ props = do
+  case props ^. mainHeaderToolbarPropsDocumentState of
             WipedDocumentStateView -> toolbar_ $ props ^. mainHeaderToolbarPropsVDoc
 
             WipedDocumentStateDiff i edit collapsed editable -> diffToolbar_ $ DiffToolbarProps
@@ -68,9 +69,9 @@ mainHeaderToolbar_ props = case props ^. mainHeaderToolbarPropsDocumentState of
 
             WipedDocumentStateDiscussion dprops -> discussionToolbar_ dprops
 
-          indexToolbarExtension_ $ props ^. mainHeaderToolbarPropsIndexToolbarProps
-          commentToolbarExtension_ $ CommentToolbarExtensionProps (props ^. mainHeaderToolbarPropsExtStatus)
-          editToolbarExtension_ $ EditToolbarExtensionProps (props ^. mainHeaderToolbarPropsExtStatus)
+  indexToolbarExtension_ $ props ^. mainHeaderToolbarPropsIndexToolbarProps
+  commentToolbarExtension_ $ CommentToolbarExtensionProps (props ^. mainHeaderToolbarPropsExtStatus)
+  editToolbarExtension_ $ EditToolbarExtensionProps (props ^. mainHeaderToolbarPropsExtStatus)
 
 
 headerDepth :: BlockType -> Maybe Int
