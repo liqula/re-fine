@@ -38,7 +38,7 @@ topMenuBar = mkView "TopMenuBarInMainMenu" $ \(TopMenuBarProps mCurrentTab curre
   div_ ["className" $= "ibutton-absolute-topleft"] $ do
     case mCurrentTab of
       Nothing -> burgerButton_
-      Just _ -> ibutton_ $ emptyIbuttonProps (ButtonImageIcon Svg.Close ColorSchemaBright) [MainMenuAction MainMenuActionClose]
+      Just _ -> ibutton_ $ emptyIbuttonProps (ButtonImageIcon Svg.Close ColorSchemaBright) (onLoginClick currentUser)
         & ibListKey .~ "1"
         & ibSize .~ XXLarge
 
@@ -52,7 +52,7 @@ topMenuBar = mkView "TopMenuBarInMainMenu" $ \(TopMenuBarProps mCurrentTab curre
   when weAreInDevMode $ do
     div_ ["style" @@= [ decl "position" (Ident "absolute")
                       , decl "top" (Px 16)
-                      , decl "right" (Px 30)
+                      , decl "right" (Px 130)
                       , decl "width" (Px 80)
                       , decl "height" (Px 80)]] $ do
       ibutton_ $ emptyIbuttonProps (ButtonImageIcon Svg.Help ColorSchemaDark) [DumpAllState]
@@ -543,7 +543,7 @@ renderCreateOrUpdateProcess (cloneLens -> toTitle) (cloneLens -> toAbstract) sav
 
 
 mainMenuLoginTab :: HasCallStack => View '[MainMenuProps MainMenuSubTabLogin]
-mainMenuLoginTab = mkView "MainMenuLoginTab" $ \(MainMenuProps currentTab menuErrors currentUser) -> do
+mainMenuLoginTab = mkView "MainMenuLoginTab" $ \(MainMenuProps currentTab menuErrors _currentUser) -> do
   let tabButton :: Int -> MainMenuSubTabLogin -> ReactElementM eventHandler ()
       tabButton key this =
         ibutton_ $ emptyIbuttonProps
@@ -568,8 +568,8 @@ mainMenuLoginTab = mkView "MainMenuLoginTab" $ \(MainMenuProps currentTab menuEr
     div_ ["className" $= "menupage-hr"] $ pure ()
 
     case currentTab of
-      MainMenuSubTabLogin        -> loginOrLogout_ currentUser (menuErrors ^. mmeLogin)
-      MainMenuSubTabRegistration -> registration_  (menuErrors ^. mmeRegistration)
+      MainMenuSubTabLogin        -> login_ (menuErrors ^. mmeLogin)
+      MainMenuSubTabRegistration -> registration_ (menuErrors ^. mmeRegistration)
 
 mainMenuLoginTab_ :: HasCallStack => MainMenuProps MainMenuSubTabLogin -> ReactElementM eventHandler ()
 mainMenuLoginTab_ = view_ mainMenuLoginTab "mainMenuLoginTab_"

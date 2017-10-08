@@ -19,6 +19,7 @@ import Refine.Common.Types
 import Refine.Frontend.Access
 import Refine.Frontend.Document.Types
 import Refine.Frontend.Login.Types
+import {-# SOURCE #-} Refine.Frontend.Login.Status
 import Refine.Frontend.MainMenu.Types
 import Refine.Frontend.Route
 import Refine.Frontend.Store.Types
@@ -126,7 +127,7 @@ initWebSocket = openConnection Nothing
      TCLoginResp (Right user) -> do
        sendTS TSClearCache
        dispatchAndExec . SetCurrentUser . UserLoggedIn $ user ^. userID
-       dispatchAndExec $ MainMenuAction MainMenuActionClose
+       dispatchAndExec `mapM_` onLoginClick (UserLoggedIn (Right user))
        dispatchAndExec LoginGuardPop
 
      TCTranslations l10 ->

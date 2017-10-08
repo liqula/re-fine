@@ -78,11 +78,6 @@ invalidRegistrationForm form =
      , form ^. registrationFormAgree . to not
      ]
 
-loginOrLogout_ :: HasCallStack => CurrentUser (Lookup User) -> FormError -> ReactElementM eventHandler ()
-loginOrLogout_ = \case
-  UserLoggedOut  -> login_
-  UserLoggedIn _ -> const logout_
-
 
 -- * Login
 
@@ -113,23 +108,6 @@ login errors = mkStatefulView "Login" (LoginForm "" "" errors) $ \curState ->
 
 login_ :: HasCallStack => FormError -> ReactElementM eventHandler ()
 login_ errors = view_ (login errors) "login_"
-
-
--- * Logout
-
-logout :: HasCallStack => View '[]
-logout = mkView "Logout" $ do
-  div_ [] $ do
-    p_ "Profile page"
-    form_ [ "target" $= "#"
-          , "action" $= "POST" ] $ do
-
-      ibutton_ $ emptyIbuttonProps
-        (ButtonImageIcon Svg.Save ColorSchemaDark)
-        [RS.Logout]
-
-logout_ :: HasCallStack => ReactElementM eventHandler ()
-logout_ = view_ logout "logout_"
 
 
 -- * Registration
