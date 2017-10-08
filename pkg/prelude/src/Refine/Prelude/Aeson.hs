@@ -1,4 +1,5 @@
 {-# LANGUAGE DeriveGeneric      #-}
+{-# LANGUAGE OverloadedStrings  #-}
 {-# LANGUAGE DeriveFunctor      #-}
 {-# LANGUAGE TemplateHaskell    #-}
 {-# LANGUAGE StandaloneDeriving #-}
@@ -22,10 +23,13 @@ instance Show (NoJSONRep a) where
   show _ = "NoJSONRep"
 
 instance ToJSON (NoJSONRep a) where
-  toJSON _ = toJSON "NoJSONRep"
+  toJSON _ = toJSON ("NoJSONRep" :: ST)
 
 instance FromJSON (NoJSONRep a) where
-  parseJSON = error "NoJSONRep has no json parser."
+  -- only throw the error when the parsed value is forced.  this way, we have a chance to complete a
+  -- parsed value, or just use the parts that were parseable.
+  parseJSON (String "NoJSONRep") = pure . NoJSONRep $ error "NoJSONRep can be parsed, but not evaluated."
+  parseJSON _ = fail "NoJSONRep"
 
 instance NFData a => NFData (NoJSONRep a) where
   rnf (NoJSONRep a) = rnf a `seq` ()

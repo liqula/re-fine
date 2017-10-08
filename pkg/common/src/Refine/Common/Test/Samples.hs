@@ -127,3 +127,13 @@ sampleCreateUser = CreateUser
   , _cuAvatar      = Nothing
   , _cuDescription = "i am a test"
   }
+
+sampleCreateGroup :: Monoid members => CreateGroup_ members
+sampleCreateGroup = CreateGroup
+  { _createGroupTitle    = "group title"
+  , _createGroupDesc     = "this is what's with this group"
+  , _createGroupParents  = []
+  , _createGroupChildren = []
+  , _createGroupMembers  = mempty  -- :: [(User, Bool)], Map (ID User) Bool, ...
+  , _createGroupImage    = Nothing  -- :: Maybe ImageInline
+  }

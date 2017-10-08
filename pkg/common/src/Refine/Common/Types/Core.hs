@@ -207,8 +207,8 @@ data Group = Group
 type CreateGroup = CreateGroup_ (Map (ID User) Bool)
 
 data CreateGroup_ members = CreateGroup
-  { _createGroupTitle :: ST
-  , _createGroupDesc  :: ST
+  { _createGroupTitle    :: ST
+  , _createGroupDesc     :: ST
   , _createGroupParents  :: [ID Group]
   , _createGroupChildren :: [ID Group]
   , _createGroupMembers  :: members
