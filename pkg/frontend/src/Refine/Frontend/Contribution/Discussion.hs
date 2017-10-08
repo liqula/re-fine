@@ -71,19 +71,19 @@ statementList = mkView "StatementList" $ \(tree, details) ->
 statementRoot :: HasCallStack => View '[(Tree.Tree Statement, StatementPropDetails)]
 statementRoot = mkView "StatementForest" $ \(tree, details) ->
   div_ ["className" $= "discussion-thread-container__tree"] .
-    div_ ["className" $= "discussion-thread-item-root"] $
+    div_ ["className" $= "discussion-thread-root"] $
       statementSubtree_ details tree
 
 statementChild :: HasCallStack => View '[(Tree.Tree Statement, StatementPropDetails)]
 statementChild = mkView "StatementForest" $ \(tree, details) ->
-  div_ ["className" $= "discussion-thread-item-child"] $ do
-    div_ ["className" $= "discussion-thread-item-child__icon-column"] $ do
+  div_ ["className" $= "discussion-thread-child"] $ do
+    div_ ["className" $= "discussion-thread-child__icon-column"] $ do
       ibutton_
         $ emptyIbuttonProps (ButtonImageIcon Svg.DiscussionTreeChild ColorSchemaDiscussion)
           ([] :: [GlobalAction])
           & ibListKey .~ "0"
           & ibSize .~ Large
-    div_ ["className" $= "discussion-thread-item-child__node-column"] $ do
+    div_ ["className" $= "discussion-thread-child__node-column"] $ do
       statementSubtree_ details tree
 
 -- | (This is a list of more than one DOM sibling, so it can't be a 'View'.)
@@ -101,29 +101,32 @@ statementSubtree_ details (Tree.Node stmnt chldrn) = do
 statementEditor :: StatementEditorProps -> View '[]
 statementEditor (StatementEditorProps sid r modif) =
   mkPersistentStatefulView "statementEditor" r Nothing $ \txt ->
-    div_ ["className" $= "discussion-thread-item"] $ do
-      div_ ["className" $= "discussion-thread-item__form-header"] $ do
-        ibutton_
-          $ emptyIbuttonProps (ButtonImageIcon Svg.Close ColorSchemaBright)
-              [DocumentAction $ ReplyToOrUpdateStatement modif sid FormCancel]
-          & ibListKey .~ "0"
-          & ibSize .~ Medium
-        ibutton_
-          $ emptyIbuttonProps (ButtonImageIcon Svg.Help ColorSchemaBright)
-              [ShowNotImplementedYet]
-          & ibListKey .~ "1"
-          & ibSize .~ Medium
+    div_ ["className" $= "content-box c_bg_note_bubble"] $ do
+      div_ ["className" $= "content-box__header"] $ do
+        div_ ["className" $= "left-column"] $ do
+          div_ ["className" $= "inner-column-1"] $ do
+            ibutton_
+              $ emptyIbuttonProps (ButtonImageIcon Svg.Close ColorSchemaBright)
+                  [DocumentAction $ ReplyToOrUpdateStatement modif sid FormCancel]
+              & ibListKey .~ "0"
+              & ibSize .~ Medium
+          div_ ["className" $= "inner-column-1"] $ do
+            ibutton_
+              $ emptyIbuttonProps (ButtonImageIcon Svg.Help ColorSchemaBright)
+                  [ShowNotImplementedYet]
+              & ibListKey .~ "1"
+              & ibSize .~ Medium
 
-      div_ ["className" $= "discussion-thread-item__form-horizontal-line"] $ pure ()
-      div_ ["className" $= "discussion-thread-item__form-body"] $ do
-        div_ ["className" $= "discussion-thread-item__form-body-button"] $ do
+      div_ ["className" $= "content-box__hr"] $ pure ()
+      div_ ["className" $= "content-box__form-div"] $ do
+        div_ ["className" $= "content-box__form-ibutton-div"] $ do
           ibutton_
             $ emptyIbuttonProps (ButtonImageIcon Svg.Save ColorSchemaBright)
                 [ DocumentAction . ReplyToOrUpdateStatement modif sid $ FormComplete txt
                 , AddStatement modif sid txt
                 ]
                 & ibSize .~ XLarge
-        textarea_ [ "className" $= "discussion-thread-item__form-body-input"
+        textarea_ [ "className" $= "content-box__form-textarea"
                   , onChange $ \evt ->
                       -- Update the current state with the current text in the textbox, sending no actions
                       simpleHandler $ \txt' -> ([], Just $ txt' & createStatementText .~ target evt "value")
@@ -135,65 +138,73 @@ type StatementViewerProps = (Statement, StatementPropDetails)
 
 statementViewer :: View '[StatementViewerProps]
 statementViewer = mkView "statementViewer" $ \(stmnt, StatementPropDetails meditor names) ->
-  div_ ["className" $= "discussion-thread-item"] $ do
-    div_ ["className" $= "discussion-thread-item__header"] $ do
-      div_ ["className" $= "discussion-thread-item__header-inner fisx-css-toolbar-flex c-vdoc-toolbar"] $ do
-        ibutton_
-          $ emptyIbuttonProps (ButtonImageIcon Svg.Discussion ColorSchemaDiscussion)
-          ([] :: [GlobalAction])
-          & ibListKey .~ "0"
-          & ibSize .~ Medium
+  div_ ["className" $= "content-box"] $ do
+    div_ ["className" $= "content-box__header"] $ do
+      div_ ["className" $= "left-column"] $ do
+        div_ ["className" $= "inner-column-1"] $ do
+          ibutton_
+            $ emptyIbuttonProps (ButtonImageIcon Svg.Discussion ColorSchemaDiscussion)
+            ([] :: [GlobalAction])
+            & ibListKey .~ "0"
+            & ibSize .~ Medium
 
-        ibutton_  -- FIXME: get user image if available.  make that a little component?
-          $ emptyIbuttonProps (ButtonImageIcon Svg.User ColorSchemaDiscussion)
-          ([] :: [GlobalAction])
-          & ibListKey .~ "1"
-          & ibSize .~ Medium
+        div_ ["className" $= "inner-column-1"] $ do
+          ibutton_  -- FIXME: get user image if available.  make that a little component?
+            $ emptyIbuttonProps (ButtonImageIcon Svg.User ColorSchemaDiscussion)
+            ([] :: [GlobalAction])
+            & ibListKey .~ "1"
+            & ibSize .~ Medium
 
-        authorInfo (stmnt ^. statementMetaID . miMeta) names
+        div_ ["className" $= "inner-column-1"] $ do
+          authorInfo (stmnt ^. statementMetaID . miMeta) names
 
-      div_ ["className" $= "discussion-thread-item__header-inner fisx-css-toolbar-flex c-vdoc-toolbar"] $ do
-        let expanded = True  -- FIXME: implement partial thread collapse.
-                             -- FIXME: more general name for Svg.DiffExpand, Svg.DiffCollapse.
-        if expanded
-          then do
-            "collapse thread"
-            ibutton_
-              $ emptyIbuttonProps (ButtonImageIcon Svg.DiffCollapse ColorSchemaDiscussion)
-              [ShowNotImplementedYet]
-              & ibListKey .~ "0"
-              & ibSize .~ Medium
-          else do
-            "expand thread"
-            ibutton_
-              $ emptyIbuttonProps (ButtonImageIcon Svg.DiffExpand ColorSchemaDiscussion)
-              [ShowNotImplementedYet]
-              & ibListKey .~ "0"
-              & ibSize .~ Medium
+      --div_ ["className" $= "discussion-thread-item__header-inner fisx-css-toolbar-flex c-vdoc-toolbar"] $ do
+      div_ ["className" $= "right-column"] $ do
+        div_ ["className" $= "inner-column-1"] $ do
+          let expanded = True  -- FIXME: implement partial thread collapse.
+                               -- FIXME: more general name for Svg.DiffExpand, Svg.DiffCollapse.
+          if expanded
+            then do
+              "collapse thread"
+              ibutton_
+                $ emptyIbuttonProps (ButtonImageIcon Svg.DiffCollapse ColorSchemaDiscussion)
+                [ShowNotImplementedYet]
+                & ibListKey .~ "0"
+                & ibSize .~ Medium
+            else do
+              "expand thread"
+              ibutton_
+                $ emptyIbuttonProps (ButtonImageIcon Svg.DiffExpand ColorSchemaDiscussion)
+                [ShowNotImplementedYet]
+                & ibListKey .~ "0"
+                & ibSize .~ Medium
 
-    div_ ["className" $= "discussion-thread-item__body"] $ do
+    div_ ["className" $= "content-box__body"] $ do
       elemText $ stmnt ^. statementText
 
     let editing e = e ^. sepStatementID == stmnt ^. statementID && not (e ^. sepUpdate)
     case meditor of
       Just e | editing e -> do
-        div_ ["className" $= "discussion-thread-item__footer"] $ do
-          div_ ["style" @@= [decl "height" (Px 6)]] $ do
+        div_ ["className" $= "content-box__footer"] $ do
+          --div_ ["style" @@= [decl "height" (Px 6)]] $ do
             pure ()
         xview_ (statementEditor e)
       _ -> do
-        div_ ["className" $= "discussion-thread-item__footer"] $ do
-          div_ ["className" $= "discussion-thread-item__footer-inner"] $ do
+        div_ ["className" $= "content-box__footer"] $ do
+          div_ ["className" $= "left-column"] $ do
             -- FIXME: @AP.createOrUpdateComment $ stmnt ^. statementVDoc@, but now we need to look up
             -- the vdoc under the id :(.  so it seems like the access policy terms need to be with less
             -- data.  e.g., replace vdoc by the group it's in.  that should be sufficient, and then the
             -- information is already in global access state.
-            replyButton_ stmnt
+            div_ ["className" $= "inner-column-1"] $ do
+              replyButton_ stmnt
             -- FIXME: comment in #358: @guard (AP.updateStatement stmnt) $ ...@
-            updateButton_ stmnt
+            div_ ["className" $= "inner-column-1"] $ do
+              updateButton_ stmnt
 
-          div_ ["className" $= "discussion-thread-item__footer-inner"] $ do
-            voteUpDownReportButtons
+          div_ ["className" $= "right-column"] $ do
+            div_ ["className" $= "inner-column-1"] $ do
+              voteUpDownReportButtons
 
   where
     replyButton_ :: Statement -> ReactElementM 'EventHandlerCode ()
