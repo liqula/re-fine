@@ -137,7 +137,7 @@ statementViewer :: View '[StatementViewerProps]
 statementViewer = mkView "statementViewer" $ \(stmnt, StatementPropDetails meditor names) ->
   div_ ["className" $= "discussion-thread-item"] $ do
     div_ ["className" $= "discussion-thread-item__header"] $ do
-      div_ ["className" $= "discussion-thread-item__header-inner"] $ do
+      div_ ["className" $= "discussion-thread-item__header-inner fisx-css-toolbar-flex c-vdoc-toolbar"] $ do
         ibutton_
           $ emptyIbuttonProps (ButtonImageIcon Svg.Discussion ColorSchemaDiscussion)
           ([] :: [GlobalAction])
@@ -152,7 +152,7 @@ statementViewer = mkView "statementViewer" $ \(stmnt, StatementPropDetails medit
 
         authorInfo (stmnt ^. statementMetaID . miMeta) names
 
-      div_ ["className" $= "discussion-thread-item__header-inner"] $ do
+      div_ ["className" $= "discussion-thread-item__header-inner fisx-css-toolbar-flex c-vdoc-toolbar"] $ do
         let expanded = True  -- FIXME: implement partial thread collapse.
                              -- FIXME: more general name for Svg.DiffExpand, Svg.DiffCollapse.
         if expanded

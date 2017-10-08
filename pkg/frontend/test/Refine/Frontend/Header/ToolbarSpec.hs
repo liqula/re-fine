@@ -24,7 +24,7 @@ spec = do
       let mockVDoc :: VDoc
           mockVDoc = VDoc (MetaID (ID 0) undefined) (Title "title") (Abstract "abstract") undefined undefined mempty Nothing
 
-      wrapper <- mount $ toolbarWrapper_ (toolbar_ mockVDoc)
+      wrapper <- mount $ toolbar_ mockVDoc
       button <- find wrapper (StringSelector ".c-vdoc-toolbar__btn-add-annotation")
 
       _ <- simulate button Click

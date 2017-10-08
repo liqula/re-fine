@@ -25,17 +25,13 @@ import           Refine.Frontend.Access
 -- introduce a @View '[]@, the styling breaks completely.  note that this does not fix #376 either.
 toolbar_ :: HasCallStack => ToolbarProps -> ReactElementM eventHandler ()
 toolbar_ vdoc = do
-
-  -- FIXME (scss): floate this to the left
-  span_ ["id" $= "c-toolbar-menu-label"
-        , "className" $= "c-toolbar-menu-label-hidden"
-        ] "MENU"
-
   let props icon acts = emptyIbuttonProps icon acts & ibSize .~ XXLarge
 
   div_ ["className" $= "main-content__header"] $ do
-    div_ ["className" $= "main-content__header-inner"] $ do
-      ibutton_ $ props (ButtonImageIcon Svg.IndexDesktop ColorSchemaDark) [HeaderAction ToggleIndexToolbarExtension]
+    div_ ["className" $= "main-content__header-inner fisx-css-toolbar-flex c-vdoc-toolbar"] $ do
+      ibutton_ $ props (ButtonImageIcon Svg.IndexDesktop ColorSchemaDark)
+        [HeaderAction ToggleIndexToolbarExtension]
+        & ibListKey .~ "0"
 
       div_ ["className" $= "c-vdoc-toolbar__separator"] ""
 

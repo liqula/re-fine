@@ -51,7 +51,7 @@ topMenuBar = mkView "TopMenuBarInMainMenu" $ \(TopMenuBarProps mCurrentTab curre
   case mCurrentTab of
     Nothing -> pure ()
     Just currentTab -> div_ ["className" $= "main-content__header"] $ do
-      div_ ["className" $= "main-content__header-inner"] $ do
+      div_ ["className" $= "main-content__header-inner fisx-css-toolbar-flex c-vdoc-toolbar"] $ do
         case currentUser of
           UserLoggedIn user -> do
             ibutton_ $ emptyIbuttonProps (ButtonImageIcon Svg.UserProfile ColorSchemaBright)
