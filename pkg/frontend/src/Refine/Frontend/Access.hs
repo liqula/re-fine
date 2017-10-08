@@ -6,10 +6,11 @@ module Refine.Frontend.Access where
 
 import           Refine.Common.Access
 import           Refine.Common.Types hiding (Login(..))
-import           Refine.Frontend.Login.Types
-import           Refine.Frontend.Store.Types
-import           Refine.Frontend.MainMenu.Types
 import           Refine.Frontend.Document.Types
+import           Refine.Frontend.Login.Types
+import           Refine.Frontend.MainMenu.Types
+import           Refine.Frontend.Store.Types
+import           Refine.Frontend.Test.Console
 
 
 data AccessState = AccessState
@@ -33,6 +34,7 @@ data AccessAction =
   | LoginGuardStash [GlobalAction]  -- ^ if logged in, dispatch actions directly.  otherwise, login first.
   | LoginGuardPop  -- ^ dispatched this to trigger dispatch of the stashed actions after login.
   | SetCurrentUser (CurrentUser (ID User))
+  | DumpAccessState
   deriving (Show, Eq, Generic)
 
 instance (Dispatchable GlobalAction, Sendable ToServer) => Dispatchable AccessAction where
@@ -76,6 +78,9 @@ instance (Dispatchable GlobalAction, Sendable ToServer) => StoreData AccessState
 
       SetCurrentUser user ->
         pure $ st & accLoginState . lsCurrentUser .~ user
+
+      DumpAccessState ->
+        consoleLogJSStringM "DumpAccessState" (cs $ encode st) >> pure st
 
 
 -- | FIXME: We should be using 'childrenPassedToView' here, I suspect that would help with the

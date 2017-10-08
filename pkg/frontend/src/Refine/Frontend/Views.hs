@@ -3,6 +3,7 @@
 
 module Refine.Frontend.Views
   ( refineApp
+  , wholeScreen_
   ) where
 #include "import_frontend.hs"
 

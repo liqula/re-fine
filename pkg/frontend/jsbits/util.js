@@ -179,4 +179,22 @@
             };
         };
     })();
+
+    target.refine$getRangeTopBottomOffset = function () {
+        if (typeof getSelection === 'undefined') {
+            return { top: 0, bottom: 0 };
+        } else {
+            var r = getSelection().getRangeAt(0).startContainer.parentElement.getBoundingClientRect();
+            return { top: r.top, bottom: r.bottom };
+        }
+    };
+
+    target.refine$removeAllRanges = function () {
+        if (typeof getSelection === 'undefined') {
+            return;
+        } else {
+            return getSelection().removeAllRanges();
+        }
+    };
+
 })((typeof global === 'undefined') ? window : global);

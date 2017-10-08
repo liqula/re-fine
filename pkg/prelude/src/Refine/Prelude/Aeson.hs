@@ -7,11 +7,11 @@
 
 module Refine.Prelude.Aeson where
 
-import           Control.Lens (makeLenses)
 import           Control.DeepSeq
-import           Data.Void
+import           Control.Lens (makeLenses)
 import           Data.Aeson
 import           Data.String.Conversions
+import           Data.Void
 import qualified Generics.SOP as SOP
 import           GHC.Generics (Generic)
 

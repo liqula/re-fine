@@ -27,7 +27,7 @@ type GlobalState = GlobalState_ DocumentState
 data GlobalState_ a = GlobalState
   { _gsPageState                  :: PageState a
   , _gsScreenState                :: ScreenState
-  , _gsTranslations               :: Trans
+--  , _gsTranslations               :: Trans
   , _gsDevState                   :: Maybe DevState  -- ^ for development & testing, see 'devStateUpdate'.
   , _gsServerCache                :: ServerCache
   } deriving (Show, Eq, Generic, Functor)
@@ -36,7 +36,7 @@ emptyGlobalState :: HasCallStack => GlobalState
 emptyGlobalState = GlobalState
   { _gsPageState                  = emptyPageState
   , _gsScreenState                = emptyScreenState
-  , _gsTranslations               = emptyTrans
+--  , _gsTranslations               = emptyTrans
   , _gsDevState                   = Nothing
   , _gsServerCache                = mempty
   }
@@ -103,6 +103,7 @@ data GlobalAction =
     -- testing & dev
   | ResetState GlobalState
   | ShowNotImplementedYet
+  | DumpAllState
 
     -- make sure that between two actions, no rendering happens (only one composite state
     -- transformation).

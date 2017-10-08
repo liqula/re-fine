@@ -42,13 +42,15 @@ import           System.Process
 import           Test.Hspec
 
 import           React.Flux.Missing
+import           Refine.Common.Color
 import           Refine.Common.Test hiding (assert)
 import           Refine.Common.Types
-import           Refine.Common.Color
+import           Refine.Frontend.Access
 import           Refine.Frontend.Contribution.Bubble
 import           Refine.Frontend.Contribution.Dialog
 import           Refine.Frontend.Contribution.Types
 import           Refine.Frontend.Document.FFI (createEmpty)
+import           Refine.Frontend.Document.Types
 import           Refine.Frontend.Header.DiffToolbar
 import           Refine.Frontend.Header.DiscussionToolbar
 import           Refine.Frontend.Header.EditToolbar
@@ -60,8 +62,11 @@ import           Refine.Frontend.Login.Component
 import           Refine.Frontend.MainMenu.Component
 import           Refine.Frontend.MainMenu.Types
 import           Refine.Frontend.Screen.Types
+import           Refine.Frontend.Store
+import           Refine.Frontend.Store.Types
 import           Refine.Frontend.Test.Enzyme hiding (Prop)
 import           Refine.Frontend.Util
+import           Refine.Frontend.Views
 
 
 -- * config
@@ -295,6 +300,13 @@ viewsSources :: [(String, ReactElementM 'EventHandlerCode (), [String])]
 viewsSources =
     [ ("toy_", toy_, ["testclass"])
 
+    , ("wholeScreen_/empty-empty", wholeScreen_ emptyAccessState emptyGlobalState, [])
+    , let Just gs = decode "{\"_gsPageState\":{\"PageStateMainMenu\":[{\"_mmErrors\":{\"_mmeRegistration\":null,\"_mmeLogin\":null},\"_mmState\":{\"MainMenuLogin\":\"MainMenuSubTabLogin\"}},null]},\"_gsServerCache\":{\"_scUsers\":[],\"_scUserIds\":null,\"_scGroupIds\":null,\"_scDiscussions\":[],\"_scVDocs\":[],\"_scEdits\":[],\"_scGroups\":[]},\"_gsDevState\":null,\"_gsScreenState\":{\"_ssHeaderHeight\":0,\"_ssWindowSize\":\"Desktop\",\"_ssWindowWidth\":0}}"
+      in ("wholeScreen_/empty-login", wholeScreen_ emptyAccessState gs, [])
+    , let Just as = decode "{\"_accGlobalRoles\":[],\"_accLoginState\":{\"UserLoggedIn\":{\"_loggedInUser\":1}},\"_accGroupRoles\":[],\"_accDispatchAfterLogin\":[]}"
+          Just gs = decode "{\"_gsPageState\":{\"PageStateMainMenu\":[{\"_mmErrors\":{\"_mmeRegistration\":null,\"_mmeLogin\":null},\"_mmState\":{\"MainMenuLogin\":\"MainMenuSubTabLogin\"}},null]},\"_gsServerCache\":{\"_scUsers\":[[1,{\"_userEmail\":\"admin@localhost\",\"_userDescription\":\"\",\"_userAvatar\":null,\"_userMetaID\":{\"_miID\":1,\"_miMeta\":{\"_metaCreatedAt\":\"2017-10-08T11:24:29.335107782Z\",\"_metaChangedAt\":\"2017-10-08T11:24:29.335107782Z\",\"_metaChangedBy\":\"Anonymous\",\"_metaCreatedBy\":\"Anonymous\"}},\"_userName\":\"admin\"}]],\"_scUserIds\":null,\"_scGroupIds\":null,\"_scDiscussions\":[],\"_scVDocs\":[],\"_scEdits\":[],\"_scGroups\":[]},\"_gsDevState\":null,\"_gsScreenState\":{\"_ssHeaderHeight\":0,\"_ssWindowSize\":\"Desktop\",\"_ssWindowWidth\":0}}"
+      in ("wholeScreen_/empty-iamadmin", wholeScreen_ as gs, [])
+
     , ("menu/login_", login_ Nothing, [])
     , ("menu/mainMenuGroups_", view_ mainMenuGroups "mainMenuGroups"
         ( GroupsProps
@@ -423,7 +435,12 @@ gitStatus = do
 -- * main
 
 main :: IO ()
-main = hspec spec
+main = do
+  registerInitialStore emptyGlobalState
+  registerInitialStore emptyAccessState
+  registerInitialStore emptyEditorStore
+  initRouting
+  hspec spec
 
 spec :: Spec
 spec = describe "@STYLEGUIDE" $ do

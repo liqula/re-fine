@@ -25,6 +25,7 @@ import           Refine.Frontend.Login.Types
 import           Refine.Frontend.MainMenu.Types
 import           Refine.Frontend.Store()
 import           Refine.Frontend.Store.Types
+import           Refine.Frontend.Test.Console
 import           Refine.Frontend.Types
 import           Refine.Frontend.Util
 import qualified Refine.Prelude.BuildInfo as BuildInfo
@@ -46,6 +47,15 @@ topMenuBar = mkView "TopMenuBarInMainMenu" $ \(TopMenuBarProps mCurrentTab curre
 
   div_ ["className" $= "ibutton-absolute-topright"] $ do
     loginStatusButton_ ColorSchemaBright (has _MainMenuLogin <$> mCurrentTab) currentUser
+
+  -- dump-all-state button.
+  when weAreInDevMode $ do
+    div_ ["style" @@= [ decl "position" (Ident "absolute")
+                      , decl "top" (Px 16)
+                      , decl "right" (Px 30)
+                      , decl "width" (Px 80)
+                      , decl "height" (Px 80)]] $ do
+      ibutton_ $ emptyIbuttonProps (ButtonImageIcon Svg.Help ColorSchemaDark) [DumpAllState]
 
   -- FIXME: move this div_ into the resp. tab component (or something...)
   case mCurrentTab of
