@@ -92,7 +92,7 @@ burgerButton_ = do
             , "style" @@= [decl "pointerEvents" (Ident "all")]
             , onClick $ \_ _ -> simpleHandler . dispatch . MainMenuAction $ MainMenuActionOpen defaultMainMenuTab
             ] $ do
-      span_ ["className" $= "sr-only"] "Navigation an/aus"
+      span_ ["className" $= "sr-only"] "main menu"
       span_ ["className" $= "c-mainmenu__icon-bar"] ""
       span_ ["className" $= "c-mainmenu__icon-bar"] ""
       span_ ["className" $= "c-mainmenu__icon-bar"] ""
