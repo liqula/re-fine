@@ -73,6 +73,7 @@ library
     , pretty-show
     , QuickCheck
     , quickcheck-instances
+    , random
     , react-hs
     , refine-common
     , refine-prelude
