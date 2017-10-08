@@ -13,8 +13,14 @@
     <title>liqula:Product1</title>
 
 </head>
-<body id="refine">
-
+<body>
+    <!-- if we write the app id into the body tag, react warns:
+    `render(): Rendering components directly into document.body is
+    discouraged, since its children are often manipulated by
+    third-party scripts and browser extensions. This may lead to
+    subtle reconciliation issues. Try rendering into a container
+    element created for your app.` -->
+    <section id="refine"/>
 
 </body>
 </html>
