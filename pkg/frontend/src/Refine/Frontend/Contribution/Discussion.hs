@@ -152,29 +152,32 @@ statementViewer = mkView "statementViewer" $ \(stmnt, StatementPropDetails medit
             & ibListKey .~ "1"
             & ibSize .~ Medium
 
-        div_ ["className" $= "inner-column-1"] $ do
+        div_ ["className" $= "inner-column-1 content-box__header__label"] $ do
           authorInfo (stmnt ^. statementMetaID . miMeta) names
 
       --div_ ["className" $= "discussion-thread-item__header-inner fisx-css-toolbar-flex c-vdoc-toolbar"] $ do
       div_ ["className" $= "right-column"] $ do
-        div_ ["className" $= "inner-column-1"] $ do
           let expanded = True  -- FIXME: implement partial thread collapse.
                                -- FIXME: more general name for Svg.DiffExpand, Svg.DiffCollapse.
           if expanded
             then do
-              "collapse thread"
-              ibutton_
-                $ emptyIbuttonProps (ButtonImageIcon Svg.DiffCollapse ColorSchemaDiscussion)
-                [ShowNotImplementedYet]
-                & ibListKey .~ "0"
-                & ibSize .~ Medium
+              div_ ["className" $= "inner-column-1 content-box__header__label"] $ do
+                "collapse thread"
+              div_ ["className" $= "inner-column-1"] $ do
+                ibutton_
+                  $ emptyIbuttonProps (ButtonImageIcon Svg.DiffCollapse ColorSchemaDiscussion)
+                  [ShowNotImplementedYet]
+                  & ibListKey .~ "0"
+                  & ibSize .~ Medium
             else do
-              "expand thread"
-              ibutton_
-                $ emptyIbuttonProps (ButtonImageIcon Svg.DiffExpand ColorSchemaDiscussion)
-                [ShowNotImplementedYet]
-                & ibListKey .~ "0"
-                & ibSize .~ Medium
+              div_ ["className" $= "inner-column-1 content-box__header__label"] $ do
+                "expand thread"
+              div_ ["className" $= "inner-column-1"] $ do
+                ibutton_
+                  $ emptyIbuttonProps (ButtonImageIcon Svg.DiffExpand ColorSchemaDiscussion)
+                  [ShowNotImplementedYet]
+                  & ibListKey .~ "0"
+                  & ibSize .~ Medium
 
     div_ ["className" $= "content-box__body"] $ do
       elemText $ stmnt ^. statementText
