@@ -27,7 +27,7 @@ import           Refine.Frontend.Util
 discussion :: HasCallStack => View '[DiscussionProps]
 discussion = mkView "Discussion" $ \props -> case props ^. discPropsDiscussion of
   Left _ -> hourglass
-  Right (_range, disc) -> div_ ["style" @@= styles, "className" $= "discussion-thread-container"] $ do
+  Right (_range, disc) -> div_ ["className" $= "discussion-thread-container"] $ do
     view_ aboutText "aboutText_"
       ( props ^. discPropsAboutText
       , ContribIDDiscussion False $ disc ^. discussionMetaID . miID
@@ -36,9 +36,6 @@ discussion = mkView "Discussion" $ \props -> case props ^. discPropsDiscussion o
     let treeprops = (disc ^. discussionTree, props ^. discPropsDetails)
         component = if props ^. discPropsFlatView then statementList else statementRoot
     xview_ component treeprops
-  where
-    -- FIXME: make this fit window size.
-    styles = [decl "width" (Px 800), decl "height" (Px 600)]
 
 discussion_ :: HasCallStack => DiscussionProps -> ReactElementM eventHandler ()
 discussion_ = view_ discussion "discussion_"
@@ -100,9 +97,9 @@ statementSubtree_ details (Tree.Node stmnt chldrn) = do
 
 statementEditor :: StatementEditorProps -> View '[]
 statementEditor (StatementEditorProps sid r modif) =
-  mkPersistentStatefulView "statementEditor" r Nothing $ \txt ->
-    div_ ["className" $= "content-box c_bg_note_bubble"] $ do
-      div_ ["className" $= "content-box__header"] $ do
+  mkPersistentStatefulView "statementEditor" r Nothing $ \txt -> do
+    --div_ ["className" $= "content-box c_bg_note_bubble"] $ do
+      div_ ["className" $= "content-box__section"] $ do
         div_ ["className" $= "left-column"] $ do
           div_ ["className" $= "inner-column-1"] $ do
             ibutton_
@@ -138,7 +135,7 @@ type StatementViewerProps = (Statement, StatementPropDetails)
 
 statementViewer :: View '[StatementViewerProps]
 statementViewer = mkView "statementViewer" $ \(stmnt, StatementPropDetails meditor names) ->
-  div_ ["className" $= "content-box"] $ do
+  div_ ["className" $= "content-box c_bg_note_bubble"] $ do
     div_ ["className" $= "content-box__header"] $ do
       div_ ["className" $= "left-column"] $ do
         div_ ["className" $= "inner-column-1"] $ do
@@ -185,26 +182,23 @@ statementViewer = mkView "statementViewer" $ \(stmnt, StatementPropDetails medit
     let editing e = e ^. sepStatementID == stmnt ^. statementID && not (e ^. sepUpdate)
     case meditor of
       Just e | editing e -> do
-        div_ ["className" $= "content-box__footer"] $ do
+        div_ ["className" $= "content-box__section"] $ do
           --div_ ["style" @@= [decl "height" (Px 6)]] $ do
             pure ()
         xview_ (statementEditor e)
       _ -> do
-        div_ ["className" $= "content-box__footer"] $ do
+        div_ ["className" $= "content-box__section"] $ do
           div_ ["className" $= "left-column"] $ do
             -- FIXME: @AP.createOrUpdateComment $ stmnt ^. statementVDoc@, but now we need to look up
             -- the vdoc under the id :(.  so it seems like the access policy terms need to be with less
             -- data.  e.g., replace vdoc by the group it's in.  that should be sufficient, and then the
             -- information is already in global access state.
-            div_ ["className" $= "inner-column-1"] $ do
-              replyButton_ stmnt
+            replyButton_ stmnt
             -- FIXME: comment in #358: @guard (AP.updateStatement stmnt) $ ...@
-            div_ ["className" $= "inner-column-1"] $ do
-              updateButton_ stmnt
+            updateButton_ stmnt
 
           div_ ["className" $= "right-column"] $ do
-            div_ ["className" $= "inner-column-1"] $ do
-              voteUpDownReportButtons
+            voteUpDownReportButtons
 
   where
     replyButton_ :: Statement -> ReactElementM 'EventHandlerCode ()
@@ -220,25 +214,31 @@ statementViewer = mkView "statementViewer" $ \(stmnt, StatementPropDetails medit
           act = [ DocumentAction . ReplyToOrUpdateStatement isupdate (stmnt ^. statementID) . FormBegin
                   $ newLocalStateRef (CreateStatement contents) stmnt
                 ]
-      xview_ (ibutton (props ^. ibPressed)) props
-      label
+      div_ ["className" $= "inner-column-1"] $ do
+        xview_ (ibutton (props ^. ibPressed)) props
+      div_ ["className" $= "inner-column-1"] $ do
+        div_ ["className" $= "content-box__section__label"] $ do
+          label
 
     voteUpDownReportButtons = do
-      ibutton_ $ emptyIbuttonProps (ButtonImageIcon Svg.VotePositive ColorSchemaDiscussion) [ShowNotImplementedYet]
-        & ibListKey .~ "voteup"
-        -- & ibIndexNum .~ Just 0
-        & ibSize .~ Large
+      div_ ["className" $= "inner-column-1"] $ do
+        ibutton_ $ emptyIbuttonProps (ButtonImageIcon Svg.VotePositive ColorSchemaDiscussion) [ShowNotImplementedYet]
+          & ibListKey .~ "voteup"
+          -- & ibIndexNum .~ Just 0
+          & ibSize .~ Large
 
-      ibutton_ $ emptyIbuttonProps (ButtonImageIcon Svg.VoteNegative ColorSchemaDiscussion) [ShowNotImplementedYet]
-        & ibListKey .~ "votedown"
-        -- & ibIndexNum .~ Just 0
-        & ibSize .~ Large
+      div_ ["className" $= "inner-column-1"] $ do
+        ibutton_ $ emptyIbuttonProps (ButtonImageIcon Svg.VoteNegative ColorSchemaDiscussion) [ShowNotImplementedYet]
+          & ibListKey .~ "votedown"
+          -- & ibIndexNum .~ Just 0
+          & ibSize .~ Large
 
-      div_ ["className" $= "hr-div"] $ pure ()
+      --div_ ["className" $= "content-box__hr"] $ pure ()
 
-      ibutton_ $ emptyIbuttonProps (ButtonImageIcon Svg.Report ColorSchemaDiscussion) [ShowNotImplementedYet]
-        & ibListKey .~ "report"
-        & ibSize .~ Large
+      div_ ["className" $= "inner-column-1"] $ do
+        ibutton_ $ emptyIbuttonProps (ButtonImageIcon Svg.Report ColorSchemaDiscussion) [ShowNotImplementedYet]
+          & ibListKey .~ "report"
+          & ibSize .~ Large
 
 authorInfo :: MetaInfo -> Map (ID User) Username -> ReactElementM h ()
 authorInfo metaInfo names = elemText . mconcat $
