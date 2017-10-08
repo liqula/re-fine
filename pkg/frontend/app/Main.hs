@@ -20,7 +20,7 @@ main = do
     registerInitialStore emptyGlobalState
     registerInitialStore emptyAccessState
     registerInitialStore emptyEditorStore
-    initAjax
+    initAjax  -- FIXME: can we skip this?  it's not needed for config.js, and we have no servant here any more.
     initWebSocket
     initRouting
     reactRenderView "refine" refineApp

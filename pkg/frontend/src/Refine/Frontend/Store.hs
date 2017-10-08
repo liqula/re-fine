@@ -12,7 +12,7 @@ import           GHCJS.Foreign.Callback (Callback, asyncCallback1, syncCallback1
 import           React.Flux.Missing
 import           Refine.Common.Types hiding (CreateUser, Login)
 import           Refine.Common.VDoc.Draft
-import           Refine.Frontend.Access ()
+import           Refine.Frontend.Access
 import           Refine.Frontend.Contribution.Store (contributionStateUpdate)
 import           Refine.Frontend.Contribution.Types
 import           Refine.Frontend.Document.FFI
@@ -126,6 +126,10 @@ transformGlobalState = transf
 
         ShowNotImplementedYet -> do
             liftIO $ windowAlertST "not implemented yet."
+        DumpAllState -> do
+            consoleLogJSStringM "DumpAllState" (cs $ encode st)
+            dispatchAndExec DumpAccessState
+            -- FIXME: dump editorstate?
 
         _ -> pure ()
 
@@ -145,7 +149,7 @@ transformGlobalState = transf
       fm :: GlobalState -> CacheLookupT GlobalState
       fm =    gsServerCache         (pure . serverCacheUpdate act)
           >=> gsScreenState         (pure . maybe id screenStateUpdate (act ^? _ScreenAction))
-          >=> gsTranslations        (pure . translationsUpdate act)
+          -- >=> gsTranslations        (pure . translationsUpdate act)
           >=> gsDevState            (pure . devStateUpdate act)
           >=> (\st' -> gsPageState (pageStateUpdate act st') st')
 
@@ -437,15 +441,15 @@ newtype FileReader = FileReader JSVal
 #ifdef __GHCJS__
 
 foreign import javascript safe
-  "getSelection().getRangeAt(0).startContainer.parentElement.getBoundingClientRect().top"
+  "refine$getRangeTopBottomOffset().top"
   js_getRangeTopOffset :: IO Int
 
 foreign import javascript safe
-  "getSelection().getRangeAt(0).endContainer.parentElement.getBoundingClientRect().bottom"
+  "refine$getRangeTopBottomOffset().bottom"
   js_getRangeBottomOffset :: IO Int
 
 foreign import javascript safe
-  "window.getSelection().removeAllRanges()"
+  "refine$removeAllRanges"
   js_removeAllRanges :: IO ()
 
 foreign import javascript safe

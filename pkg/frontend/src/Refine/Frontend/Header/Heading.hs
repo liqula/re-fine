@@ -6,9 +6,6 @@ module Refine.Frontend.Header.Heading
   , mkMainHeaderProps, mkMainHeaderToolbarProps
   , mainHeader_
   , mainHeaderToolbar_
-
-  -- * exported for testing only:
-  , toolbarWrapper_
   ) where
 #include "import_frontend.hs"
 
@@ -35,11 +32,6 @@ import           Refine.Frontend.Store.Types
 import           Refine.Frontend.Util
 
 
--- | Note that if @toolbarItems_@ is a component ('View') rather than a 'ReactElementM', css styling
--- mysteriously breaks.
-toolbarWrapper_ :: ReactElementM eventHandler () -> ReactElementM eventHandler ()
-toolbarWrapper_ = header_ ["className" $= "row row-align-middle c-vdoc-toolbar"]
-
 mainHeader :: HasCallStack => React.ReactView MainHeaderProps
 mainHeader = React.defineLifecycleView "MainHeader" () React.lifecycleConfig
      -- the render function inside a Lifecycle view does not update the children passed to it when the state changes
@@ -61,9 +53,8 @@ mainHeader_ props = React.viewWithSKey mainHeader "mainHeader" props mempty
 
 -- | FIXME: make this a component, not just an element.
 mainHeaderToolbar_ :: HasCallStack => MainHeaderToolbarProps -> ReactElementM eventHandler ()
-mainHeaderToolbar_ props = div_ ["className" $= "c-fulltoolbar"] $ do
-          toolbarWrapper_ $ case props ^. mainHeaderToolbarPropsDocumentState of
-
+mainHeaderToolbar_ props = do
+  case props ^. mainHeaderToolbarPropsDocumentState of
             WipedDocumentStateView -> toolbar_ $ props ^. mainHeaderToolbarPropsVDoc
 
             WipedDocumentStateDiff i edit collapsed editable -> diffToolbar_ $ DiffToolbarProps
@@ -78,9 +69,9 @@ mainHeaderToolbar_ props = div_ ["className" $= "c-fulltoolbar"] $ do
 
             WipedDocumentStateDiscussion dprops -> discussionToolbar_ dprops
 
-          indexToolbarExtension_ $ props ^. mainHeaderToolbarPropsIndexToolbarProps
-          commentToolbarExtension_ $ CommentToolbarExtensionProps (props ^. mainHeaderToolbarPropsExtStatus)
-          editToolbarExtension_ $ EditToolbarExtensionProps (props ^. mainHeaderToolbarPropsExtStatus)
+  indexToolbarExtension_ $ props ^. mainHeaderToolbarPropsIndexToolbarProps
+  commentToolbarExtension_ $ CommentToolbarExtensionProps (props ^. mainHeaderToolbarPropsExtStatus)
+  editToolbarExtension_ $ EditToolbarExtensionProps (props ^. mainHeaderToolbarPropsExtStatus)
 
 
 headerDepth :: BlockType -> Maybe Int

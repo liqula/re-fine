@@ -25,6 +25,7 @@ import           Refine.Frontend.Login.Types
 import           Refine.Frontend.MainMenu.Types
 import           Refine.Frontend.Store()
 import           Refine.Frontend.Store.Types
+import           Refine.Frontend.Test.Console
 import           Refine.Frontend.Types
 import           Refine.Frontend.Util
 import qualified Refine.Prelude.BuildInfo as BuildInfo
@@ -37,7 +38,7 @@ topMenuBar = mkView "TopMenuBarInMainMenu" $ \(TopMenuBarProps mCurrentTab curre
   div_ ["className" $= "ibutton-absolute-topleft"] $ do
     case mCurrentTab of
       Nothing -> burgerButton_
-      Just _ -> ibutton_ $ emptyIbuttonProps (ButtonImageIcon Svg.Close ColorSchemaBright) [MainMenuAction MainMenuActionClose]
+      Just _ -> ibutton_ $ emptyIbuttonProps (ButtonImageIcon Svg.Close ColorSchemaBright) (onLoginClick currentUser)
         & ibListKey .~ "1"
         & ibSize .~ XXLarge
 
@@ -47,11 +48,20 @@ topMenuBar = mkView "TopMenuBarInMainMenu" $ \(TopMenuBarProps mCurrentTab curre
   div_ ["className" $= "ibutton-absolute-topright"] $ do
     loginStatusButton_ ColorSchemaBright (has _MainMenuLogin <$> mCurrentTab) currentUser
 
+  -- dump-all-state button.
+  when weAreInDevMode $ do
+    div_ ["style" @@= [ decl "position" (Ident "absolute")
+                      , decl "top" (Px 16)
+                      , decl "right" (Px 130)
+                      , decl "width" (Px 80)
+                      , decl "height" (Px 80)]] $ do
+      ibutton_ $ emptyIbuttonProps (ButtonImageIcon Svg.Help ColorSchemaDark) [DumpAllState]
+
   -- FIXME: move this div_ into the resp. tab component (or something...)
   case mCurrentTab of
     Nothing -> pure ()
     Just currentTab -> div_ ["className" $= "main-content__header"] $ do
-      div_ ["className" $= "main-content__header-inner"] $ do
+      div_ ["className" $= "main-content__header-inner fisx-css-toolbar-flex c-vdoc-toolbar"] $ do
         case currentUser of
           UserLoggedIn user -> do
             ibutton_ $ emptyIbuttonProps (ButtonImageIcon Svg.UserProfile ColorSchemaBright)
@@ -82,7 +92,7 @@ burgerButton_ = do
             , "style" @@= [decl "pointerEvents" (Ident "all")]
             , onClick $ \_ _ -> simpleHandler . dispatch . MainMenuAction $ MainMenuActionOpen defaultMainMenuTab
             ] $ do
-      span_ ["className" $= "sr-only"] "Navigation an/aus"
+      span_ ["className" $= "sr-only"] "main menu"
       span_ ["className" $= "c-mainmenu__icon-bar"] ""
       span_ ["className" $= "c-mainmenu__icon-bar"] ""
       span_ ["className" $= "c-mainmenu__icon-bar"] ""
@@ -375,50 +385,11 @@ mainMenuProcessShort_ props = view_ mainMenuProcessShort listKey props
 
 -- | FUTUREWORK: should this be @View '[LocalStateRef CreateGroup]@ or @View '[Maybe (ID Group),
 -- LocalStateRef CreateGroup]@?  (same with 'mainMenuCreateProcess'.)
-mainMenuCreateGroup :: HasCallStack => Maybe (ID Group) -> (LocalStateRef (CreateGroup_ [(User, Bool)]), Map (ID User) User) -> View '[]
+mainMenuCreateGroup :: HasCallStack => Maybe (ID Group)
+                    -> (LocalStateRef (CreateGroup_ [(User, Bool)]), Map (ID User) User)
+                    -> View '[]
 mainMenuCreateGroup mid (lst, allusers)
-  = mkPersistentStatefulView "MainMenuCreateGroup" lst (Just addUsers)
-  $ \st@(CreateGroup title desc _ _ users _) -> do
-
-    contributionDialogTextForm createGroupTitle st 1 "group title"
-    hr_ []
-    contributionDialogTextForm createGroupDesc st 2 "group description"
-    hr_ []
-    "Invite Members"
-    forM_ (zip [0..] users) $ \(i, (user, cv)) -> do
-      br_ []
-      div_ ["key" @= ("u-" <> show (user ^. userID . unID))] $ do
-        let inputFieldStyles =
-              [ decl "borderRadius" (Px 5)
-              , decl "margin" (Px 12)
-              , decl "backgroundColor" (Ident "rgba(246, 247, 249, 1)")
-              ]
-
-        input_ $
-         ["checked" $= "checked" | cv] <>
-         [ "style" @@= inputFieldStyles
-         , "type" $= "checkbox"
-         , onChange $ \_evt -> simpleHandler $ \st' -> ([], Just (st' & createGroupMembers . ix i . _2 %~ not))
-         ]
-        elemText $ user ^. userName <> " <" <> (user ^. userEmail) <> ">"
-    hr_ []
-
-    -- FIXME: align right
-    ibutton_ $ emptyIbuttonProps
-      (ButtonImageIcon Svg.Save ColorSchemaDark)
-      [MainMenuAction . MainMenuActionOpen . MainMenuCreateOrUpdateGroup mid $ FormComplete st]
-      & ibListKey .~ "1"
-      & ibSize .~ XXLarge
-      & ibEnabled .~ not (ST.null desc || ST.null title)
-
-    -- FIXME: align right
-    ibutton_ $ emptyIbuttonProps
-      (ButtonImageIcon Svg.Close ColorSchemaDark)
-      [ MainMenuAction . MainMenuActionOpen $
-          maybe (MainMenuGroups ()) (MainMenuGroup MainMenuGroupProcesses) mid
-      ]
-      & ibListKey .~ "2"
-      & ibSize .~ XXLarge
+  = mkPersistentStatefulView "MainMenuCreateGroup" lst (Just addUsers) rndr
   where
     addUsers :: CreateGroup_ [(User, Bool)] -> CreateGroup_ [(User, Bool)]
     addUsers cg = cg & createGroupMembers %~ flip (foldr f) (Map.elems allusers)
@@ -427,8 +398,72 @@ mainMenuCreateGroup mid (lst, allusers)
           Nothing -> asc <> [(u, False)]
           _ -> asc
 
+    rndr :: CreateGroup_ [(User, Bool)]
+         -> ReactElementM_ (StatefulViewEventHandler (CreateGroup_ [(User, Bool)])) ()
+    rndr st@(CreateGroup title desc _ _ users _) =
+      div_ ["className" $= "menupage-container c_bg_blue_light"] $ do
+        div_ ["className" $= "menupage-header"] $ do
+          div_ ["className" $= "right-column"] $ do
+            div_ ["className" $= "inner-column-1"] $ do
+              ibutton_ $ emptyIbuttonProps
+                (ButtonImageIcon Svg.Close ColorSchemaDark)
+                [ MainMenuAction . MainMenuActionOpen $
+                    maybe (MainMenuGroups ()) (MainMenuGroup MainMenuGroupProcesses) mid
+                ]
+                & ibListKey .~ "2"
+                & ibSize .~ Large
 
-mainMenuCreateGroup_ :: HasCallStack => Maybe (ID Group) -> (LocalStateRef (CreateGroup_ [(User, Bool)]), Map (ID User) User) -> ReactElementM eventHandler ()
+        div_ ["className" $= "menupage-hr"] $ pure ()
+
+        div_ ["className" $= "menu-form m-t-1"] $ do
+          div_ ["className" $= "menu-form-header"] .
+            div_ ["className" $= "left-column"] .
+              div_ ["className" $= "inner-column-1"] .
+                div_ ["className" $= "menu-form-header__label"] $
+                  "Create / Update Group"
+
+          div_ ["className" $= "menu-form__input-div m-b-1"] $
+            contributionDialogTextForm createGroupTitle st 1 "group title"
+
+          div_ ["className" $= "menu-form__input-div m-b-1"] $
+            contributionDialogTextForm createGroupDesc st 2 "group description"
+
+          div_ ["className" $= "menu-form__input-div m-b-1"] $ do
+            div_ ["className" $= "c-vdoc-overlay-content__step-indicator"] $ do
+              p_ $ do
+                elemString "Step 3: "
+                span_ ["className" $= "bold"] "Invite Members"
+
+            forM_ (zip [0..] users) $ \(i, (user, cv)) -> do
+              br_ []
+              div_ ["key" @= ("u-" <> show (user ^. userID . unID))] $ do
+                let inputFieldStyles =
+                      [ decl "borderRadius" (Px 5)
+                      , decl "margin" (Px 12)
+                      , decl "backgroundColor" (Ident "rgba(246, 247, 249, 1)")
+                      ]
+
+                input_ $
+                 ["checked" $= "checked" | cv] <>
+                 [ "style" @@= inputFieldStyles
+                 , "type" $= "checkbox"
+                 , onChange $ \_evt -> simpleHandler $ \st' -> ([], Just (st' & createGroupMembers . ix i . _2 %~ not))
+                 ]
+                elemText $ user ^. userName <> " <" <> (user ^. userEmail) <> ">"
+
+          div_ ["className" $= "menu-form__input-div m-b-1"] $ do
+            ibutton_ $ emptyIbuttonProps
+              (ButtonImageIcon Svg.Save ColorSchemaDark)
+              [MainMenuAction . MainMenuActionOpen . MainMenuCreateOrUpdateGroup mid $ FormComplete st]
+              & ibListKey .~ "1"
+              & ibSize .~ XXLarge
+              & ibEnabled .~ not (ST.null desc || ST.null title)
+
+
+mainMenuCreateGroup_ :: HasCallStack
+                     => Maybe (ID Group)
+                     -> (LocalStateRef (CreateGroup_ [(User, Bool)]), Map (ID User) User)
+                     -> ReactElementM eventHandler ()
 mainMenuCreateGroup_ mid lst = view_ (mainMenuCreateGroup mid lst) "mainMenuCreateGroup"
 
 mainMenuCreateProcess :: HasCallStack => LocalStateRef CreateVDoc -> View '[]
@@ -452,42 +487,57 @@ mainMenuCreateProcess_ lst = view_ (mainMenuCreateProcess lst) "mainMenuCreatePr
 - this is possible with local state update function
 
 -}
-
 mainMenuProfile :: HasCallStack => Bool -> Lookup User -> LocalStateRef ProfileLocalState -> View '[]
 mainMenuProfile editable user lst = mkPersistentStatefulView "MainMenuProfile" lst Nothing $ \st -> case user of
   Left _uid -> hourglass
-  Right u -> do
-    elemText $ u ^. userName
+  Right u -> div_ ["style" @@= [decl "margin" (Px 30), decl "border" (Ident "red, dashed, 1px")]] $ do
+      div_ ["className" $= "menupage-container c_bg_blue_light"] $ do
+        div_ ["className" $= "menupage-header"] $ do
+          div_ ["className" $= "left-column"] $ do
+            div_ ["className" $= "inner-column-1"] $ do
+              pure ()
+            div_ ["className" $= "inner-column-1"] $ do
+              pure ()
 
-    imageUpload_ editable u lst st
+        div_ [] $ do
+          div_ ["style" @@= [decl "backgroundColor" (Ident "yellow"), decl "border" (Ident "dashed black 1px")]] $ do
+            ibutton_ $ emptyIbuttonProps (ButtonImageIcon Svg.Login ColorSchemaDark) [Logout]
 
-    case snd st of
-      Nothing -> do
-        br_ []
-        elemText $ u ^. userDescription
+          div_ ["style" @@= [decl "backgroundColor" (Ident "orange"), decl "border" (Ident "dashed black 1px")]] $ do
+            elemText $ u ^. userName
 
-        when editable $ do
-          br_ []
-          button_
-            [ onClick $ \_evt _ -> simpleHandler @_ $
-              \st' -> ([], Just $ st' & _2 .~ Just (u ^. userDescription))
-            ] $ elemText "edit"
+          div_ ["style" @@= [decl "backgroundColor" (Ident "yellow"), decl "border" (Ident "dashed black 1px")]] $ do
+            imageUpload_ editable u lst st
 
-      _ -> do
-          br_ []
-          contributionDialogTextForm (_2 . iso (fromJustNote "mainMenuProfile: desc") Just) st 1 "Description"
-          br_ []
+          div_ ["style" @@= [decl "backgroundColor" (Ident "orange"), decl "border" (Ident "dashed black 1px")]] $ do
+           case snd st of
+            Nothing -> do
+              br_ []
+              p_ "description:"
+              p_ . elemText $ u ^. userDescription
 
-          button_
-            [ onClick $ \_evt _ -> simpleHandler @_ $
-              \st' -> ( [action @GlobalState . MainMenuAction . MainMenuActionOpen $
-                         MainMenuProfile (u ^. userID, FormComplete (Right <$> (u ^. userAvatar), snd st))]
-                      , Just $ st' & _2 .~ Nothing)
-            ] $ elemText "save"
-          button_
-            [ onClick $ \_evt _ -> simpleHandler @_ $
-              \st' -> ([], Just $ st' & _2 .~ Nothing)
-            ] $ elemText "cancel"
+              when editable $ do
+                br_ []
+                button_
+                  [ onClick $ \_evt _ -> simpleHandler @_ $
+                    \st' -> ([], Just $ st' & _2 .~ Just (u ^. userDescription))
+                  ] $ elemText "edit"
+
+            _ -> do
+                br_ []
+                contributionDialogTextForm (_2 . iso (fromJustNote "mainMenuProfile: desc") Just) st 1 "Description"
+                br_ []
+
+                button_
+                  [ onClick $ \_evt _ -> simpleHandler @_ $
+                    \st' -> ( [action @GlobalState . MainMenuAction . MainMenuActionOpen $
+                               MainMenuProfile (u ^. userID, FormComplete (Right <$> (u ^. userAvatar), snd st))]
+                            , Just $ st' & _2 .~ Nothing)
+                  ] $ elemText "save"
+                button_
+                  [ onClick $ \_evt _ -> simpleHandler @_ $
+                    \st' -> ([], Just $ st' & _2 .~ Nothing)
+                  ] $ elemText "cancel"
 
 mainMenuProfile_ :: HasCallStack => Bool -> Lookup User -> LocalStateRef ProfileLocalState -> ReactElementM eventHandler ()
 mainMenuProfile_ editable user lst = view_ (mainMenuProfile editable user lst) "mainMenuProfile_"
@@ -511,29 +561,40 @@ renderCreateOrUpdateProcess
   -> st
   -> ReactElementM ('StatefulEventHandlerCode st) ()
 renderCreateOrUpdateProcess (cloneLens -> toTitle) (cloneLens -> toAbstract) save cancel st = do
-    contributionDialogTextForm (toTitle . unTitle) st 2 "title"
-    hr_ []
-    contributionDialogTextForm (toAbstract . unAbstract) st 2 "abstract"
-    hr_ []
+  div_ ["className" $= "menupage-container c_bg_blue_light"] $ do
+    div_ ["className" $= "menupage-header"] $ do
+      div_ ["className" $= "right-column"] $ do
+        div_ ["className" $= "inner-column-1"] $ do
+          ibutton_ $ emptyIbuttonProps
+            (ButtonImageIcon Svg.Close ColorSchemaDark)
+            [cancel]
+            & ibListKey .~ "2"
+            & ibSize .~ Large
 
-    -- FIXME: align right
-    ibutton_ $ emptyIbuttonProps
-      (ButtonImageIcon Svg.Save ColorSchemaDark)
-      [save $ FormComplete st]
-      & ibEnabled .~ (not . ST.null $ st ^. toTitle . unTitle)
-      & ibSize .~ XXLarge
-      & ibListKey .~ "1"
+    div_ ["className" $= "menu-form m-t-1"] $ do
+      div_ ["className" $= "menu-form-header"] .
+        div_ ["className" $= "left-column"] .
+          div_ ["className" $= "inner-column-1"] .
+            div_ ["className" $= "menu-form-header__label"] $
+              "Create / Update Process Details"
 
-    -- FIXME: align right
-    ibutton_ $ emptyIbuttonProps
-      (ButtonImageIcon Svg.Close ColorSchemaDark)
-      [cancel]
-      & ibSize .~ XXLarge
-      & ibListKey .~ "2"
+      div_ ["className" $= "menu-form__input-div m-b-1"] $
+        contributionDialogTextForm (toTitle . unTitle) st 2 "title"
+
+      div_ ["className" $= "menu-form__input-div m-b-1"] $
+        contributionDialogTextForm (toAbstract . unAbstract) st 2 "abstract"
+
+      div_ ["className" $= "menu-form__input-div m-b-1"] $ do
+        ibutton_ $ emptyIbuttonProps
+          (ButtonImageIcon Svg.Save ColorSchemaDark)
+          [save $ FormComplete st]
+          & ibEnabled .~ (not . ST.null $ st ^. toTitle . unTitle)
+          & ibSize .~ XXLarge
+          & ibListKey .~ "1"
 
 
 mainMenuLoginTab :: HasCallStack => View '[MainMenuProps MainMenuSubTabLogin]
-mainMenuLoginTab = mkView "MainMenuLoginTab" $ \(MainMenuProps currentTab menuErrors currentUser) -> do
+mainMenuLoginTab = mkView "MainMenuLoginTab" $ \(MainMenuProps currentTab menuErrors _currentUser) -> do
   let tabButton :: Int -> MainMenuSubTabLogin -> ReactElementM eventHandler ()
       tabButton key this =
         ibutton_ $ emptyIbuttonProps
@@ -558,8 +619,8 @@ mainMenuLoginTab = mkView "MainMenuLoginTab" $ \(MainMenuProps currentTab menuEr
     div_ ["className" $= "menupage-hr"] $ pure ()
 
     case currentTab of
-      MainMenuSubTabLogin        -> loginOrLogout_ currentUser (menuErrors ^. mmeLogin)
-      MainMenuSubTabRegistration -> registration_  (menuErrors ^. mmeRegistration)
+      MainMenuSubTabLogin        -> login_ (menuErrors ^. mmeLogin)
+      MainMenuSubTabRegistration -> registration_ (menuErrors ^. mmeRegistration)
 
 mainMenuLoginTab_ :: HasCallStack => MainMenuProps MainMenuSubTabLogin -> ReactElementM eventHandler ()
 mainMenuLoginTab_ = view_ mainMenuLoginTab "mainMenuLoginTab_"

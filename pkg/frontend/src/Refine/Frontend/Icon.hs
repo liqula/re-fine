@@ -62,7 +62,7 @@ sibutton_ stlens st props = do
       onClk = [onClick $ \evt mevt -> mkIbuttonClickHandler props evt mevt | props ^. ibEnabled]
 
       divclss = [ iconSizeCls (props ^. ibSize)
-                , "margin1"  -- only sometimes; introduce 'ibExtraClasses' for this.
+                , "margin1"  -- TODO: only sometimes; introduce 'ibExtraClasses' for this.
                 ]
 
       -- TODO: should this go to scss for coherence reasons?
@@ -92,7 +92,7 @@ emptyIbuttonProps img onclick = IbuttonProps
   , _ibImage            = img
   , _ibIndexNum         = Nothing
   , _ibEnabled          = True
-  , _ibGrayedOut        = False
+  , _ibNotGrayedOut     = True
   , _ibSize             = Large
   }
 

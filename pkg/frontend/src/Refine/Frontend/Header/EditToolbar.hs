@@ -102,7 +102,7 @@ editToolbar = mkView' "editToolbar" $ \ep -> do
   let props icon acts = emptyIbuttonProps icon acts & ibSize .~ XXLarge
 
   div_ ["className" $= "main-content__header"] $ do
-    div_ ["className" $= "main-content__header-inner"] $ do
+    div_ ["className" $= "main-content__header-inner fisx-css-toolbar-flex c-vdoc-toolbar"] $ do
       ibutton_ $ props (ButtonImageIcon Svg.Close ColorSchemaEdit)
         [DocumentAction DocumentCancelSave, DocumentAction UpdateDocumentStateView]
         & ibListKey .~ "1"

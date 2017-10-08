@@ -78,19 +78,8 @@ invalidRegistrationForm form =
      , form ^. registrationFormAgree . to not
      ]
 
-loginOrLogout_ :: HasCallStack => CurrentUser (Lookup User) -> FormError -> ReactElementM eventHandler ()
-loginOrLogout_ = \case
-  UserLoggedOut  -> login_
-  UserLoggedIn _ -> const logout_
-
-defaultStyles :: HasCallStack => [Decl]
-defaultStyles = []
-
 
 -- * Login
-
-loginStyles :: HasCallStack => [Decl]
-loginStyles = defaultStyles
 
 login :: HasCallStack => FormError -> View '[]
 login errors = mkStatefulView "Login" (LoginForm "" "" errors) $ \curState ->
@@ -121,50 +110,44 @@ login_ :: HasCallStack => FormError -> ReactElementM eventHandler ()
 login_ errors = view_ (login errors) "login_"
 
 
--- * Logout
-
-logoutStyles :: HasCallStack => [Decl]
-logoutStyles = defaultStyles
-
-logout :: HasCallStack => View '[]
-logout = mkView "Logout" $ do
-  div_ ["style" @@= logoutStyles] $ do
-    p_ "Profile page"
-    form_ [ "target" $= "#"
-          , "action" $= "POST" ] $ do
-
-      ibutton_ $ emptyIbuttonProps
-        (ButtonImageIcon Svg.Save ColorSchemaDark)
-        [RS.Logout]
-
-logout_ :: HasCallStack => ReactElementM eventHandler ()
-logout_ = view_ logout "logout_"
-
-
 -- * Registration
-
-registrationStyles :: HasCallStack => [Decl]
-registrationStyles = defaultStyles
 
 registration :: HasCallStack => FormError -> View '[]
 registration errors = mkStatefulView "Registration" (RegistrationForm "" "" "" "" False errors) $ \curState -> do
-  div_ ["style" @@= registrationStyles] $ do
-    h1_ "Registration"
 
-    form_ [ "target" $= "#"
-          , "action" $= "POST" ] $ do
+  div_ ["className" $= "menu-form m-t-1"] $ do
+    div_ ["className" $= "menu-form-header"] .
+      div_ ["className" $= "left-column"] .
+        div_ ["className" $= "inner-column-1"] .
+          div_ ["className" $= "menu-form-header__label"] $
+            "Register"
 
-      mapM_ (p_ . elemCS)
-        (curState ^. registrationFormErrors)
+    mapM_ (p_ . elemCS)
+      (curState ^. registrationFormErrors)
 
-      inputField "registration-username"  "text"     "Username"    registrationFormUsername >> br_ []
-      inputField "registration-email1"    "email"    "Email"       registrationFormEmail1   >> br_ []
-      inputField "registration-email2"    "email"    "Email again" registrationFormEmail2   >> br_ []
-      inputField "registration-password1" "password" "Password"    registrationFormPassword >> br_ []
+    div_ ["className" $= "menu-form__input-div m-b-1"] $
+      inputFieldWithKeyExtra ["className" $= "menu-form__input"]
+        "registration-username" "text" "Username" "value" registrationFormUsername
 
-      inputFieldWithKey "registration-agree" "checkbox" "" "checked" registrationFormAgree
-      "I agree with the terms of use." >> br_ []
+    div_ ["className" $= "menu-form__input-div m-b-1"] $
+      inputFieldWithKeyExtra ["className" $= "menu-form__input"]
+        "registration-email1" "email" "Email" "value" registrationFormEmail1
 
+    div_ ["className" $= "menu-form__input-div m-b-1"] $
+      inputFieldWithKeyExtra ["className" $= "menu-form__input"]
+        "registration-email2" "email" "Email again" "value" registrationFormEmail2
+
+    div_ ["className" $= "menu-form__input-div m-b-1"] $
+      inputFieldWithKeyExtra ["className" $= "menu-form__input"]
+        "registration-password1" "password" "Password" "value" registrationFormPassword
+
+    div_ ["className" $= "menu-form__input-div m-b-1"] $ do
+      p_ ["style" @@= [decl "marginLeft" (Px 12)]] $ do
+        inputFieldWithKeyExtra []
+          "registration-agree" "checkbox" "" "checked" registrationFormAgree
+        "I agree with the terms of use."
+
+    div_ ["className" $= "menu-form-submenu m-b-1"] .
       ibutton_ $ emptyIbuttonProps
         (ButtonImageIcon Svg.Save ColorSchemaDark)
         [RS.CreateUser

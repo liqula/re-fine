@@ -47,7 +47,6 @@ $btn-active-indicator-size-mobile: 35px;
                 position: absolute;
                 top: 0;
                 width: $btn-active-indicator-size-mobile;
-                z-index: -1;
             }
 
             *::before,
@@ -80,7 +79,6 @@ $btn-active-indicator-size-mobile: 35px;
 
     &--align-right {
         margin-left: auto;
-        z-index: $toolbar-icons-index;
     }
 
     button {

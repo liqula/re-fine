@@ -50,7 +50,7 @@ js-build/frontend.js: js-build/install-root setup-js-build $(INSTALL_ROOT)/refin
 	mv js-build/frontend.js- js-build/frontend.js
 
 # build without nix.  see stack-js.yaml for why.
-via-stack: setup-js-build $(STACK_INSTALL_ROOT)/bin/refine-frontend.jsexe/all.js
+via-stack:
 	mkdir -p js-build
 	cp images/favicon.ico js-build/
 	ln -sf $(STACK_INSTALL_ROOT) js-build/install-root

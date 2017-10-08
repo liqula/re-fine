@@ -7,6 +7,7 @@ module Refine.Frontend.WebSocket where
 
 import           Control.Concurrent
 import           System.IO.Unsafe
+import           System.Random
 #ifdef __GHCJS__
 import           JavaScript.Web.WebSocket
 import           JavaScript.Web.MessageEvent
@@ -53,7 +54,9 @@ initWebSocket = openConnection Nothing
 
    wsClose :: CloseEvent -> IO ()
    wsClose _ = tryTakeMVar webSocketMVar >>= \case
-     Nothing -> openConnection Nothing  -- this shouldn't happen, but handle it anyway.
+     Nothing -> do  -- could happen if connection dies before handshakeSend is called.
+       threadDelay =<< randomRIO (100 * 1000, 1000 * 1000)
+       openConnection Nothing
      Just (st, _) -> openConnection $ case st of
        WSSHandshake -> Nothing
        WSSSession sid -> Just sid
@@ -62,8 +65,9 @@ initWebSocket = openConnection Nothing
    openConnection mid = connect wsReq >>= handshakeSend mid
 
    handshakeSend :: Maybe WSSessionId -> WebSocket -> IO ()
-   handshakeSend mid ws = do
-     sendMessage ws $ maybe HandshakeToServerSyn HandshakeToServerSynWith mid
+   handshakeSend mid conn = do
+     putMVar webSocketMVar (WSSHandshake, conn)
+     sendMessage conn $ maybe HandshakeToServerSyn HandshakeToServerSynWith mid
 
    wsMessage :: MessageEvent -> IO ()
    wsMessage msgev = readMVar webSocketMVar >>= \case
@@ -122,7 +126,7 @@ initWebSocket = openConnection Nothing
      TCLoginResp (Right user) -> do
        sendTS TSClearCache
        dispatchAndExec . SetCurrentUser . UserLoggedIn $ user ^. userID
-       dispatchAndExec $ MainMenuAction MainMenuActionClose
+       dispatchAndExec `mapM_` onLoginClick (UserLoggedIn (Right user))
        dispatchAndExec LoginGuardPop
 
      TCTranslations l10 ->

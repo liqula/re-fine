@@ -8,9 +8,11 @@ import           Control.Concurrent.MVar
 import           System.IO.Unsafe
 import           Data.Text.I18n
 
+import React.Flux.Missing
 import Refine.Common.Types
 import Refine.Common.VDoc.Draft (rawContentFromCompositeVDoc)
 import Refine.Frontend.Contribution.Types
+import Refine.Frontend.Login.Types
 import Refine.Frontend.Document.Types
 import Refine.Frontend.Header.Types
 import Refine.Frontend.MainMenu.Types
@@ -27,7 +29,7 @@ type GlobalState = GlobalState_ DocumentState
 data GlobalState_ a = GlobalState
   { _gsPageState                  :: PageState a
   , _gsScreenState                :: ScreenState
-  , _gsTranslations               :: Trans
+--  , _gsTranslations               :: Trans
   , _gsDevState                   :: Maybe DevState  -- ^ for development & testing, see 'devStateUpdate'.
   , _gsServerCache                :: ServerCache
   } deriving (Show, Eq, Generic, Functor)
@@ -36,7 +38,7 @@ emptyGlobalState :: HasCallStack => GlobalState
 emptyGlobalState = GlobalState
   { _gsPageState                  = emptyPageState
   , _gsScreenState                = emptyScreenState
-  , _gsTranslations               = emptyTrans
+--  , _gsTranslations               = emptyTrans
   , _gsDevState                   = Nothing
   , _gsServerCache                = mempty
   }
@@ -103,6 +105,7 @@ data GlobalAction =
     -- testing & dev
   | ResetState GlobalState
   | ShowNotImplementedYet
+  | DumpAllState
 
     -- make sure that between two actions, no rendering happens (only one composite state
     -- transformation).
@@ -242,3 +245,15 @@ instance CacheLookup User where
 instance CacheLookup Group where
   cacheKey = CacheKeyGroup
   cacheLens = scGroups
+
+
+-- * user stuff
+
+-- | beware of cyclical imports!  do not more this to Login.Types or Login.Status!
+-- See also: https://github.com/ghcjs/ghcjs/issues/267
+onLoginClick :: CurrentUser (Lookup User) -> [GlobalAction]
+onLoginClick UserLoggedOut              = [MainMenuAction $ MainMenuActionOpen (MainMenuLogin MainMenuSubTabLogin)]
+onLoginClick (UserLoggedIn (Left _uid)) = []
+onLoginClick (UserLoggedIn (Right usr)) = [MainMenuAction $ MainMenuActionOpen (MainMenuProfile (usr ^. userID, formstate))]
+  where
+    formstate = FormBegin $ newLocalStateRef (Nothing, Nothing) usr
