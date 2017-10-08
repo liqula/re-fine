@@ -462,11 +462,12 @@ mainMenuCreateProcess_ lst = view_ (mainMenuCreateProcess lst) "mainMenuCreatePr
 - this is possible with local state update function
 
 -}
-
 mainMenuProfile :: HasCallStack => Bool -> Lookup User -> LocalStateRef ProfileLocalState -> View '[]
 mainMenuProfile editable user lst = mkPersistentStatefulView "MainMenuProfile" lst Nothing $ \st -> case user of
   Left _uid -> hourglass
-  Right u -> do
+  Right u -> div_ ["style" @@= [decl "margin" (Px 30), decl "border" (Ident "red, dashed, 1px")]] $ do
+    ibutton_ $ emptyIbuttonProps (ButtonImageIcon Svg.Save ColorSchemaDark) [Logout]
+
     elemText $ u ^. userName
 
     imageUpload_ editable u lst st
