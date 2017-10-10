@@ -27,7 +27,7 @@ toolbar_ :: HasCallStack => ToolbarProps -> ReactElementM eventHandler ()
 toolbar_ vdoc = do
   let props icon acts = emptyIbuttonProps icon acts & ibSize .~ XXLarge
 
-  div_ ["className" $= "main-content__header"] $ do
+  div_ ["className" $= "main-content__header c-toolbar-sticky"] $ do
     div_ ["className" $= "main-content__header-inner fisx-css-toolbar-flex c-vdoc-toolbar"] $ do
       ibutton_ $ props (ButtonImageIcon Svg.IndexDesktop ColorSchemaDark)
         [HeaderAction ToggleIndexToolbarExtension]

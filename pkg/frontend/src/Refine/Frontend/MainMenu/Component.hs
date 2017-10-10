@@ -34,69 +34,73 @@ import System.IO.Unsafe
 
 
 topMenuBar :: HasCallStack => View '[TopMenuBarProps]
-topMenuBar = mkView "TopMenuBarInMainMenu" $ \(TopMenuBarProps mCurrentTab currentUser) -> do
-  div_ ["className" $= "ibutton-absolute-topleft"] $ do
-    case mCurrentTab of
-      Nothing -> burgerButton_
-      Just _ -> ibutton_ $ emptyIbuttonProps (ButtonImageIcon Svg.Close ColorSchemaBright) (onLoginClick currentUser)
-        & ibListKey .~ "1"
+topMenuBar = mkView "TopMenuBarInMainMenu" $ \(TopMenuBarProps mCurrentTab currentUser) ->
+  let burgerOrCloseButton = case mCurrentTab of
+        Nothing -> button_ [ "aria-controls" $= "bs-navbar"
+                           , "aria-expanded" $= "false"
+                           , "className" $= "c-mainmenu__menu-button"
+                           , "type" $= "button"
+                           , "style" @@= [decl "pointerEvents" (Ident "all")]
+                           , onClick $ \_ _ -> simpleHandler . dispatch . MainMenuAction $ MainMenuActionOpen defaultMainMenuTab
+                           ] $ do
+                     span_ ["className" $= "sr-only"] "main menu"
+                     span_ ["className" $= "c-mainmenu__icon-bar"] ""
+                     span_ ["className" $= "c-mainmenu__icon-bar"] ""
+                     span_ ["className" $= "c-mainmenu__icon-bar"] ""
+        Just _ -> ibutton_
+          $ emptyIbuttonProps (ButtonImageIcon Svg.Close ColorSchemaBright) (onLoginClick currentUser)
+          & ibListKey .~ "1"
+          & ibSize .~ XXLarge
+
+      profilePageButton = ibutton_
+        $ emptyIbuttonProps (ButtonImageIcon Svg.UserProfile ColorSchemaBright)
+            (case currentUser of
+               UserLoggedIn user -> [MainMenuAction . MainMenuActionOpen
+                                     $ MainMenuProfile ( either id (^. userID) user
+                                                       , FormBegin $ newLocalStateRef (Nothing, Nothing) user)]
+               UserLoggedOut -> [])
+        & ibListKey .~ "2"
         & ibSize .~ XXLarge
 
-  div_ ["className" $= "platform-title"] $ do
-    pure ()
+      groupsButton = ibutton_
+        $ emptyIbuttonProps (ButtonImageIcon Svg.Group ColorSchemaBright)
+            [MainMenuAction . MainMenuActionOpen $ MainMenuGroups ()]
+        & ibListKey .~ "3"
+        & ibPressed .~ Just (case mCurrentTab of Just MainMenuGroup{} -> True; _ -> False)
+        & ibSize .~ XXLarge
 
-  div_ ["className" $= "ibutton-absolute-topright"] $ do
-    loginStatusButton_ ColorSchemaBright (has _MainMenuLogin <$> mCurrentTab) currentUser
+      helpButton = ibutton_
+        $ emptyIbuttonProps (ButtonImageIcon Svg.Help ColorSchemaBright)
+            [MainMenuAction $ MainMenuActionOpen MainMenuHelp]
+        & ibListKey .~ "4"
+        & ibPressed .~ Just (mCurrentTab == Just MainMenuHelp)
+        & ibSize .~ XXLarge
 
-  -- dump-all-state button.
-  when weAreInDevMode $ do
-    div_ ["style" @@= [ decl "position" (Ident "absolute")
-                      , decl "top" (Px 16)
-                      , decl "right" (Px 130)
-                      , decl "width" (Px 80)
-                      , decl "height" (Px 80)]] $ do
-      ibutton_ $ emptyIbuttonProps (ButtonImageIcon Svg.Help ColorSchemaDark) [DumpAllState]
+      dumpPageButton = when weAreInDevMode . ibutton_
+        $ emptyIbuttonProps (ButtonImageIcon Svg.Help ColorSchemaDark) [DumpAllState]
 
-  -- FIXME: move this div_ into the resp. tab component (or something...)
-  case mCurrentTab of
-    Nothing -> pure ()
-    Just currentTab -> div_ ["className" $= "main-content__header"] $ do
-      div_ ["className" $= "main-content__header-inner fisx-css-toolbar-flex c-vdoc-toolbar"] $ do
-        case currentUser of
-          UserLoggedIn user -> do
-            ibutton_ $ emptyIbuttonProps (ButtonImageIcon Svg.UserProfile ColorSchemaBright)
-              [ MainMenuAction . MainMenuActionOpen
-                $ MainMenuProfile ( either id (^. userID) user
-                                  , FormBegin $ newLocalStateRef (Nothing, Nothing) user)
-              ]
-              & ibListKey .~ "2"
-              & ibSize .~ XXLarge
-          _ -> pure ()
+      loginButton = loginStatusButton_ ColorSchemaBright (has _MainMenuLogin <$> mCurrentTab) currentUser
 
-        ibutton_ $ emptyIbuttonProps (ButtonImageIcon Svg.Group ColorSchemaBright) [MainMenuAction . MainMenuActionOpen $ MainMenuGroups ()]
-          & ibListKey .~ "3"
-          & ibPressed .~ Just (currentTab & has _MainMenuGroup)
-          & ibSize .~ XXLarge
+      buttonBox_ = div_ ["className" $= "inner-column-1"]
 
-        ibutton_ $ emptyIbuttonProps (ButtonImageIcon Svg.Help ColorSchemaBright) [MainMenuAction $ MainMenuActionOpen MainMenuHelp]
-          & ibListKey .~ "4"
-          & ibPressed .~ Just (currentTab == MainMenuHelp)
-          & ibSize .~ XXLarge
+      -- in order the platform title to be centered, the left and right need to contain equally many
+      -- button boxes.  some of them may be empty.
+      emptyButtonBox_ = buttonBox_ . div_ ["className" $= "ibutton_xxlarge"] $ pure ()
 
-burgerButton_ :: ReactElementM 'EventHandlerCode ()
-burgerButton_ = do
-    button_ [ "aria-controls" $= "bs-navbar"
-            , "aria-expanded" $= "false"
-            , "className" $= "c-mainmenu__menu-button"
-            , "type" $= "button"
-            , "style" @@= [decl "pointerEvents" (Ident "all")]
-            , onClick $ \_ _ -> simpleHandler . dispatch . MainMenuAction $ MainMenuActionOpen defaultMainMenuTab
-            ] $ do
-      span_ ["className" $= "sr-only"] "main menu"
-      span_ ["className" $= "c-mainmenu__icon-bar"] ""
-      span_ ["className" $= "c-mainmenu__icon-bar"] ""
-      span_ ["className" $= "c-mainmenu__icon-bar"] ""
+  in div_ ["className" $= "topmenubar c-menubar-sticky"] $ do
+       div_ ["className" $= "left-column m-t-1 m-l-1 m-r-1 m-b-1"] $ do
+         buttonBox_ burgerOrCloseButton
+         buttonBox_ profilePageButton
+         buttonBox_ groupsButton
+         buttonBox_ helpButton
 
+       div_ ["className" $= "platform-title"] $ pure ()
+
+       div_ ["className" $= "right-column m-t-1 m-l-1 m-r-1 m-b-1"] $ do
+         emptyButtonBox_
+         emptyButtonBox_
+         buttonBox_ dumpPageButton
+         buttonBox_ loginButton
 
 mainMenu :: HasCallStack => View '[MainMenuProps MainMenuTabProps]
 mainMenu = mkView "MainMenu" $ \(MainMenuProps currentTab menuErrors currentUser) -> do

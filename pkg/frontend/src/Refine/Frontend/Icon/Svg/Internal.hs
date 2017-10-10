@@ -91,115 +91,121 @@ data Icon =
   deriving (Eq, Show, Generic, Bounded, Enum)
 
 {-# NOINLINE svgArrowDown #-}
-svgArrowDown :: Color -> ReactElementM h ()
-svgArrowDown c0 = do
-  svg_ ["xmlns" $= "http://www.w3.org/2000/svg", "viewBox" $= "0 0 100 100"] $ do
+svgArrowDown :: Color -> Color -> ReactElementM h ()
+svgArrowDown c0 c1 = do
+  svg_ ["xmlns" $= "http://www.w3.org/2000/svg", "viewBox" $= "0 0 200 200"] $ do
     defs_ $ do mempty
     title_ $ do
-      elemText "Zeichenfl\228che 1 Kopie 5"
-    path_ ["className" $= colorName ColorAttrFill c0, "d" $= "M89.91,21.83a9.05,9.05,0,0,1,6.4,15.45l-37,37a13.11,13.11,0,0,1-18.53,0l-37-37a9.05,9.05,0,0,1,12.8-12.8L50,58,83.51,24.49A9,9,0,0,1,89.91,21.83ZM53.54,61.53h0Z"] $ do mempty
+      elemText "Bottom"
+    circle_ ["className" $= colorName ColorAttrFill c0, "cx" $= "100", "cy" $= "100", "r" $= "100"] $ do mempty
+    path_ ["className" $= colorName ColorAttrFill c1, "d" $= "M165.21,63.61a14.79,14.79,0,0,1,10.46,25.25l-60.53,60.53a21.42,21.42,0,0,1-30.28,0L24.33,88.86A14.79,14.79,0,0,1,45.25,67.94L100,122.69l54.75-54.75A14.74,14.74,0,0,1,165.21,63.61Zm-59.43,64.86h0Z"] $ do mempty
 
 {-# NOINLINE svgArrowLeft #-}
-svgArrowLeft :: Color -> ReactElementM h ()
-svgArrowLeft c0 = do
-  svg_ ["xmlns" $= "http://www.w3.org/2000/svg", "viewBox" $= "0 0 100 100"] $ do
+svgArrowLeft :: Color -> Color -> ReactElementM h ()
+svgArrowLeft c0 c1 = do
+  svg_ ["xmlns" $= "http://www.w3.org/2000/svg", "viewBox" $= "0 0 200 200"] $ do
     defs_ $ do mempty
     title_ $ do
-      elemText "Zeichenfl\228che 1 Kopie 3"
-    path_ ["className" $= colorName ColorAttrFill c0, "d" $= "M78.17,89.91a9.05,9.05,0,0,1-15.45,6.4l-37-37a13.11,13.11,0,0,1,0-18.53l37-37a9.05,9.05,0,0,1,12.8,12.8L42,50,75.51,83.51A9,9,0,0,1,78.17,89.91ZM38.47,53.54h0Z"] $ do mempty
+      elemText "Left"
+    circle_ ["className" $= colorName ColorAttrFill c0, "cx" $= "100", "cy" $= "100", "r" $= "100"] $ do mempty
+    path_ ["className" $= colorName ColorAttrFill c1, "d" $= "M136.39,165.21a14.79,14.79,0,0,1-25.25,10.46L50.61,115.14a21.42,21.42,0,0,1,0-30.28l60.52-60.52a14.79,14.79,0,0,1,20.92,20.91L77.31,100l54.75,54.75A14.74,14.74,0,0,1,136.39,165.21ZM71.53,105.78h0Z"] $ do mempty
 
 {-# NOINLINE svgArrowRight #-}
-svgArrowRight :: Color -> ReactElementM h ()
-svgArrowRight c0 = do
-  svg_ ["xmlns" $= "http://www.w3.org/2000/svg", "viewBox" $= "0 0 100 100"] $ do
+svgArrowRight :: Color -> Color -> ReactElementM h ()
+svgArrowRight c0 c1 = do
+  svg_ ["xmlns" $= "http://www.w3.org/2000/svg", "viewBox" $= "0 0 200 200"] $ do
     defs_ $ do mempty
     title_ $ do
-      elemText "Zeichenfl\228che 1 Kopie 5"
-    path_ ["className" $= colorName ColorAttrFill c0, "d" $= "M21.83,10.09a9.05,9.05,0,0,1,15.45-6.4l37,37a13.11,13.11,0,0,1,0,18.53l-37,37a9.05,9.05,0,0,1-12.8-12.8L58,50,24.49,16.49A9,9,0,0,1,21.83,10.09Zm39.7,36.37h0Z"] $ do mempty
+      elemText "Right"
+    circle_ ["className" $= colorName ColorAttrFill c0, "cx" $= "100", "cy" $= "100", "r" $= "100"] $ do mempty
+    path_ ["className" $= colorName ColorAttrFill c1, "d" $= "M63.61,34.79A14.79,14.79,0,0,1,88.86,24.33l60.53,60.53a21.42,21.42,0,0,1,0,30.28L88.86,175.67a14.79,14.79,0,0,1-20.92-20.91L122.69,100,67.95,45.25A14.74,14.74,0,0,1,63.61,34.79Zm64.86,59.43h0Z"] $ do mempty
 
 {-# NOINLINE svgArrowUp #-}
-svgArrowUp :: Color -> ReactElementM h ()
-svgArrowUp c0 = do
-  svg_ ["xmlns" $= "http://www.w3.org/2000/svg", "viewBox" $= "0 0 100 100"] $ do
+svgArrowUp :: Color -> Color -> ReactElementM h ()
+svgArrowUp c0 c1 = do
+  svg_ ["xmlns" $= "http://www.w3.org/2000/svg", "viewBox" $= "0 0 200 200"] $ do
     defs_ $ do mempty
     title_ $ do
-      elemText "Zeichenfl\228che 1 Kopie 3"
-    path_ ["className" $= colorName ColorAttrFill c0, "d" $= "M10.09,78.17a9.05,9.05,0,0,1-6.4-15.45l37-37a13.11,13.11,0,0,1,18.53,0l37,37a9.05,9.05,0,0,1-12.8,12.8L50,42,16.49,75.51A9,9,0,0,1,10.09,78.17Zm36.37-39.7h0Z"] $ do mempty
+      elemText "Top"
+    circle_ ["className" $= colorName ColorAttrFill c0, "cx" $= "100", "cy" $= "100", "r" $= "100"] $ do mempty
+    path_ ["className" $= colorName ColorAttrFill c1, "d" $= "M34.79,136.39a14.79,14.79,0,0,1-10.46-25.25L84.86,50.61a21.42,21.42,0,0,1,30.28,0l60.52,60.52a14.79,14.79,0,0,1-20.91,20.92L100,77.31,45.25,132.05A14.74,14.74,0,0,1,34.79,136.39ZM94.22,71.53h0Z"] $ do mempty
 
 {-# NOINLINE svgClose #-}
-svgClose :: Color -> ReactElementM h ()
-svgClose c0 = do
-  svg_ ["version" $= "1.1", "id" $= "Ebene_1", "xmlns" $= "http://www.w3.org/2000/svg", "xmlnsXlink" $= "http://www.w3.org/1999/xlink", "x" $= "0px", "y" $= "0px", "viewBox" $= "0 0 100 100", "style" @= styles [("enableBackground","new 0 0 100 100")], "xmlSpace" $= "preserve"] $ do
-    elemText "\n"
-    elemText "\n"
+svgClose :: Color -> Color -> ReactElementM h ()
+svgClose c0 c1 = do
+  svg_ ["xmlns" $= "http://www.w3.org/2000/svg", "viewBox" $= "0 0 200 200"] $ do
+    defs_ $ do mempty
     title_ $ do
-      elemText "Zeichenfl\228che 1 Kopie 3"
-    elemText "\n"
-    path_ ["className" $= colorName ColorAttrFill c0, "d" $= "M58.9,50l30.2-30.2c0.4-0.4,0.4-1,0-1.4c0,0,0,0,0,0l-7.4-7.5c-0.4-0.4-1-0.4-1.4,0c0,0,0,0,0,0L50,41.1\n\tL19.8,10.9c-0.4-0.4-1-0.4-1.4,0c0,0,0,0,0,0l-7.4,7.4c-0.4,0.4-0.4,1,0,1.4c0,0,0,0,0,0L41.1,50L10.9,80.2c-0.4,0.4-0.4,1,0,1.4\n\tc0,0,0,0,0,0l7.4,7.4c0.4,0.4,1,0.4,1.4,0c0,0,0,0,0,0L50,58.9l30.2,30.2c0.4,0.4,1,0.4,1.4,0c0,0,0,0,0,0l7.4-7.4\n\tc0.4-0.4,0.4-1,0-1.4c0,0,0,0,0,0L58.9,50z"] $ do mempty
-    elemText "\n"
+      elemText "Close"
+    circle_ ["className" $= colorName ColorAttrFill c0, "cx" $= "100", "cy" $= "100", "r" $= "100"] $ do mempty
+    path_ ["className" $= colorName ColorAttrFill c1, "d" $= "M116.72,98.89,159.91,55.7a10.56,10.56,0,0,0,0-14.94h0a10.56,10.56,0,0,0-14.94,0L101.78,84A2,2,0,0,1,99,84L55.76,40.77a10.56,10.56,0,0,0-14.94,0h0a10.56,10.56,0,0,0,0,14.94L84,98.89a2,2,0,0,1,0,2.83L40.83,144.91a10.56,10.56,0,0,0,0,14.94h0a10.56,10.56,0,0,0,14.94,0L99,116.66a2,2,0,0,1,2.83,0L145,159.85a10.56,10.56,0,0,0,14.94,0h0a10.56,10.56,0,0,0,0-14.94l-43.19-43.19A2,2,0,0,1,116.72,98.89Z"] $ do mempty
 
 {-# NOINLINE svgComment #-}
-svgComment :: Color -> ReactElementM h ()
-svgComment c0 = do
-  svg_ ["version" $= "1.1", "id" $= "Ebene_1", "xmlns" $= "http://www.w3.org/2000/svg", "xmlnsXlink" $= "http://www.w3.org/1999/xlink", "x" $= "0px", "y" $= "0px", "viewBox" $= "0 0 100 100", "style" @= styles [("enableBackground","new 0 0 100 100")], "xmlSpace" $= "preserve"] $ do
-    elemText "\n"
-    elemText "\n"
+svgComment :: Color -> Color -> ReactElementM h ()
+svgComment c0 c1 = do
+  svg_ ["xmlns" $= "http://www.w3.org/2000/svg", "viewBox" $= "0 0 200 200"] $ do
+    defs_ $ do mempty
     title_ $ do
-      elemText "Zeichenfl\228che 1 Kopie 3"
-    elemText "\n"
-    path_ ["className" $= colorName ColorAttrFill c0, "d" $= "M61.6,9.7H42.3C21.1,9.8,4,26.9,3.9,48.1l0,0c0,7.3,2.1,14.5,6.1,20.7L1.1,83.7c-1.5,1.5-1.5,4,0,5.5\n\tc1.5,1.5,4,1.5,5.5,0L20.9,80c6.3,4.3,13.8,6.5,21.4,6.5h19.3c21.2-0.1,38.3-17.2,38.4-38.4l0,0C99.9,26.9,82.8,9.8,61.6,9.7z"] $ do mempty
-    elemText "\n"
+      elemText "Commet"
+    circle_ ["className" $= colorName ColorAttrFill c0, "cx" $= "100", "cy" $= "100", "r" $= "100"] $ do mempty
+    path_ ["className" $= colorName ColorAttrFill c1, "d" $= "M122.35,42.34h-28A55.82,55.82,0,0,0,38.66,98h0a55.2,55.2,0,0,0,8.86,30L34.67,149.63a5.66,5.66,0,0,0,8,8l20.69-13.49a55.24,55.24,0,0,0,31,9.48h28A55.82,55.82,0,0,0,178,98h0A55.82,55.82,0,0,0,122.35,42.34Z"] $ do mempty
 
 {-# NOINLINE svgCommentNew #-}
 svgCommentNew :: Color -> Color -> ReactElementM h ()
 svgCommentNew c0 c1 = do
-  svg_ ["version" $= "1.1", "id" $= "Ebene_1", "xmlns" $= "http://www.w3.org/2000/svg", "xmlnsXlink" $= "http://www.w3.org/1999/xlink", "x" $= "0px", "y" $= "0px", "viewBox" $= "0 0 100 100", "style" @= styles [("enableBackground","new 0 0 100 100")], "xmlSpace" $= "preserve"] $ do
+  svg_ ["version" $= "1.1", "id" $= "Ebene_1", "xmlns" $= "http://www.w3.org/2000/svg", "xmlnsXlink" $= "http://www.w3.org/1999/xlink", "x" $= "0px", "y" $= "0px", "viewBox" $= "0 0 200 200", "style" @= styles [("enableBackground","new 0 0 200 200")], "xmlSpace" $= "preserve"] $ do
     elemText "\n"
     elemText "\n"
     title_ $ do
-      elemText "Zeichenfl\228che 1 Kopie 3"
+      elemText "New Comment"
     elemText "\n"
-    path_ ["className" $= colorName ColorAttrFill c0, "d" $= "M61.6,9.7H42.3C21.1,9.8,4,26.9,3.9,48.1l0,0c0,7.3,2.1,14.5,6.1,20.7L1.1,83.7c-1.5,1.5-1.5,4,0,5.5\n\tc1.5,1.5,4,1.5,5.5,0L20.9,80c6.3,4.3,13.8,6.5,21.4,6.5h19.3c21.2-0.1,38.3-17.2,38.4-38.4l0,0C99.9,26.9,82.8,9.8,61.6,9.7z"] $ do mempty
+    circle_ ["className" $= colorName ColorAttrFill c0, "cx" $= "100", "cy" $= "100", "r" $= "100"] $ do mempty
     elemText "\n"
-    path_ ["className" $= colorName ColorAttrFill c1, "d" $= "M73.6,39.6H58.3V24.4c0-0.8-0.7-1.4-1.4-1.4H43.1c-0.8,0-1.4,0.6-1.4,1.4l0,0v15.2H26.4c-0.8,0-1.4,0.6-1.4,1.4\n\tv13.8c0,0.8,0.6,1.4,1.4,1.4l0,0h15.2v15.2c0,0.8,0.6,1.4,1.4,1.4c0,0,0,0,0,0h13.8c0.8,0,1.4-0.6,1.4-1.4l0,0V56.3h15.2\n\tc0.8,0,1.4-0.6,1.4-1.4c0,0,0,0,0,0V41.1C75,40.3,74.4,39.6,73.6,39.6C73.6,39.6,73.6,39.6,73.6,39.6z"] $ do mempty
+    path_ ["className" $= colorName ColorAttrFill c1, "d" $= "M122.3,41.3h-28C63.6,41.4,38.7,66.3,38.7,97l0,0c0,10.6,3.1,21.1,8.9,30l-12.9,21.6c-2.1,2.3-2,5.9,0.3,8\n\tc2.2,2,5.6,2,7.7,0l20.7-13.5c9.2,6.2,20,9.5,31,9.5h28c30.7-0.1,55.5-24.9,55.6-55.6l0,0C177.9,66.3,153,41.4,122.3,41.3z"] $ do mempty
+    elemText "\n"
+    path_ ["className" $= colorName ColorAttrFill c0, "d" $= "M142.6,84.7h-22.1V62.6c0-1.1-0.9-2.1-2.1-2.1h-20c-1.1,0-2.1,0.9-2.1,2.1v22.1H74.2c-1.1,0-2.1,0.9-2.1,2.1v20\n\tc0,1.1,0.9,2.1,2.1,2.1h22.1V131c0,1.1,1,2,2.1,2h20c1.1,0,2.1-0.9,2.1-2.1v-22.1h22.1c1.1,0,2.1-0.9,2.1-2.1v-20\n\tC144.6,85.6,143.7,84.7,142.6,84.7z"] $ do mempty
     elemText "\n"
 
 {-# NOINLINE svgDiffCollapse #-}
-svgDiffCollapse :: Color -> ReactElementM h ()
-svgDiffCollapse c0 = do
-  svg_ ["xmlns" $= "http://www.w3.org/2000/svg", "viewBox" $= "0 0 100 100"] $ do
+svgDiffCollapse :: Color -> Color -> ReactElementM h ()
+svgDiffCollapse c0 c1 = do
+  svg_ ["xmlns" $= "http://www.w3.org/2000/svg", "viewBox" $= "0 0 200 200"] $ do
     defs_ $ do mempty
     title_ $ do
-      elemText "Zeichenfl\228che 1 Kopie 5"
-    path_ ["className" $= colorName ColorAttrFill c0, "d" $= "M92.38,10.22s0,1.33-.08,1.59A4,4,0,0,1,88.37,15H12.14a4,4,0,0,1-4-4s0-1.33.08-1.59a4,4,0,0,1,3.93-3.21H88.37A4,4,0,0,1,92.38,10.22Zm-4,56.38H12.14A4,4,0,0,0,8.21,69.8c-.05.26-.08,20-.08,20a4,4,0,0,0,4,4H88.37a4,4,0,0,0,3.93-3.21c.05-.26.08-20,.08-20A4,4,0,0,0,88.37,66.6ZM70.29,61.2a4.56,4.56,0,0,0,3.29-7.78L54.92,34.77a6.6,6.6,0,0,0-9.33,0L26.94,53.42a4.56,4.56,0,0,0,3.22,7.78C31.33,61.2,69.14,61.18,70.29,61.2ZM46.15,15h0Z"] $ do mempty
+      elemText "Collapse Section"
+    circle_ ["className" $= colorName ColorAttrFill c0, "cx" $= "100", "cy" $= "100", "r" $= "100"] $ do mempty
+    path_ ["className" $= colorName ColorAttrFill c1, "d" $= "M159.82,43.63s0,1.89-.12,2.27a5.74,5.74,0,0,1-5.6,4.58H45.54a5.74,5.74,0,0,1-5.71-5.73s0-1.89.12-2.27a5.74,5.74,0,0,1,5.6-4.58H154.11A5.74,5.74,0,0,1,159.82,43.63Zm-5.71,80.46H45.54a5.74,5.74,0,0,0-5.6,4.58c-.08.37-.12,28.52-.12,28.52a5.74,5.74,0,0,0,5.71,5.73H154.11a5.74,5.74,0,0,0,5.6-4.58c.08-.37.12-28.52.12-28.52A5.74,5.74,0,0,0,154.11,124.09Zm-25.76-7.7a6.51,6.51,0,0,0,4.68-11.1L106.47,78.66a9.39,9.39,0,0,0-13.29,0L66.61,105.28a6.51,6.51,0,0,0,4.59,11.1C72.86,116.39,126.72,116.36,128.35,116.39ZM94,50.48h0Z"] $ do mempty
 
 {-# NOINLINE svgDiffDetails #-}
-svgDiffDetails :: Color -> ReactElementM h ()
-svgDiffDetails c0 = do
-  svg_ ["xmlns" $= "http://www.w3.org/2000/svg", "viewBox" $= "0 0 100 100"] $ do
+svgDiffDetails :: Color -> Color -> ReactElementM h ()
+svgDiffDetails c0 c1 = do
+  svg_ ["xmlns" $= "http://www.w3.org/2000/svg", "viewBox" $= "0 0 200 200"] $ do
     defs_ $ do mempty
     title_ $ do
-      elemText "Zeichenfl\228che 1 Kopie 6"
-    path_ ["className" $= colorName ColorAttrFill c0, "d" $= "M91.08,85.33a6.17,6.17,0,0,1-6.17,6.17,5.72,5.72,0,0,1-4.33-1.83L64.06,73.2a33,33,0,0,1-19.21,6A33.33,33.33,0,0,1,31.67,76.5,33.19,33.19,0,0,1,13.62,58.44a33.8,33.8,0,0,1,0-26.34A33.22,33.22,0,0,1,31.67,14,33.8,33.8,0,0,1,58,14,33.25,33.25,0,0,1,76.08,32.1a33.34,33.34,0,0,1,2.67,13.17,33,33,0,0,1-6,19.21L89.29,81A5.9,5.9,0,0,1,91.08,85.33Zm-31-24.82a20.77,20.77,0,0,0,6.33-15.24A20.77,20.77,0,0,0,60.08,30,20.77,20.77,0,0,0,44.85,23.7,20.77,20.77,0,0,0,29.6,30a20.78,20.78,0,0,0-6.33,15.24A20.78,20.78,0,0,0,29.6,60.51a20.78,20.78,0,0,0,15.24,6.33A20.78,20.78,0,0,0,60.08,60.51Zm.17-16.78v3.08a1.56,1.56,0,0,1-1.54,1.54H47.93V59.14a1.57,1.57,0,0,1-1.54,1.54H43.3a1.48,1.48,0,0,1-1.09-.46,1.47,1.47,0,0,1-.46-1.08V48.35H31a1.47,1.47,0,0,1-1.08-.46,1.48,1.48,0,0,1-.46-1.09V43.73A1.57,1.57,0,0,1,31,42.19H41.76V31.4a1.56,1.56,0,0,1,1.54-1.54h3.08a1.57,1.57,0,0,1,1.54,1.54V42.19H58.71a1.57,1.57,0,0,1,1.54,1.54Z"] $ do mempty
+      elemText "Details"
+    circle_ ["className" $= colorName ColorAttrFill c0, "cx" $= "100", "cy" $= "100", "r" $= "100"] $ do mempty
+    path_ ["className" $= colorName ColorAttrFill c1, "d" $= "M164,152.4A10.62,10.62,0,0,1,153.38,163a9.86,9.86,0,0,1-7.46-3.15L117.47,131.5a56.8,56.8,0,0,1-33.09,10.29,57.41,57.41,0,0,1-22.69-4.6,57.17,57.17,0,0,1-31.11-31.11,58.21,58.21,0,0,1,0-45.37A57.22,57.22,0,0,1,61.69,29.6a58.21,58.21,0,0,1,45.37,0,57.27,57.27,0,0,1,31.11,31.11,57.43,57.43,0,0,1,4.6,22.69,56.77,56.77,0,0,1-10.29,33.09l28.45,28.45A10.17,10.17,0,0,1,164,152.4Zm-53.38-42.75a35.77,35.77,0,0,0,10.91-26.25,35.77,35.77,0,0,0-10.91-26.25A35.77,35.77,0,0,0,84.37,46.23,35.77,35.77,0,0,0,58.12,57.15a35.79,35.79,0,0,0-10.9,26.25,35.79,35.79,0,0,0,10.9,26.25,35.79,35.79,0,0,0,26.25,10.9A35.79,35.79,0,0,0,110.62,109.65Zm.29-28.91V86a2.69,2.69,0,0,1-2.65,2.66H89.68v18.58A2.71,2.71,0,0,1,87,109.94H81.72a2.56,2.56,0,0,1-1.87-.79,2.53,2.53,0,0,1-.79-1.86V88.7H60.48a2.53,2.53,0,0,1-1.86-.79A2.56,2.56,0,0,1,57.83,86V80.74a2.71,2.71,0,0,1,2.66-2.66H79.06V59.5a2.69,2.69,0,0,1,2.66-2.65H87a2.7,2.7,0,0,1,2.66,2.65V78.08h18.58a2.7,2.7,0,0,1,2.65,2.66Z"] $ do mempty
 
 {-# NOINLINE svgDiffExpand #-}
-svgDiffExpand :: Color -> ReactElementM h ()
-svgDiffExpand c0 = do
-  svg_ ["xmlns" $= "http://www.w3.org/2000/svg", "viewBox" $= "0 0 100 100"] $ do
+svgDiffExpand :: Color -> Color -> ReactElementM h ()
+svgDiffExpand c0 c1 = do
+  svg_ ["xmlns" $= "http://www.w3.org/2000/svg", "viewBox" $= "0 0 200 200"] $ do
     defs_ $ do mempty
     title_ $ do
-      elemText "Zeichenfl\228che 1 Kopie 3"
-    path_ ["className" $= colorName ColorAttrFill c0, "d" $= "M88.66,93.79H12.43A4,4,0,0,1,8.5,90.59C8.45,90.33,8.42,89,8.42,89a4,4,0,0,1,4-4H88.66a4,4,0,0,1,3.93,3.21c.05.26.08,1.59.08,1.59A4,4,0,0,1,88.66,93.79Zm4-64.4s0-19.72-.08-20a4,4,0,0,0-3.93-3.21H12.43a4,4,0,0,0-4,4s0,19.72.08,20a4,4,0,0,0,3.93,3.21H88.66A4,4,0,0,0,92.67,29.39ZM30.45,38.8a4.56,4.56,0,0,0-3.22,7.78L45.88,65.24a6.6,6.6,0,0,0,9.33,0L73.87,46.58a4.56,4.56,0,0,0-3.29-7.78C69.43,38.82,31.61,38.8,30.45,38.8ZM46.43,85h0Z"] $ do mempty
+      elemText "Expand Section"
+    circle_ ["className" $= colorName ColorAttrFill c0, "cx" $= "100", "cy" $= "100", "r" $= "100"] $ do mempty
+    path_ ["className" $= colorName ColorAttrFill c1, "d" $= "M154.11,50.43H45.54a5.73,5.73,0,0,1-5.6-4.56c-.08-.37-.12-2.26-.12-2.26a5.73,5.73,0,0,1,5.71-5.7H154.11a5.73,5.73,0,0,1,5.6,4.56c.08.37.12,2.26.12,2.26A5.73,5.73,0,0,1,154.11,50.43Zm5.71,106.78s0-28-.12-28.41a5.73,5.73,0,0,0-5.6-4.56H45.54a5.73,5.73,0,0,0-5.71,5.7s0,28,.12,28.41a5.73,5.73,0,0,0,5.6,4.56H154.11A5.73,5.73,0,0,0,159.82,157.2ZM71.2,58.25a6.48,6.48,0,0,0-4.59,11.06L93.18,95.84a9.41,9.41,0,0,0,13.29,0L133,69.32a6.48,6.48,0,0,0-4.68-11.06C126.72,58.28,72.86,58.25,71.2,58.25ZM94,123.92h0Z"] $ do mempty
 
 {-# NOINLINE svgDiscussion #-}
-svgDiscussion :: Color -> Color -> ReactElementM h ()
-svgDiscussion c0 c1 = do
-  svg_ ["xmlns" $= "http://www.w3.org/2000/svg", "viewBox" $= "0 0 100 100"] $ do
+svgDiscussion :: Color -> Color -> Color -> ReactElementM h ()
+svgDiscussion c0 c1 c2 = do
+  svg_ ["xmlns" $= "http://www.w3.org/2000/svg", "viewBox" $= "0 0 200 200"] $ do
     defs_ $ do mempty
     title_ $ do
-      elemText "Zeichenfl\228che 1 Kopie 4"
-    path_ ["className" $= colorName ColorAttrFill c0, "d" $= "M49.34,10.63,33,11.23A32.46,32.46,0,0,0,1.89,44.77h0A32.1,32.1,0,0,0,7.68,62l-7,12.85a3.29,3.29,0,0,0,4.81,4.49l11.73-8.29a32.13,32.13,0,0,0,18.21,4.85l16.29-.6A32.46,32.46,0,0,0,82.88,41.79h0A32.46,32.46,0,0,0,49.34,10.63Z"] $ do mempty
-    path_ ["className" $= colorName ColorAttrFill c1, "d" $= "M55.77,35.23l13.33-.49A26.56,26.56,0,0,1,96.54,60.23h0a26.27,26.27,0,0,1-3.69,14.42l6.49,10.06a2.69,2.69,0,0,1-3.66,4L85.61,82.62A26.29,26.29,0,0,1,71,87.67l-13.33.49A26.56,26.56,0,0,1,30.28,62.67h0A26.56,26.56,0,0,1,55.77,35.23Z"] $ do mempty
+      elemText "Discussion"
+    circle_ ["className" $= colorName ColorAttrFill c0, "cx" $= "100", "cy" $= "100", "r" $= "100"] $ do mempty
+    path_ ["className" $= colorName ColorAttrFill c1, "d" $= "M97.06,37H73.17A47.57,47.57,0,0,0,25.74,84.43h0A47,47,0,0,0,33.29,110l-11,18.44a4.82,4.82,0,0,0,6.81,6.84l17.63-11.5a47.08,47.08,0,0,0,26.4,8.08H97.06A47.57,47.57,0,0,0,144.5,84.43h0A47.57,47.57,0,0,0,97.06,37Z"] $ do mempty
+    path_ ["className" $= colorName ColorAttrFill c2, "d" $= "M105.15,73.37H124.7a38.92,38.92,0,0,1,38.81,38.81h0a38.49,38.49,0,0,1-6.18,20.92l9,15.09a3.95,3.95,0,0,1-5.57,5.59l-14.42-9.41A38.52,38.52,0,0,1,124.7,151H105.15a38.92,38.92,0,0,1-38.81-38.81h0A38.92,38.92,0,0,1,105.15,73.37Z"] $ do mempty
 
 {-# NOINLINE svgDiscussionFlat #-}
 svgDiscussionFlat :: Color -> ReactElementM h ()
@@ -244,232 +250,234 @@ svgDiscussionTreeChild c0 = do
     elemText "\n"
 
 {-# NOINLINE svgEdit #-}
-svgEdit :: Color -> Color -> ReactElementM h ()
-svgEdit c0 c1 = do
-  svg_ ["version" $= "1.1", "id" $= "Ebene_1", "xmlns" $= "http://www.w3.org/2000/svg", "xmlnsXlink" $= "http://www.w3.org/1999/xlink", "x" $= "0px", "y" $= "0px", "viewBox" $= "0 0 100 100", "style" @= styles [("enableBackground","new 0 0 100 100")], "xmlSpace" $= "preserve"] $ do
-    elemText "\n"
-    elemText "\n"
+svgEdit :: Color -> Color -> Color -> ReactElementM h ()
+svgEdit c0 c1 c2 = do
+  svg_ ["xmlns" $= "http://www.w3.org/2000/svg", "viewBox" $= "0 0 200 200"] $ do
+    defs_ $ do mempty
     title_ $ do
-      elemText "Zeichenfl\228che 1 Kopie 3"
-    elemText "\n"
-    path_ ["className" $= colorName ColorAttrFill c0, "d" $= "M21.3,77.1c0.1-0.6,0.4-1.1,0.7-1.6l36.7-63.8l3.9,2.3l9.6,5.6l3.8,2.2L39.3,85.6c-0.2,0.5-0.6,1-1.1,1.3l-6,5\n\tl-4.2-2.3l-4-2.2l-4.1-2.3L21.3,77.1z"] $ do mempty
-    elemText "\n"
-    path_ ["className" $= colorName ColorAttrFill c1, "d" $= "M19.9,85.1l4.1,2.3l0,0l4,2.2l0,0l4.2,2.3l-8.7,7.2c-0.6,0.5-1.4,0.8-2.2,0.9c-1.9,0-3.4-1.6-3.4-3.5\n\tc0-0.2,0-0.3,0-0.5L19.9,85.1z"] $ do mempty
-    elemText "\n"
-    path_ ["className" $= colorName ColorAttrFill c1, "d" $= "M72.1,19.5L62.6,14l0,0l-3.9-2.3l5.5-9.5C65,0.8,66.5,0,68.2,0c0.8,0,1.6,0.2,2.2,0.7l9.6,5.6\n\tc1.4,0.8,2.2,2.2,2.2,3.8c0,0.8-0.2,1.6-0.7,2.2L76,21.8L72.1,19.5L72.1,19.5z"] $ do mempty
-    elemText "\n"
+      elemText "Edit"
+    circle_ ["className" $= colorName ColorAttrFill c0, "cx" $= "100", "cy" $= "100", "r" $= "100"] $ do mempty
+    path_ ["className" $= colorName ColorAttrFill c1, "d" $= "M56.68,138.48a7,7,0,0,1,1-2.36l55.86-97,6,3.46L134,51l5.82,3.39L84,151.32a4.93,4.93,0,0,1-1.69,2L73.22,161l-6.41-3.56L60.73,154l-6.19-3.43Z"] $ do mempty
+    path_ ["className" $= colorName ColorAttrFill c2, "d" $= "M54.54,150.59,60.73,154h0l6.08,3.37h0L73.22,161l-13.16,11a6,6,0,0,1-3.38,1.34,5.24,5.24,0,0,1-5.07-6.07Z"] $ do mempty
+    path_ ["className" $= colorName ColorAttrFill c2, "d" $= "M134,51,119.5,42.55h0l-6-3.46,8.32-14.44a7.11,7.11,0,0,1,6.08-3.37,5.74,5.74,0,0,1,3.38,1l14.52,8.44a6.53,6.53,0,0,1,3.38,5.74,5.69,5.69,0,0,1-1,3.37l-8.37,14.53L134,51Z"] $ do mempty
 
 {-# NOINLINE svgEditKindGrammar #-}
-svgEditKindGrammar :: Color -> ReactElementM h ()
-svgEditKindGrammar c0 = do
-  svg_ ["version" $= "1.1", "id" $= "Ebene_1", "xmlns" $= "http://www.w3.org/2000/svg", "xmlnsXlink" $= "http://www.w3.org/1999/xlink", "x" $= "0px", "y" $= "0px", "viewBox" $= "0 0 100 100", "style" @= styles [("enableBackground","new 0 0 100 100")], "xmlSpace" $= "preserve"] $ do
-    elemText "\n"
-    elemText "\n"
+svgEditKindGrammar :: Color -> Color -> ReactElementM h ()
+svgEditKindGrammar c0 c1 = do
+  svg_ ["xmlns" $= "http://www.w3.org/2000/svg", "viewBox" $= "0 0 200 200"] $ do
+    defs_ $ do mempty
     title_ $ do
-      elemText "Zeichenfl\228che 1 Kopie 2"
-    elemText "\n"
-    circle_ ["className" $= colorName ColorAttrFill c0, "cx" $= "50", "cy" $= "50", "r" $= "50"] $ do mempty
-    elemText "\n"
+      elemText "Grammar"
+    circle_ ["className" $= colorName ColorAttrFill c0, "cx" $= "100", "cy" $= "100", "r" $= "100"] $ do mempty
+    path_ ["className" $= colorName ColorAttrFill c1, "d" $= "M68.26,102.26q0,2.2.1,3.8t.2,3.4l6.9,1v2.1a37,37,0,0,1-5.55,2.3,43.73,43.73,0,0,1-5.85,1.5h-2.5a15.32,15.32,0,0,1-1.2-5.05q-.2-2.75-.3-6.05h-.5A13.83,13.83,0,0,1,58,109.32,13.57,13.57,0,0,1,55,113,15,15,0,0,1,45,116.57a13.77,13.77,0,0,1-10-3.7,12.85,12.85,0,0,1-3.85-9.7A14,14,0,0,1,33,95.61,12.54,12.54,0,0,1,38.45,91a31.13,31.13,0,0,1,8.9-2.45q5.3-.75,12.3-1.15a57.58,57.58,0,0,0,.25-7.75,18.61,18.61,0,0,0-1.1-5.9A8.27,8.27,0,0,0,56,69.9a8,8,0,0,0-4.85-1.35q-1.4,0-3.15.15a11.68,11.68,0,0,0-3.45.85l-4.7,12h-2.6q-1-3-1.75-6.2a38.35,38.35,0,0,1-.95-6.3A33.79,33.79,0,0,1,43,65.45a38.47,38.47,0,0,1,10.35-1.3,19.22,19.22,0,0,1,8.15,1.45,11.54,11.54,0,0,1,4.65,3.75,12.8,12.8,0,0,1,2.1,5.1,31.85,31.85,0,0,1,.5,5.6q0,6-.25,11.55T68.26,102.26ZM49,110.37a9.31,9.31,0,0,0,4.4-1,11.83,11.83,0,0,0,3.2-2.4,14.59,14.59,0,0,0,2.1-2.85,13.11,13.11,0,0,0,1.1-2.45V91.16a61.39,61.39,0,0,0-9.5.6,16,16,0,0,0-5.8,1.9,6.93,6.93,0,0,0-2.9,3.25,11.61,11.61,0,0,0-.8,4.45A9.36,9.36,0,0,0,43,108,7.82,7.82,0,0,0,49,110.37ZM83,47.14l-7.6-.8v-2.6a38.06,38.06,0,0,1,7-2.1l7.15-1.5H92V75.25h.2a16.15,16.15,0,0,1,5.75-8.1,14.7,14.7,0,0,1,9-3q9.1,0,14,6.2t4.85,19.11q0,13.2-6.65,20t-19.16,6.8a36.15,36.15,0,0,1-5-.35q-2.5-.35-4.8-.85a29.36,29.36,0,0,1-4.15-1.2,16.32,16.32,0,0,1-3-1.4Zm21.21,23.21a10.13,10.13,0,0,0-7.8,3.25A19.81,19.81,0,0,0,92,81.86v27.91a15.74,15.74,0,0,0,4.4,1.55,26.49,26.49,0,0,0,5.5.55,11.86,11.86,0,0,0,10.4-5.75q3.8-5.75,3.8-16.66a40.64,40.64,0,0,0-.65-7.4,20,20,0,0,0-2.1-6.1,11.64,11.64,0,0,0-3.7-4.1A9.61,9.61,0,0,0,104.18,70.35Zm65.82,38a14.49,14.49,0,0,1-5.85,5.85,18.51,18.51,0,0,1-9.45,2.35,26.07,26.07,0,0,1-10.25-1.85,19.05,19.05,0,0,1-7.25-5.3,22.85,22.85,0,0,1-4.35-8.3,37.39,37.39,0,0,1-1.45-10.75q0-12.7,6.2-19.46t16.91-6.75a40.88,40.88,0,0,1,8.75.85,26.88,26.88,0,0,1,6.55,2.25,74.13,74.13,0,0,1-1.1,7.4,32.15,32.15,0,0,1-2,6.8H164l-4.2-11.9a5,5,0,0,0-1.6-.75,12.55,12.55,0,0,0-3-.25q-6.8,0-10.5,5T141,90.26a26.29,26.29,0,0,0,1.05,7.4,19.8,19.8,0,0,0,3.2,6.45,15.61,15.61,0,0,0,13,6.25,16.7,16.7,0,0,0,10.5-3.4Zm-1.31,25.55a4.48,4.48,0,0,0-6.34,0L145.77,150.5l-7.57-7.57,0,0-18.33-18.33a6.49,6.49,0,0,0-9.17,0L92.34,142.9l0,0-7.56,7.56-7.57-7.57,0,0L58.82,124.56a6.49,6.49,0,0,0-9.17,0L31.31,142.9a4.48,4.48,0,0,0,6.34,6.33l16.58-16.58,7.57,7.57,0,0,18.33,18.33a6.49,6.49,0,0,0,9.17,0l18.33-18.33,0,0,7.56-7.56,7.57,7.57,0,0,18.33,18.33a6.49,6.49,0,0,0,9.17,0l18.33-18.33A4.48,4.48,0,0,0,168.69,133.91Z"] $ do mempty
 
 {-# NOINLINE svgEditKindMeaning #-}
-svgEditKindMeaning :: Color -> ReactElementM h ()
-svgEditKindMeaning c0 = do
-  svg_ ["version" $= "1.1", "id" $= "Ebene_1", "xmlns" $= "http://www.w3.org/2000/svg", "xmlnsXlink" $= "http://www.w3.org/1999/xlink", "x" $= "0px", "y" $= "0px", "viewBox" $= "0 0 100 100", "style" @= styles [("enableBackground","new 0 0 100 100")], "xmlSpace" $= "preserve"] $ do
-    elemText "\n"
-    elemText "\n"
+svgEditKindMeaning :: Color -> Color -> ReactElementM h ()
+svgEditKindMeaning c0 c1 = do
+  svg_ ["xmlns" $= "http://www.w3.org/2000/svg", "viewBox" $= "0 0 200 200"] $ do
+    defs_ $ do mempty
     title_ $ do
-      elemText "Zeichenfl\228che 1 Kopie 2"
-    elemText "\n"
-    circle_ ["className" $= colorName ColorAttrFill c0, "cx" $= "50", "cy" $= "50", "r" $= "50"] $ do mempty
-    elemText "\n"
+      elemText "Meaning"
+    circle_ ["className" $= colorName ColorAttrFill c0, "cx" $= "100", "cy" $= "100", "r" $= "100"] $ do mempty
+    path_ ["className" $= colorName ColorAttrFill c1, "d" $= "M160,114.52a11.07,11.07,0,0,1,5.46,7.11,11.56,11.56,0,0,1-1.15,8.94l-5.87,10.08a11.07,11.07,0,0,1-7.11,5.45,11.55,11.55,0,0,1-8.94-1.15l-24.39-14v28.14a11.89,11.89,0,0,1-11.73,11.73H94.5a11.89,11.89,0,0,1-11.73-11.73V130.93L58.38,145a11.56,11.56,0,0,1-8.94,1.15,11.06,11.06,0,0,1-7.11-5.45l-5.87-10.08a11.56,11.56,0,0,1-1.15-8.94,11.07,11.07,0,0,1,5.45-7.11L65.16,100.4,40.78,86.29a11.06,11.06,0,0,1-5.45-7.11,11.56,11.56,0,0,1,1.15-8.94l5.87-10.08a11.06,11.06,0,0,1,7.11-5.46,11.58,11.58,0,0,1,8.94,1.15l24.39,14V41.73A11.89,11.89,0,0,1,94.5,30h11.73A11.89,11.89,0,0,1,118,41.73V69.88l24.39-14a11.57,11.57,0,0,1,8.94-1.15,11.08,11.08,0,0,1,7.11,5.46l5.87,10.08a11.56,11.56,0,0,1,1.15,8.94A11.07,11.07,0,0,1,160,86.29L135.57,100.4Z"] $ do mempty
 
 {-# NOINLINE svgEditKindPhrasing #-}
-svgEditKindPhrasing :: Color -> ReactElementM h ()
-svgEditKindPhrasing c0 = do
-  svg_ ["version" $= "1.1", "id" $= "Ebene_1", "xmlns" $= "http://www.w3.org/2000/svg", "xmlnsXlink" $= "http://www.w3.org/1999/xlink", "x" $= "0px", "y" $= "0px", "viewBox" $= "0 0 100 100", "style" @= styles [("enableBackground","new 0 0 100 100")], "xmlSpace" $= "preserve"] $ do
-    elemText "\n"
-    elemText "\n"
+svgEditKindPhrasing :: Color -> Color -> ReactElementM h ()
+svgEditKindPhrasing c0 c1 = do
+  svg_ ["xmlns" $= "http://www.w3.org/2000/svg", "viewBox" $= "0 0 200 200"] $ do
+    defs_ $ do mempty
     title_ $ do
-      elemText "Zeichenfl\228che 1 Kopie 2"
-    elemText "\n"
-    circle_ ["className" $= colorName ColorAttrFill c0, "cx" $= "50", "cy" $= "50", "r" $= "50"] $ do mempty
-    elemText "\n"
+      elemText "Phrasing"
+    circle_ ["className" $= colorName ColorAttrFill c0, "cx" $= "100", "cy" $= "100", "r" $= "100"] $ do mempty
+    path_ ["className" $= colorName ColorAttrFill c1, "d" $= "M37.29,152.05a20.33,20.33,0,0,0,10.54-6q3.8-4.32,3.45-9a16.38,16.38,0,0,0-5.62-4.41,53.5,53.5,0,0,0-7.17-2.85,13.67,13.67,0,0,1-.26-6.31,16.33,16.33,0,0,1,2.33-5.88A19.5,19.5,0,0,1,44.63,113a9.74,9.74,0,0,1,4.75-2.25,22.94,22.94,0,0,1,6.91,1.47,19.83,19.83,0,0,1,6.13,3.63,17.34,17.34,0,0,1,4.32,5.87,19.79,19.79,0,0,1,1.64,8.38,24,24,0,0,1-2.07,9.5,32.78,32.78,0,0,1-5.79,9A37,37,0,0,1,40.39,160Zm35.42,0a20.32,20.32,0,0,0,10.54-6q3.8-4.32,3.46-9a16.37,16.37,0,0,0-5.61-4.41,53.64,53.64,0,0,0-7.17-2.85,13.69,13.69,0,0,1-.26-6.31A16.31,16.31,0,0,1,76,117.58,19.48,19.48,0,0,1,80,113a9.73,9.73,0,0,1,4.75-2.25,22.94,22.94,0,0,1,6.91,1.47,19.85,19.85,0,0,1,6.13,3.63,17.37,17.37,0,0,1,4.32,5.87,19.79,19.79,0,0,1,1.64,8.38,24,24,0,0,1-2.07,9.5,32.78,32.78,0,0,1-5.79,9A37,37,0,0,1,75.81,160ZM127.58,48.59q-6.74,1.73-10.28,5.1a9.63,9.63,0,0,0-3.19,8,16.32,16.32,0,0,0,5.61,4.4A52.77,52.77,0,0,0,126.89,69a13.79,13.79,0,0,1,.26,6.31,16.38,16.38,0,0,1-2.33,5.87,19.45,19.45,0,0,1-4.06,4.58A9.73,9.73,0,0,1,116,88a23.19,23.19,0,0,1-7.08-1.47,18,18,0,0,1-6-3.71A19.49,19.49,0,0,1,98.65,77,17.32,17.32,0,0,1,97,69.32a24.61,24.61,0,0,1,2.07-9.93,28.44,28.44,0,0,1,5.79-8.55,34.44,34.44,0,0,1,8.9-6.48,38.46,38.46,0,0,1,11.4-3.71Zm35.42,0q-6.74,1.73-10.28,5.1a9.63,9.63,0,0,0-3.2,8,16.32,16.32,0,0,0,5.61,4.4A52.77,52.77,0,0,0,162.31,69a13.75,13.75,0,0,1,.26,6.31,16.33,16.33,0,0,1-2.33,5.87,19.4,19.4,0,0,1-4.06,4.58A9.72,9.72,0,0,1,151.43,88a23.2,23.2,0,0,1-7.09-1.47,18,18,0,0,1-6-3.71A19.49,19.49,0,0,1,134.06,77a17.31,17.31,0,0,1-1.64-7.69,24.57,24.57,0,0,1,2.07-9.93,28.39,28.39,0,0,1,5.79-8.55,34.49,34.49,0,0,1,8.9-6.48,38.44,38.44,0,0,1,11.4-3.71Z"] $ do mempty
 
 {-# NOINLINE svgEditNew #-}
 svgEditNew :: Color -> Color -> Color -> ReactElementM h ()
 svgEditNew c0 c1 c2 = do
-  svg_ ["version" $= "1.1", "id" $= "Ebene_1", "xmlns" $= "http://www.w3.org/2000/svg", "xmlnsXlink" $= "http://www.w3.org/1999/xlink", "x" $= "0px", "y" $= "0px", "viewBox" $= "0 0 100 100", "style" @= styles [("enableBackground","new 0 0 100 100")], "xmlSpace" $= "preserve"] $ do
-    elemText "\n"
-    elemText "\n"
+  svg_ ["xmlns" $= "http://www.w3.org/2000/svg", "viewBox" $= "0 0 200 200"] $ do
+    defs_ $ do mempty
     title_ $ do
-      elemText "Zeichenfl\228che 1 Kopie 3"
-    elemText "\n"
-    path_ ["className" $= colorName ColorAttrFill c0, "d" $= "M14.6,77.1c0.1-0.6,0.4-1.1,0.7-1.6L52,11.7l3.9,2.3l9.6,5.6l3.8,2.2L32.6,85.6c-0.2,0.5-0.6,1-1.1,1.3l-6,5\n\tl-4.2-2.3l-4-2.2l-4.1-2.3L14.6,77.1z"] $ do mempty
-    elemText "\n"
-    path_ ["className" $= colorName ColorAttrFill c1, "d" $= "M13.2,85.1l4.1,2.3l0,0l4,2.2l0,0l4.2,2.3l-8.7,7.2c-0.6,0.5-1.4,0.8-2.2,0.9c-1.9,0-3.4-1.6-3.4-3.5\n\tc0-0.2,0-0.3,0-0.5L13.2,85.1z"] $ do mempty
-    elemText "\n"
-    path_ ["className" $= colorName ColorAttrFill c1, "d" $= "M65.5,19.5L55.9,14l0,0L52,11.7l5.5-9.5c0.9-1.4,2.4-2.2,4-2.2c0.8,0,1.6,0.2,2.2,0.7l9.6,5.6\n\tc1.4,0.8,2.2,2.2,2.2,3.8c0,0.8-0.2,1.6-0.7,2.2l-5.5,9.6C69.3,21.8,65.5,19.5,65.5,19.5z"] $ do mempty
-    elemText "\n"
-    circle_ ["className" $= colorName ColorAttrFill c0, "cx" $= "63", "cy" $= "66", "r" $= "25.9"] $ do mempty
-    elemText "\n"
-    path_ ["className" $= colorName ColorAttrFill c2, "d" $= "M80.2,72.3H68.8v11.4c0,0.6-0.5,1.1-1.1,1.1H57.3c-0.6,0-1.1-0.5-1.1-1.1V72.3H44.8c-0.6,0-1.1-0.5-1.1-1.1\n\tV60.8c0-0.6,0.5-1.1,1.1-1.1h11.4V48.3c0-0.6,0.5-1.1,1.1-1.1h10.4c0.6,0,1.1,0.5,1.1,1.1v11.4h11.4c0.6,0,1.1,0.5,1.1,1.1v10.4\n\tC81.3,71.8,80.8,72.3,80.2,72.3z"] $ do mempty
-    elemText "\n"
+      elemText "New Edit"
+    circle_ ["className" $= colorName ColorAttrFill c0, "cx" $= "100", "cy" $= "100", "r" $= "100", "transform" $= "translate(-3.61 196.26) rotate(-87.9)"] $ do mempty
+    path_ ["className" $= colorName ColorAttrFill c1, "d" $= "M55.29,136.86a7,7,0,0,1,1.1-2.32l59.39-94.92,5.82,3.68,14.2,9,5.69,3.6L82.16,150.7a4.93,4.93,0,0,1-1.77,2L71,159.93l-6.27-3.79-6-3.59-6.06-3.66Z"] $ do mempty
+    path_ ["className" $= colorName ColorAttrFill c2, "d" $= "M54.54,150.59,60.73,154h0l6.08,3.37h0L73.22,161l-13.16,11a6,6,0,0,1-3.38,1.34,5.24,5.24,0,0,1-5.07-6.07Z"] $ do mempty
+    path_ ["className" $= colorName ColorAttrFill c2, "d" $= "M135.8,52.27l-14.2-9h0l-5.82-3.68,8.84-14.13a7.11,7.11,0,0,1,6.2-3.15,5.74,5.74,0,0,1,3.34,1.14l14.2,9a6.53,6.53,0,0,1,3.17,5.86,5.69,5.69,0,0,1-1.14,3.33L141.5,55.87l-5.69-3.6Z"] $ do mempty
+    circle_ ["className" $= colorName ColorAttrFill c2, "cx" $= "130.2", "cy" $= "121.62", "r" $= "39.33"] $ do mempty
+    path_ ["className" $= colorName ColorAttrFill c1, "d" $= "M156.44,131.12H139.07v17.37a1.63,1.63,0,0,1-1.63,1.63H121.69a1.63,1.63,0,0,1-1.63-1.63V131.12H102.69a1.63,1.63,0,0,1-1.63-1.63V113.75a1.63,1.63,0,0,1,1.63-1.63h17.37V94.75a1.63,1.63,0,0,1,1.63-1.63h15.74a1.63,1.63,0,0,1,1.63,1.63v17.37h17.37a1.63,1.63,0,0,1,1.63,1.63v15.74A1.63,1.63,0,0,1,156.44,131.12Z"] $ do mempty
 
 {-# NOINLINE svgEditReason #-}
-svgEditReason :: Color -> ReactElementM h ()
-svgEditReason c0 = do
-  svg_ ["xmlns" $= "http://www.w3.org/2000/svg", "viewBox" $= "0 0 100 100"] $ do
+svgEditReason :: Color -> Color -> ReactElementM h ()
+svgEditReason c0 c1 = do
+  svg_ ["xmlns" $= "http://www.w3.org/2000/svg", "viewBox" $= "0 0 200 200"] $ do
     defs_ $ do mempty
     title_ $ do
-      elemText "Zeichenfl\228che 1 Kopie 3"
-    path_ ["className" $= colorName ColorAttrFill c0, "d" $= "M39.3,79.94a11.08,11.08,0,0,1,3.07-8,10.74,10.74,0,0,1,15.27,0,11.08,11.08,0,0,1,3.07,8,10.92,10.92,0,0,1-3.07,7.87,10.74,10.74,0,0,1-15.27,0A10.92,10.92,0,0,1,39.3,79.94ZM41.7,25,41.1,9H58.9l-.6,16L55.77,61.78H44.23Z"] $ do mempty
+      elemText "Remark"
+    circle_ ["className" $= colorName ColorAttrFill c0, "cx" $= "100", "cy" $= "100", "r" $= "100"] $ do mempty
+    path_ ["className" $= colorName ColorAttrFill c1, "d" $= "M115.93,144.23a21.89,21.89,0,0,0-31.14,0,22.62,22.62,0,0,0-6.24,16.25,22.28,22.28,0,0,0,6.24,16,21.89,21.89,0,0,0,31.14,0,22.29,22.29,0,0,0,6.24-16A22.62,22.62,0,0,0,115.93,144.23Z"] $ do mempty
+    path_ ["className" $= colorName ColorAttrFill c1, "d" $= "M88.19,125.08a.91.91,0,0,0,.9.85h22.55a.91.91,0,0,0,.9-.84l4.93-71.95,1.17-31.19a.91.91,0,0,0-.91-.94H83a.91.91,0,0,0-.91.94l1.17,31.24Z"] $ do mempty
 
 {-# NOINLINE svgEditToolbarBold #-}
-svgEditToolbarBold :: Color -> ReactElementM h ()
-svgEditToolbarBold c0 = do
-  svg_ ["xmlns" $= "http://www.w3.org/2000/svg", "viewBox" $= "0 0 100 100"] $ do
+svgEditToolbarBold :: Color -> Color -> ReactElementM h ()
+svgEditToolbarBold c0 c1 = do
+  svg_ ["xmlns" $= "http://www.w3.org/2000/svg", "viewBox" $= "0 0 200 200"] $ do
     defs_ $ do mempty
     title_ $ do
-      elemText "Zeichenfl\228che 1 Kopie 8"
-    path_ ["className" $= colorName ColorAttrFill c0, "d" $= "M78.23,56.43a15.64,15.64,0,0,0-4-5,17.8,17.8,0,0,0-5.49-3c-1-.32-1.91-.6-2.85-.82a19.74,19.74,0,0,0,2.52-1.07,17.19,17.19,0,0,0,4.52-3.29A14.48,14.48,0,0,0,77,33a14.42,14.42,0,0,0-2-7.93,13.75,13.75,0,0,0-5.33-4.81A24.41,24.41,0,0,0,62.28,18a55.2,55.2,0,0,0-8.44-.64c-2.64,0-5,.09-7,.27s-4.13.27-6.35.27H25.19v4.77l.45.25a22.84,22.84,0,0,0,3.71,1.63,31.76,31.76,0,0,0,3.16.91v49.1a16.56,16.56,0,0,0-3.14.84,24.84,24.84,0,0,0-3.75,1.76l-.43.25v4.76h11.5c.94,0,2.11,0,3.49.09l4.33.18,4.47.18c1.51.06,2.9.09,4.14.09a45.73,45.73,0,0,0,9.83-1,27.42,27.42,0,0,0,8.53-3.37,18.27,18.27,0,0,0,6-6,16.46,16.46,0,0,0,2.27-8.76A15.06,15.06,0,0,0,78.23,56.43Zm-26-31.56a10.17,10.17,0,0,1,7,2.41c1.76,1.58,2.66,4.14,2.66,7.62a10.63,10.63,0,0,1-2,6.33,11.89,11.89,0,0,1-5.15,4.08c-.83.11-1.74.21-2.71.29s-2,.13-3,.13h-2V25.12c.55-.07,1.15-.12,1.78-.16C49.83,24.9,51,24.87,52.23,24.87Zm11,33.68a11.92,11.92,0,0,1,1,5.2,11.51,11.51,0,0,1-3,8.29c-2,2.07-4.68,3.08-8.22,3.08A34.44,34.44,0,0,1,49,75c-.64-.08-1.27-.18-1.88-.3V53.28H51a29.64,29.64,0,0,1,5.47.48,10.77,10.77,0,0,1,4.13,1.65A8.09,8.09,0,0,1,63.24,58.55Z"] $ do mempty
+      elemText "Bold"
+    circle_ ["className" $= colorName ColorAttrFill c0, "cx" $= "100", "cy" $= "100", "r" $= "100"] $ do mempty
+    path_ ["className" $= colorName ColorAttrFill c1, "d" $= "M157.71,113.92a32.66,32.66,0,0,0-8.39-10.36,37.18,37.18,0,0,0-11.47-6.28c-2-.67-4-1.24-6-1.71a41.22,41.22,0,0,0,5.27-2.23,35.9,35.9,0,0,0,9.43-6.88A30.23,30.23,0,0,0,155.22,65c0-6.67-1.42-12.24-4.21-16.56a28.72,28.72,0,0,0-11.14-10,51,51,0,0,0-15.48-4.84,115.28,115.28,0,0,0-17.63-1.33c-5.51,0-10.46.19-14.71.57s-8.63.55-13.27.55H46.94v10l.93.52a47.69,47.69,0,0,0,7.76,3.4,66.32,66.32,0,0,0,6.61,1.9V151.7a34.59,34.59,0,0,0-6.56,1.76,51.88,51.88,0,0,0-7.83,3.67l-.9.52v9.94h24c2,0,4.41.06,7.29.18l9.05.37,9.33.37c3.15.13,6.06.19,8.65.19a95.5,95.5,0,0,0,20.54-2.19,57.27,57.27,0,0,0,17.82-7A38.16,38.16,0,0,0,156.25,147a34.38,34.38,0,0,0,4.75-18.3A31.46,31.46,0,0,0,157.71,113.92ZM103.41,48c6,0,10.91,1.7,14.65,5s5.55,8.65,5.55,15.91a22.21,22.21,0,0,1-4.14,13.22,24.83,24.83,0,0,1-10.75,8.53c-1.73.23-3.63.43-5.66.61s-4.14.27-6.18.27H92.72V48.53c1.15-.14,2.4-.25,3.71-.33C98.4,48.08,100.75,48,103.41,48Zm23,70.34a24.9,24.9,0,0,1,2.05,10.87c0,7.19-2.09,13-6.21,17.31S112.48,153,105.09,153a71.92,71.92,0,0,1-8.44-.36c-1.35-.17-2.66-.38-3.92-.62V107.34h8.08a61.91,61.91,0,0,1,11.42,1,22.48,22.48,0,0,1,8.64,3.44A16.89,16.89,0,0,1,126.41,118.36Z"] $ do mempty
 
 {-# NOINLINE svgEditToolbarBullets #-}
-svgEditToolbarBullets :: Color -> ReactElementM h ()
-svgEditToolbarBullets c0 = do
-  svg_ ["xmlns" $= "http://www.w3.org/2000/svg", "viewBox" $= "0 0 100 100"] $ do
+svgEditToolbarBullets :: Color -> Color -> ReactElementM h ()
+svgEditToolbarBullets c0 c1 = do
+  svg_ ["xmlns" $= "http://www.w3.org/2000/svg", "viewBox" $= "0 0 200 200"] $ do
     defs_ $ do mempty
     title_ $ do
-      elemText "Zeichenfl\228che 1 Kopie 8"
-    path_ ["className" $= colorName ColorAttrFill c0, "d" $= "M92.52,25.63H31a.87.87,0,0,1-.87-.87V16.54a.87.87,0,0,1,.87-.87H92.52a.87.87,0,0,1,.87.87v8.21A.87.87,0,0,1,92.52,25.63Zm1.08,29V46.39a.87.87,0,0,0-.87-.87H31a.87.87,0,0,0-.87.87v8.21a.87.87,0,0,0,.87.87H92.74A.87.87,0,0,0,93.61,54.61Zm-.22,29.85V76.24a.87.87,0,0,0-.87-.87H31a.87.87,0,0,0-.87.87v8.21a.87.87,0,0,0,.87.87H92.52A.87.87,0,0,0,93.39,84.46ZM15.07,12a8.68,8.68,0,1,0,8.68,8.68A8.68,8.68,0,0,0,15.07,12Zm0,29.85a8.68,8.68,0,1,0,8.68,8.68A8.68,8.68,0,0,0,15.07,41.82Zm0,29.85a8.68,8.68,0,1,0,8.68,8.68A8.68,8.68,0,0,0,15.07,71.67Z"] $ do mempty
+      elemText "List"
+    circle_ ["className" $= colorName ColorAttrFill c0, "cx" $= "100", "cy" $= "100", "r" $= "100"] $ do mempty
+    path_ ["className" $= colorName ColorAttrFill c1, "d" $= "M164.8,62.59H69.28a.87.87,0,0,1-.87-.87V48.09a.87.87,0,0,1,.87-.87H164.8a.87.87,0,0,1,.87.87V61.72A.87.87,0,0,1,164.8,62.59Zm1.2,45.23V94.18a.87.87,0,0,0-.87-.87H69.28a.87.87,0,0,0-.87.87v13.63a.87.87,0,0,0,.87.87h95.85A.87.87,0,0,0,166,107.82Zm-.33,46.1V140.28a.87.87,0,0,0-.87-.87H69.28a.87.87,0,0,0-.87.87v13.63a.87.87,0,0,0,.87.87H164.8A.87.87,0,0,0,165.67,153.91ZM45.33,41.5A13.4,13.4,0,1,0,58.67,54.9,13.37,13.37,0,0,0,45.33,41.5Zm0,46.1A13.4,13.4,0,1,0,58.67,101,13.37,13.37,0,0,0,45.33,87.6Zm0,46.1a13.4,13.4,0,1,0,13.33,13.4A13.37,13.37,0,0,0,45.33,133.69Z"] $ do mempty
 
 {-# NOINLINE svgEditToolbarH1 #-}
-svgEditToolbarH1 :: Color -> ReactElementM h ()
-svgEditToolbarH1 c0 = do
-  svg_ ["xmlns" $= "http://www.w3.org/2000/svg", "viewBox" $= "0 0 100 100"] $ do
+svgEditToolbarH1 :: Color -> Color -> ReactElementM h ()
+svgEditToolbarH1 c0 c1 = do
+  svg_ ["xmlns" $= "http://www.w3.org/2000/svg", "viewBox" $= "0 0 200 200"] $ do
     defs_ $ do mempty
     title_ $ do
-      elemText "Zeichenfl\228che 1 Kopie 5"
-    path_ ["className" $= colorName ColorAttrFill c0, "d" $= "M55.38,77.19H36.56v-2.7q.85-.5,1.78-.92a15.65,15.65,0,0,1,2.13-.78V58.41q0-6.12-1.17-9a4.48,4.48,0,0,0-4.58-2.88,6.62,6.62,0,0,0-4.83,2A11.24,11.24,0,0,0,27.05,53V72.79a15.82,15.82,0,0,1,2,.64A9.08,9.08,0,0,1,31,74.49v2.7H12.15v-2.7a19.76,19.76,0,0,1,4.68-1.71V29.63l-5.39-.57v-2.7a22.57,22.57,0,0,1,2.73-.85q1.67-.43,3.51-.75t3.69-.57q1.84-.25,3.26-.39h2.41V48.87h.07A12.86,12.86,0,0,1,29,45.78a14.76,14.76,0,0,1,2.73-2.56,13.34,13.34,0,0,1,3.3-1.74,11,11,0,0,1,3.76-.64,17.52,17.52,0,0,1,5.08.68,7.86,7.86,0,0,1,3.73,2.38,11.43,11.43,0,0,1,2.27,4.59,28.43,28.43,0,0,1,.78,7.29v17q1.21.28,2.41.64a8.32,8.32,0,0,1,2.27,1.07Z"] $ do mempty
-    path_ ["className" $= colorName ColorAttrFill c0, "d" $= "M84,77.19H59.42V74.14q1.77-.78,3.58-1.38t3.66-1V39.14L66.95,35a19.93,19.93,0,0,1-4.12.85,33.63,33.63,0,0,1-4.4.14l-.35-2.63a80.18,80.18,0,0,0,8.2-2.7,51.67,51.67,0,0,0,8.2-4h2.41V71.73q1.77.43,3.55,1T84,74.14Z"] $ do mempty
+      elemText "Headline 1"
+    circle_ ["className" $= colorName ColorAttrFill c0, "cx" $= "100", "cy" $= "100", "r" $= "100"] $ do mempty
+    path_ ["className" $= colorName ColorAttrFill c1, "d" $= "M113.58,151.12H77.8V146q1.62-.95,3.38-1.76a29.78,29.78,0,0,1,4-1.49V115.4q0-11.64-2.23-17.12t-8.71-5.48a12.6,12.6,0,0,0-9.18,3.72,21.38,21.38,0,0,0-5.4,8.6v37.63A30.09,30.09,0,0,1,63.55,144a17.27,17.27,0,0,1,3.58,2v5.13H31.35V146a37.58,37.58,0,0,1,8.91-3.25V60.65L30,59.57V54.44a42.93,42.93,0,0,1,5.2-1.62q3.17-.81,6.68-1.42t7-1.08q3.51-.47,6.21-.74h4.59V97.24h.14a24.46,24.46,0,0,1,3.64-5.87,28.08,28.08,0,0,1,5.2-4.86A25.38,25.38,0,0,1,75,83.2,21,21,0,0,1,82.12,82a33.33,33.33,0,0,1,9.66,1.29,15,15,0,0,1,7.09,4.53,21.74,21.74,0,0,1,4.32,8.73,54.07,54.07,0,0,1,1.49,13.87v32.34q2.3.54,4.59,1.22a15.83,15.83,0,0,1,4.32,2Z"] $ do mempty
+    path_ ["className" $= colorName ColorAttrFill c1, "d" $= "M168,151.12H121.28v-5.81q3.37-1.48,6.82-2.63t7-2v-62l.54-8a37.9,37.9,0,0,1-7.83,1.62,64,64,0,0,1-8.37.27l-.67-5a152.51,152.51,0,0,0,15.59-5.13A98.28,98.28,0,0,0,149.91,55h4.59v85.74q3.37.81,6.75,2t6.75,2.63Z"] $ do mempty
 
 {-# NOINLINE svgEditToolbarH2 #-}
-svgEditToolbarH2 :: Color -> ReactElementM h ()
-svgEditToolbarH2 c0 = do
-  svg_ ["xmlns" $= "http://www.w3.org/2000/svg", "viewBox" $= "0 0 100 100"] $ do
+svgEditToolbarH2 :: Color -> Color -> ReactElementM h ()
+svgEditToolbarH2 c0 c1 = do
+  svg_ ["xmlns" $= "http://www.w3.org/2000/svg", "viewBox" $= "0 0 200 200"] $ do
     defs_ $ do mempty
     title_ $ do
-      elemText "Zeichenfl\228che 1 Kopie 3"
-    path_ ["className" $= colorName ColorAttrFill c0, "d" $= "M54.51,77.19H35.7v-2.7q.85-.5,1.78-.92a15.61,15.61,0,0,1,2.13-.78V58.41q0-6.12-1.17-9a4.48,4.48,0,0,0-4.58-2.88,6.62,6.62,0,0,0-4.83,2A11.25,11.25,0,0,0,26.19,53V72.79a15.92,15.92,0,0,1,2,.64,9.13,9.13,0,0,1,1.88,1.07v2.7H11.28v-2.7A19.76,19.76,0,0,1,16,72.78V29.63l-5.4-.57v-2.7a22.62,22.62,0,0,1,2.73-.85q1.67-.43,3.51-.75t3.69-.57q1.85-.25,3.27-.39h2.41V48.87h.07a12.83,12.83,0,0,1,1.92-3.09,14.7,14.7,0,0,1,2.73-2.56,13.32,13.32,0,0,1,3.3-1.74A11,11,0,0,1,38,40.85a17.53,17.53,0,0,1,5.08.68,7.86,7.86,0,0,1,3.73,2.38A11.43,11.43,0,0,1,49,48.49a28.47,28.47,0,0,1,.78,7.29v17q1.21.28,2.41.64a8.31,8.31,0,0,1,2.27,1.07Z"] $ do mempty
-    path_ ["className" $= colorName ColorAttrFill c0, "d" $= "M65.37,43.26H63q-.43-1.06-1-2.48t-1.1-3q-.57-1.56-1.07-3.09t-.78-2.8a22.79,22.79,0,0,1,6.35-3.69,25.17,25.17,0,0,1,9.41-1.56,20.48,20.48,0,0,1,6.74,1,13.1,13.1,0,0,1,4.72,2.77A10.93,10.93,0,0,1,89,34.53a14.11,14.11,0,0,1,.89,5,17.7,17.7,0,0,1-2,8.2A36.76,36.76,0,0,1,83,55a59.89,59.89,0,0,1-6.25,6.25l-6,5.22L67.08,69v.28l4.33-.43H83.62l3.48-8h2.41q.21,1.7.46,4t.46,4.58q.21,2.31.35,4.4t.14,3.37H58.42V72.65q1.84-1.63,4.19-3.8t4.76-4.76q2.41-2.59,4.76-5.5a56.45,56.45,0,0,0,4.19-5.93,32.48,32.48,0,0,0,2.95-6.14,18.31,18.31,0,0,0,1.1-6.1,9.44,9.44,0,0,0-2.09-6.35,7.37,7.37,0,0,0-5.93-2.45,15,15,0,0,0-2.17.14,16.38,16.38,0,0,0-2.17.5Z"] $ do mempty
+      elemText "Headline 2"
+    circle_ ["className" $= colorName ColorAttrFill c0, "cx" $= "100", "cy" $= "100", "r" $= "100"] $ do mempty
+    path_ ["className" $= colorName ColorAttrFill c1, "d" $= "M106.1,147.12h-33v-4.73q1.5-.87,3.12-1.62a27.38,27.38,0,0,1,3.74-1.37V114.16q0-10.74-2.05-15.8t-8-5.06a11.62,11.62,0,0,0-8.47,3.44,19.74,19.74,0,0,0-5,7.93v34.71A27.93,27.93,0,0,1,60,140.51a16,16,0,0,1,3.3,1.87v4.73h-33v-4.73a34.68,34.68,0,0,1,8.22-3V63.67l-9.47-1V57.93a39.69,39.69,0,0,1,4.8-1.49q2.93-.75,6.17-1.31t6.48-1q3.24-.43,5.73-.69H56.4v44h.13A22.52,22.52,0,0,1,59.89,92a25.8,25.8,0,0,1,4.79-4.48,23.38,23.38,0,0,1,5.79-3.05,19.34,19.34,0,0,1,6.6-1.12A30.75,30.75,0,0,1,86,84.53a13.79,13.79,0,0,1,6.54,4.18,20.05,20.05,0,0,1,4,8.05,50,50,0,0,1,1.37,12.79v29.83q2.12.5,4.23,1.12a14.58,14.58,0,0,1,4,1.87Z"] $ do mempty
+    path_ ["className" $= colorName ColorAttrFill c1, "d" $= "M125.16,87.58h-4.23q-.75-1.87-1.68-4.36T117.31,78q-1-2.74-1.87-5.42t-1.37-4.92a40,40,0,0,1,11.15-6.48,44.17,44.17,0,0,1,16.5-2.74,35.93,35.93,0,0,1,11.83,1.74A23,23,0,0,1,161.84,65a19.19,19.19,0,0,1,4.86,7.22,24.76,24.76,0,0,1,1.56,8.84,31.07,31.07,0,0,1-3.49,14.39,64.5,64.5,0,0,1-8.6,12.7,105.08,105.08,0,0,1-11,11q-5.86,5-10.59,9.16l-6.48,4.36v.5l7.6-.75h21.42l6.1-14h4.24q.37,3,.81,7t.81,8q.37,4.05.62,7.72t.25,5.92H113v-8q3.24-2.86,7.35-6.66t8.35-8.35q4.23-4.55,8.35-9.65a99.06,99.06,0,0,0,7.35-10.4,57,57,0,0,0,5.17-10.77,32.13,32.13,0,0,0,1.93-10.71q0-6.85-3.68-11.15t-10.4-4.3a26.31,26.31,0,0,0-3.8.25,28.74,28.74,0,0,0-3.8.87Z"] $ do mempty
 
 {-# NOINLINE svgEditToolbarH3 #-}
-svgEditToolbarH3 :: Color -> ReactElementM h ()
-svgEditToolbarH3 c0 = do
-  svg_ ["xmlns" $= "http://www.w3.org/2000/svg", "viewBox" $= "0 0 100 100"] $ do
+svgEditToolbarH3 :: Color -> Color -> ReactElementM h ()
+svgEditToolbarH3 c0 c1 = do
+  svg_ ["xmlns" $= "http://www.w3.org/2000/svg", "viewBox" $= "0 0 200 200"] $ do
     defs_ $ do mempty
     title_ $ do
-      elemText "Zeichenfl\228che 1 Kopie 8"
-    path_ ["className" $= colorName ColorAttrFill c0, "d" $= "M53.09,76.27H34.28v-2.7q.85-.5,1.77-.92a15.57,15.57,0,0,1,2.13-.78V57.48q0-6.12-1.17-9a4.48,4.48,0,0,0-4.58-2.88,6.62,6.62,0,0,0-4.83,2,11.25,11.25,0,0,0-2.84,4.52V71.86a15.92,15.92,0,0,1,2,.64,9.13,9.13,0,0,1,1.88,1.07v2.7H9.86v-2.7a19.76,19.76,0,0,1,4.69-1.71V28.71l-5.4-.57v-2.7a22.62,22.62,0,0,1,2.73-.85q1.67-.43,3.51-.75t3.69-.57q1.85-.25,3.27-.39h2.41V47.94h.07a12.83,12.83,0,0,1,1.92-3.09,14.7,14.7,0,0,1,2.73-2.56,13.34,13.34,0,0,1,3.3-1.74,11,11,0,0,1,3.76-.64,17.52,17.52,0,0,1,5.08.68A7.85,7.85,0,0,1,45.35,43a11.42,11.42,0,0,1,2.27,4.59,28.47,28.47,0,0,1,.78,7.29v17q1.21.28,2.41.64a8.29,8.29,0,0,1,2.27,1.07Zm19.1-3.76a7.34,7.34,0,0,0,3.19-.75,9.17,9.17,0,0,0,2.8-2.09,10.41,10.41,0,0,0,2-3.19,10.53,10.53,0,0,0,.75-4,9.72,9.72,0,0,0-.82-4.15A8.55,8.55,0,0,0,78,55.47a8.38,8.38,0,0,0-3-1.67,11.35,11.35,0,0,0-3.41-.53H67.43V50.43L78.08,36.51,80.49,34v-.28l-3.83.43H65.94l-2.77,7.24H60.75q-.36-1.49-.75-3.55t-.71-4.12q-.32-2.06-.5-4t-.18-3.19h31v3.48L77.29,45l-3.05,3.12v.14l2.41-.5a17.61,17.61,0,0,1,6,1.24,12.72,12.72,0,0,1,7.24,7.35,15.08,15.08,0,0,1,1,5.47,13.28,13.28,0,0,1-1.53,6.39,15.12,15.12,0,0,1-4.08,4.83,18.15,18.15,0,0,1-6,3,24.69,24.69,0,0,1-7.17,1,29.37,29.37,0,0,1-8.27-1.21,20.34,20.34,0,0,1-3.41-1.35,12.86,12.86,0,0,1-2.59-1.7l2.63-7.38h2.06q.43.5,1.17,1.31l1.56,1.74q.81.92,1.6,1.85t1.35,1.56q.71.14,1.6.35A10.55,10.55,0,0,0,72.18,72.5Z"] $ do mempty
+      elemText "Headline 3"
+    circle_ ["className" $= colorName ColorAttrFill c0, "cx" $= "100", "cy" $= "100", "r" $= "100"] $ do mempty
+    path_ ["className" $= colorName ColorAttrFill c1, "d" $= "M107.06,146.79H73.21v-4.85q1.53-.9,3.19-1.66a28,28,0,0,1,3.83-1.41V113q0-11-2.11-16.2t-8.24-5.19a11.92,11.92,0,0,0-8.68,3.52,20.24,20.24,0,0,0-5.11,8.13v35.59A28.64,28.64,0,0,1,59.74,140a16.42,16.42,0,0,1,3.38,1.92v4.85H29.28v-4.85a35.56,35.56,0,0,1,8.43-3.07V61.22L28,60.2V55.34a40.7,40.7,0,0,1,4.92-1.53q3-.77,6.32-1.34t6.64-1q3.32-.45,5.88-.7H56.1V95.83h.13a23.09,23.09,0,0,1,3.45-5.56,26.45,26.45,0,0,1,4.92-4.6,24,24,0,0,1,5.94-3.13A19.83,19.83,0,0,1,77.3,81.4a31.52,31.52,0,0,1,9.13,1.22,14.13,14.13,0,0,1,6.7,4.29,20.54,20.54,0,0,1,4.09,8.26,51.22,51.22,0,0,1,1.41,13.12v30.59q2.17.51,4.34,1.15a14.92,14.92,0,0,1,4.09,1.92ZM141.41,140a13.21,13.21,0,0,0,5.75-1.34,16.5,16.5,0,0,0,5-3.77,18.72,18.72,0,0,0,3.58-5.75,19,19,0,0,0,1.34-7.15,17.49,17.49,0,0,0-1.47-7.47,15.39,15.39,0,0,0-3.83-5.17,15.07,15.07,0,0,0-5.43-3,20.43,20.43,0,0,0-6.13-1h-7.41V100.3l19.16-25,4.34-4.47v-.51l-6.9.77H130.17l-5,13h-4.34q-.64-2.68-1.34-6.38t-1.28-7.41q-.57-3.7-.89-7.15T117,57.39H172.7v6.26L150.61,90.59l-5.49,5.62v.25l4.34-.89a31.68,31.68,0,0,1,10.79,2.23,22.88,22.88,0,0,1,13,13.22,27.13,27.13,0,0,1,1.72,9.83,23.9,23.9,0,0,1-2.74,11.49,27.2,27.2,0,0,1-7.34,8.68,32.65,32.65,0,0,1-10.73,5.43,44.41,44.41,0,0,1-12.9,1.85,52.85,52.85,0,0,1-14.88-2.17,36.59,36.59,0,0,1-6.13-2.43,23.14,23.14,0,0,1-4.66-3.06l4.72-13.28H124q.77.9,2.11,2.36t2.81,3.13q1.47,1.66,2.87,3.32t2.43,2.81q1.28.26,2.87.64A19,19,0,0,0,141.41,140Z"] $ do mempty
 
 {-# NOINLINE svgEditToolbarItalic #-}
-svgEditToolbarItalic :: Color -> ReactElementM h ()
-svgEditToolbarItalic c0 = do
-  svg_ ["xmlns" $= "http://www.w3.org/2000/svg", "viewBox" $= "0 0 100 100"] $ do
+svgEditToolbarItalic :: Color -> Color -> ReactElementM h ()
+svgEditToolbarItalic c0 c1 = do
+  svg_ ["xmlns" $= "http://www.w3.org/2000/svg", "viewBox" $= "0 0 200 200"] $ do
     defs_ $ do mempty
     title_ $ do
-      elemText "Zeichenfl\228che 1 Kopie 3"
-    path_ ["className" $= colorName ColorAttrFill c0, "d" $= "M55.83,82.9H31.76l.47-2.73a34.1,34.1,0,0,1,8.08-2.26L52.07,22.18a24.64,24.64,0,0,1-3.57-1Q46.8,20.58,45,19.83l.66-2.73H69.74l-.56,2.73a40.44,40.44,0,0,1-4,1.36q-2.16.61-4,1L49.34,77.92q1.88.38,3.71.94a18.43,18.43,0,0,1,3.24,1.32Z"] $ do mempty
+      elemText "Italic"
+    circle_ ["className" $= colorName ColorAttrFill c0, "cx" $= "100", "cy" $= "100", "r" $= "100"] $ do mempty
+    path_ ["className" $= colorName ColorAttrFill c1, "d" $= "M111.71,174H58l1-6.09a76.18,76.18,0,0,1,18.06-5L103.31,38.34a55,55,0,0,1-8-2.21q-3.78-1.36-7.77-3L89,27h53.75l-1.26,6.09a90.34,90.34,0,0,1-9,3q-4.83,1.37-9,2.21L97.22,162.86q4.2.84,8.29,2.1a41.17,41.17,0,0,1,7.24,2.94Z"] $ do mempty
 
 {-# NOINLINE svgEditToolbarLink #-}
-svgEditToolbarLink :: Color -> ReactElementM h ()
-svgEditToolbarLink c0 = do
-  svg_ ["xmlns" $= "http://www.w3.org/2000/svg", "viewBox" $= "0 0 100 100"] $ do
+svgEditToolbarLink :: Color -> Color -> ReactElementM h ()
+svgEditToolbarLink c0 c1 = do
+  svg_ ["xmlns" $= "http://www.w3.org/2000/svg", "viewBox" $= "0 0 200 200"] $ do
     defs_ $ do mempty
     title_ $ do
-      elemText "Zeichenfl\228che 1 Kopie 3"
-    path_ ["className" $= colorName ColorAttrFill c0, "d" $= "M47.75,46h0Zm-9,0Zm23.8,9h1.23q1,0,1.42,0a10.92,10.92,0,0,0,1.12-.13,3.72,3.72,0,0,0,1.27-.41,4.73,4.73,0,0,0,1-.79,4.47,4.47,0,0,0,0-6.34,4.77,4.77,0,0,0-1-.79,3.79,3.79,0,0,0-1.27-.41c-.5-.08-.87-.12-1.12-.13s-.73,0-1.42,0l-1.22,0H38.75l-1.22,0q-1,0-1.42,0c-.25,0-.63.06-1.12.13a3.79,3.79,0,0,0-1.27.41,4.77,4.77,0,0,0-1,.79,4.47,4.47,0,0,0,0,6.34,4.73,4.73,0,0,0,1,.79,3.72,3.72,0,0,0,1.27.41,10.94,10.94,0,0,0,1.12.13q.38,0,1.42,0l1.24,0H62.57ZM37.43,58.41a4.31,4.31,0,0,1-3.14,1.36H20.55a4.32,4.32,0,0,1-3.17-1.32,4.27,4.27,0,0,1-1.29-3.14l0-9.68a4.51,4.51,0,0,1,1.35-3.14,4.33,4.33,0,0,1,3.17-1.32l13.64,0a4.32,4.32,0,0,1,3.17,1.32,4,4,0,0,1,.45.55,1.45,1.45,0,0,0,1.2.6h6.59a1.51,1.51,0,0,0,1.44-2,13.25,13.25,0,0,0-3.38-5.49,12.9,12.9,0,0,0-9.45-4l-13.64,0a12.8,12.8,0,0,0-9.54,3.94,12.89,12.89,0,0,0-4,9.45l0,9.68A12.74,12.74,0,0,0,11,64.81a13,13,0,0,0,9.52,4H34.3a13,13,0,0,0,9.51-4,13.13,13.13,0,0,0,3.34-5.45,1.51,1.51,0,0,0-1.44-2H39a1.53,1.53,0,0,0-1.22.62A4.08,4.08,0,0,1,37.43,58.41ZM90.27,36.19a13,13,0,0,0-9.52-4L67,32.25a13,13,0,0,0-9.51,4,13.12,13.12,0,0,0-3.35,5.49,1.5,1.5,0,0,0,1.43,1.94h6.66A1.51,1.51,0,0,0,63.46,43a4,4,0,0,1,.4-.47A4.32,4.32,0,0,1,67,41.24l13.74,0a4.33,4.33,0,0,1,3.17,1.32,4.27,4.27,0,0,1,1.29,3.14l0,9.68a4.5,4.5,0,0,1-1.38,3.11,4.3,4.3,0,0,1-3.14,1.36l-13.64,0a4.32,4.32,0,0,1-3.17-1.32,3.9,3.9,0,0,1-.4-.48,1.51,1.51,0,0,0-1.22-.64H55.62a1.5,1.5,0,0,0-1.43,2,13.25,13.25,0,0,0,3.38,5.48,12.89,12.89,0,0,0,9.45,4l13.64,0A13.47,13.47,0,0,0,94.16,55.37l0-9.68A12.74,12.74,0,0,0,90.27,36.19ZM38.75,46h0Z"] $ do mempty
+      elemText "Link"
+    circle_ ["className" $= colorName ColorAttrFill c0, "cx" $= "100", "cy" $= "100", "r" $= "100"] $ do mempty
+    path_ ["className" $= colorName ColorAttrFill c1, "d" $= "M94.38,92.82h0ZM77,92.84ZM123,110.13h0l2.33,0q2,0,2.74,0a21.08,21.08,0,0,0,2.17-.26,7.18,7.18,0,0,0,2.45-.8,9.13,9.13,0,0,0,2-1.53,8.62,8.62,0,0,0,0-12.24,9.21,9.21,0,0,0-2-1.53,7.32,7.32,0,0,0-2.45-.79c-1-.15-1.68-.23-2.17-.25s-1.4,0-2.74,0l-2.35,0h0l-17.37,0H94.38L77,92.84h0l-2.35,0q-2,0-2.74,0c-.49,0-1.21.11-2.17.26a7.32,7.32,0,0,0-2.45.8,9.21,9.21,0,0,0-2,1.53,8.62,8.62,0,0,0,0,12.24,9.13,9.13,0,0,0,2,1.53,7.18,7.18,0,0,0,2.45.79,21.11,21.11,0,0,0,2.17.25q.73,0,2.74,0l2.39,0h0l17.34,0h11.22l17.34,0h0Zm-48.52,6.62a8.31,8.31,0,0,1-6.05,2.62l-26.51,0a8.34,8.34,0,0,1-6.12-2.54,8.24,8.24,0,0,1-2.49-6.05l0-18.67a8.71,8.71,0,0,1,2.61-6.06A8.35,8.35,0,0,1,42,83.51l26.32,0a8.35,8.35,0,0,1,6.12,2.54,7.63,7.63,0,0,1,.88,1.05,2.8,2.8,0,0,0,2.31,1.15H90.4a2.92,2.92,0,0,0,2.78-3.79A25.57,25.57,0,0,0,86.65,73.9a24.89,24.89,0,0,0-18.24-7.63l-26.32,0a24.71,24.71,0,0,0-18.41,7.6A24.89,24.89,0,0,0,16,92.08l0,18.67a24.6,24.6,0,0,0,7.54,18.35,25,25,0,0,0,18.37,7.63l26.51,0A25,25,0,0,0,86.77,129a25.33,25.33,0,0,0,6.44-10.51,2.92,2.92,0,0,0-2.78-3.79H77.51a3,3,0,0,0-2.35,1.21A7.87,7.87,0,0,1,74.46,116.75Zm102-42.88a25,25,0,0,0-18.37-7.63l-26.52,0a25,25,0,0,0-18.35,7.67,25.32,25.32,0,0,0-6.47,10.6,2.9,2.9,0,0,0,2.76,3.75h12.85a2.91,2.91,0,0,0,2.35-1.23,7.68,7.68,0,0,1,.77-.9,8.35,8.35,0,0,1,6.12-2.56l26.52,0a8.35,8.35,0,0,1,6.12,2.54,8.24,8.24,0,0,1,2.49,6.05l0,18.68a8.68,8.68,0,0,1-2.67,6,8.31,8.31,0,0,1-6.05,2.62l-26.32,0a8.34,8.34,0,0,1-6.12-2.54,7.54,7.54,0,0,1-.78-.92,2.91,2.91,0,0,0-2.35-1.23H109.58a2.9,2.9,0,0,0-2.75,3.77,25.57,25.57,0,0,0,6.53,10.57,24.88,24.88,0,0,0,18.24,7.63l26.32,0a26,26,0,0,0,26-25.84l0-18.68A24.6,24.6,0,0,0,176.46,73.86ZM77,92.84h0Z"] $ do mempty
 
 {-# NOINLINE svgEditToolbarNumbers #-}
-svgEditToolbarNumbers :: Color -> ReactElementM h ()
-svgEditToolbarNumbers c0 = do
-  svg_ ["version" $= "1.1", "id" $= "Ebene_1", "xmlns" $= "http://www.w3.org/2000/svg", "xmlnsXlink" $= "http://www.w3.org/1999/xlink", "x" $= "0px", "y" $= "0px", "viewBox" $= "0 0 100 100", "style" @= styles [("enableBackground","new 0 0 100 100")], "xmlSpace" $= "preserve"] $ do
-    elemText "\n"
-    elemText "\n"
+svgEditToolbarNumbers :: Color -> Color -> ReactElementM h ()
+svgEditToolbarNumbers c0 c1 = do
+  svg_ ["xmlns" $= "http://www.w3.org/2000/svg", "viewBox" $= "0 0 200 200"] $ do
+    defs_ $ do mempty
     title_ $ do
-      elemText "Zeichenfl\228che 1 Kopie 8"
-    elemText "\n"
-    path_ ["className" $= colorName ColorAttrFill c0, "d" $= "M19.3,30h-8.5v-0.9c0.5-0.2,1-0.4,1.5-0.6c0.5-0.2,1-0.3,1.5-0.4V14l0.1-1.7c-0.5,0.2-1.1,0.4-1.7,0.5\n\tc-0.6,0.1-1.2,0.1-1.8,0.1l-0.1-0.7c0.9-0.3,1.9-0.7,2.8-1.1c0.9-0.4,1.8-1,2.7-1.6h0.7v18.8c0.5,0.1,1,0.3,1.5,0.4\n\tc0.5,0.2,1,0.4,1.5,0.6L19.3,30z M11.2,45.7h-0.7c-0.2-0.6-0.4-1.2-0.7-2c-0.2-0.7-0.4-1.5-0.6-2.1c0.7-0.6,1.6-1.1,2.5-1.4\n\tc1-0.3,2-0.5,3.1-0.5c0.9,0,1.7,0.1,2.5,0.4c0.6,0.2,1.2,0.6,1.7,1.1c0.4,0.5,0.8,1,1,1.6c0.2,0.6,0.3,1.3,0.3,1.9\n\tc0,1.2-0.3,2.3-0.8,3.3c-0.5,1.2-1.2,2.3-1.9,3.3c-0.7,1.1-1.5,2.1-2.4,3c-0.9,0.9-1.7,1.8-2.4,2.5L11.7,58v0.1l1.6-0.2h5l1.4-3.2\n\th0.7c0,0.4,0.1,0.9,0.1,1.4c0,0.5,0.1,1,0.1,1.5c0,0.5,0.1,1,0.1,1.5c0,0.5,0,0.9,0,1.2h-12v-0.9l1.6-1.6c0.6-0.6,1.2-1.3,1.9-2.1\n\tc0.7-0.8,1.3-1.6,2-2.5c0.6-0.8,1.2-1.7,1.7-2.7c0.5-0.9,0.9-1.8,1.2-2.7c0.3-0.8,0.5-1.7,0.5-2.6c0-0.5-0.1-1.1-0.2-1.6\n\tc-0.1-0.5-0.4-0.9-0.7-1.3c-0.6-0.8-1.5-1.2-2.5-1.2c-0.4,0-0.7,0-1.1,0.1c-0.3,0.1-0.7,0.2-1,0.3L11.2,45.7z M14.3,88.6\n\tc0.5,0,1-0.1,1.5-0.4c0.5-0.2,0.9-0.6,1.2-1c0.4-0.4,0.6-0.9,0.8-1.4c0.2-0.5,0.3-1.1,0.3-1.7c0-0.6-0.1-1.3-0.3-1.9\n\tc-0.2-0.5-0.5-1-0.9-1.3c-0.4-0.4-0.8-0.6-1.3-0.8c-0.5-0.2-1.1-0.3-1.7-0.3H12V79l4.9-6.5l1-1v-0.1l-1.6,0.2h-4.9l-1.1,3H9.5\n\tc-0.1-0.4-0.1-0.8-0.2-1.3c-0.1-0.5-0.1-0.9-0.2-1.4C9.1,71.4,9,70.9,9,70.5c0-0.4-0.1-0.8-0.1-1.2h11.3v0.9l-4.8,6.5L14.2,78V78\n\tl1-0.2c0.8,0,1.7,0.2,2.4,0.5c0.7,0.3,1.3,0.7,1.8,1.2c0.5,0.5,0.9,1.1,1.1,1.8c0.3,0.7,0.4,1.5,0.4,2.2c0,0.9-0.2,1.8-0.6,2.6\n\tc-0.4,0.8-0.9,1.4-1.6,2c-0.7,0.6-1.4,1-2.2,1.3c-0.9,0.3-1.8,0.5-2.7,0.5c-0.5,0-1,0-1.4-0.1c-0.5-0.1-1-0.2-1.5-0.3\n\tc-0.5-0.1-0.9-0.3-1.3-0.5c-0.4-0.2-0.7-0.4-1.1-0.6l0.8-2.6H10c0.1,0.1,0.3,0.3,0.5,0.5l0.6,0.7c0.2,0.2,0.4,0.5,0.7,0.7l0.5,0.6\n\tl0.8,0.1C13.5,88.6,13.9,88.6,14.3,88.6z M92.5,24.7H31c-0.5,0-0.9-0.4-0.9-0.9v0v-8.2c0-0.5,0.4-0.9,0.9-0.9l0,0h61.5\n\tc0.5,0,0.9,0.4,0.9,0.9v0v8.2C93.4,24.3,93,24.7,92.5,24.7C92.5,24.7,92.5,24.7,92.5,24.7z M93.6,53.7v-8.2c0-0.5-0.4-0.9-0.9-0.9\n\tl0,0H31c-0.5,0-0.9,0.4-0.9,0.9v8.2c0,0.5,0.4,0.9,0.9,0.9h61.7C93.2,54.5,93.6,54.1,93.6,53.7L93.6,53.7z M93.4,83.5v-8.2\n\tc0-0.5-0.4-0.9-0.9-0.9c0,0,0,0,0,0H31c-0.5,0-0.9,0.4-0.9,0.9l0,0v8.2c0,0.5,0.4,0.9,0.9,0.9c0,0,0,0,0,0h61.5\n\tC93,84.4,93.4,84,93.4,83.5L93.4,83.5z"] $ do mempty
-    elemText "\n"
+      elemText "Numbers"
+    circle_ ["className" $= colorName ColorAttrFill c0, "cx" $= "100", "cy" $= "100", "r" $= "100"] $ do mempty
+    path_ ["className" $= colorName ColorAttrFill c1, "d" $= "M59.51,141H25.23v-3.4q2.93-1.29,5.93-2.29t6-1.7V76L37.67,69a31.18,31.18,0,0,1-6.81,1.82,40.4,40.4,0,0,1-7.28.41L23,68.46a104.47,104.47,0,0,0,11.15-4.4,50.29,50.29,0,0,0,10.68-6.63h2.93V133.6q2.93.7,5.87,1.7t5.87,2.29Z"] $ do mempty
+    path_ ["className" $= colorName ColorAttrFill c1, "d" $= "M79,81.72H76.05q-1.29-3.4-2.64-8t-2.29-8.69A31,31,0,0,1,81,59.48a36.77,36.77,0,0,1,12.44-2.05,27.87,27.87,0,0,1,10.1,1.64,19.55,19.55,0,0,1,7,4.46,17.44,17.44,0,0,1,4,6.51,23.2,23.2,0,0,1,1.29,7.69,33.33,33.33,0,0,1-3.05,13.5,80.67,80.67,0,0,1-7.57,13.44,114.94,114.94,0,0,1-9.8,12.27q-5.28,5.75-9.74,10.09l-4.93,4.58v.47l6.57-.71h20.19l5.75-13.15h2.93q.23,2.58.47,5.63t.41,6.16q.18,3.11.29,6t.12,5H69v-3.76l6.28-6.57Q79,126.8,83,122.1t7.92-10a98.63,98.63,0,0,0,7-10.74,72.42,72.42,0,0,0,5-10.86,30.58,30.58,0,0,0,1.94-10.33,23.15,23.15,0,0,0-.88-6.46,15.89,15.89,0,0,0-2.64-5.34,12.2,12.2,0,0,0-10.1-4.87,23.67,23.67,0,0,0-4.34.35,35.13,35.13,0,0,0-4.11,1.06Z"] $ do mempty
+    path_ ["className" $= colorName ColorAttrFill c1, "d" $= "M150.12,136.89a13,13,0,0,0,6.1-1.47,16.06,16.06,0,0,0,4.93-4,19.77,19.77,0,0,0,3.34-5.81,19.55,19.55,0,0,0,1.23-6.93,20,20,0,0,0-1.35-7.63,15.18,15.18,0,0,0-3.7-5.46,15.85,15.85,0,0,0-5.46-3.29,19.89,19.89,0,0,0-6.75-1.12h-7.63V98l19.72-26.41,4-4.11V67l-6.34.71H138.38l-4.58,12h-2.93q-.47-2.47-.88-5.28t-.76-5.58q-.35-2.76-.59-5.34t-.24-4.7h45.9v3.64L154.7,88.65l-5,5.17V94l4-.82a27.68,27.68,0,0,1,9.86,2.11,22.37,22.37,0,0,1,7.34,5,21.34,21.34,0,0,1,4.58,7.28,25.39,25.39,0,0,1,1.58,9.1,23.67,23.67,0,0,1-2.35,10.62,25.12,25.12,0,0,1-6.28,8.1,28.65,28.65,0,0,1-9,5.17,31.8,31.8,0,0,1-10.74,1.82,43.37,43.37,0,0,1-5.75-.41,44.45,44.45,0,0,1-6-1.23,46.68,46.68,0,0,1-5.46-1.88,17.85,17.85,0,0,1-4.28-2.47l3.29-10.56h2.35q.7.82,1.94,2.11l2.58,2.7q1.35,1.41,2.64,2.82t2.23,2.46l3.05.59A27.8,27.8,0,0,0,150.12,136.89Z"] $ do mempty
 
 {-# NOINLINE svgEditToolbarRedo #-}
-svgEditToolbarRedo :: Color -> ReactElementM h ()
-svgEditToolbarRedo c0 = do
-  svg_ ["xmlns" $= "http://www.w3.org/2000/svg", "viewBox" $= "0 0 100 100"] $ do
+svgEditToolbarRedo :: Color -> Color -> ReactElementM h ()
+svgEditToolbarRedo c0 c1 = do
+  svg_ ["xmlns" $= "http://www.w3.org/2000/svg", "viewBox" $= "0 0 200 200"] $ do
     defs_ $ do mempty
     title_ $ do
-      elemText "Zeichenfl\228che 1 Kopie 3"
-    path_ ["className" $= colorName ColorAttrFill c0, "d" $= "M90.15,43.84l-19-19a6.16,6.16,0,0,0-8.72,8.72l10,10h-33a33.08,33.08,0,0,0-33,33,6.16,6.16,0,1,0,12.33,0A20.74,20.74,0,0,1,39.44,55.83h33l-10,10a6.16,6.16,0,1,0,8.72,8.72l19-19a8.25,8.25,0,0,0,0-11.66Zm-11.7,5.92s0-.06,0-.09,0-.06,0-.09l.09.09Z"] $ do mempty
+      elemText "Redo"
+    circle_ ["className" $= colorName ColorAttrFill c0, "cx" $= "100", "cy" $= "100", "r" $= "100"] $ do mempty
+    path_ ["className" $= colorName ColorAttrFill c1, "d" $= "M179.66,88.58,145.43,54.35A11.09,11.09,0,0,0,129.75,70l18,18-.17,0H88.44A59.51,59.51,0,0,0,29,147.42a11.09,11.09,0,1,0,22.18,0,37.31,37.31,0,0,1,37.27-37.27h59.11l.17,0-18,18a11.09,11.09,0,1,0,15.68,15.68l34.22-34.22a14.83,14.83,0,0,0,0-21Z"] $ do mempty
 
 {-# NOINLINE svgEditToolbarSave #-}
-svgEditToolbarSave :: Color -> ReactElementM h ()
-svgEditToolbarSave c0 = do
-  svg_ ["xmlns" $= "http://www.w3.org/2000/svg", "viewBox" $= "0 0 100 100"] $ do
+svgEditToolbarSave :: Color -> Color -> ReactElementM h ()
+svgEditToolbarSave c0 c1 = do
+  svg_ ["xmlns" $= "http://www.w3.org/2000/svg", "viewBox" $= "0 0 200 200"] $ do
     defs_ $ do mempty
     title_ $ do
-      elemText "Zeichenfl\228che 1 Kopie 3"
-    path_ ["className" $= colorName ColorAttrFill c0, "d" $= "M88.21,14.08a8.42,8.42,0,0,0-11.57,2.83L44.55,69.79,22.78,42.13A8.43,8.43,0,0,0,9.54,52.55L38.32,89.13A8.4,8.4,0,0,0,44.41,93h.21a8.4,8.4,0,0,0,1.19,0c.25,0,.49,0,.74-.07l.51-.09a8.13,8.13,0,0,0,6-4.56L91,25.66A8.43,8.43,0,0,0,88.21,14.08Z"] $ do mempty
+      elemText "Safe"
+    circle_ ["className" $= colorName ColorAttrFill c0, "cx" $= "100", "cy" $= "100", "r" $= "100"] $ do mempty
+    path_ ["className" $= colorName ColorAttrFill c1, "d" $= "M162.35,57.94,97.2,165.3A13.94,13.94,0,0,1,87,173.11c-.29.06-.58.11-.87.15s-.84.1-1.27.12a14.4,14.4,0,0,1-2,0h-.36A14.39,14.39,0,0,1,72,166.74L22.64,104a14.44,14.44,0,0,1,22.7-17.86l35.53,45.15a2,2,0,0,0,3.28-.2L137.66,43a14.44,14.44,0,0,1,24.69,15Z"] $ do mempty
 
 {-# NOINLINE svgEditToolbarUndo #-}
-svgEditToolbarUndo :: Color -> ReactElementM h ()
-svgEditToolbarUndo c0 = do
-  svg_ ["xmlns" $= "http://www.w3.org/2000/svg", "viewBox" $= "0 0 100 100"] $ do
+svgEditToolbarUndo :: Color -> Color -> ReactElementM h ()
+svgEditToolbarUndo c0 c1 = do
+  svg_ ["xmlns" $= "http://www.w3.org/2000/svg", "viewBox" $= "0 0 200 200"] $ do
     defs_ $ do mempty
     title_ $ do
-      elemText "Zeichenfl\228che 1 Kopie 6"
-    path_ ["className" $= colorName ColorAttrFill c0, "d" $= "M7.39,49.66A8.19,8.19,0,0,0,9.81,55.5l19,19a6.16,6.16,0,0,0,8.72-8.72l-10-10h33A20.74,20.74,0,0,1,81.23,76.55a6.16,6.16,0,1,0,12.33,0,33.08,33.08,0,0,0-33-33h-33l10-10a6.16,6.16,0,0,0-8.72-8.72l-19,19A8.18,8.18,0,0,0,7.39,49.66Zm14,0,.09-.09s0,.06,0,.09,0,.06,0,.09Z"] $ do mempty
+      elemText "Undo"
+    circle_ ["className" $= colorName ColorAttrFill c0, "cx" $= "100", "cy" $= "100", "r" $= "100"] $ do mempty
+    path_ ["className" $= colorName ColorAttrFill c1, "d" $= "M16,99.07a14.73,14.73,0,0,0,4.35,10.5l34.22,34.22A11.09,11.09,0,1,0,70.25,128.1l-18-18,.17,0h59.11a37.31,37.31,0,0,1,37.27,37.27,11.09,11.09,0,0,0,22.18,0A59.51,59.51,0,0,0,111.56,88H52.45l-.17,0,18-18A11.09,11.09,0,0,0,54.57,54.35L20.34,88.58A14.71,14.71,0,0,0,16,99.07Z"] $ do mempty
 
 {-# NOINLINE svgEditView #-}
 svgEditView :: Color -> Color -> Color -> ReactElementM h ()
 svgEditView c0 c1 c2 = do
-  svg_ ["xmlns" $= "http://www.w3.org/2000/svg", "viewBox" $= "0 0 100 100"] $ do
+  svg_ ["xmlns" $= "http://www.w3.org/2000/svg", "viewBox" $= "0 0 200 200"] $ do
     defs_ $ do mempty
     title_ $ do
-      elemText "Zeichenfl\228che 1 Kopie 3"
-    path_ ["className" $= colorName ColorAttrFill c0, "d" $= "M65.18,18.07V.13H17.62a3.46,3.46,0,0,0-3.45,3.45v93.1a3.46,3.46,0,0,0,3.45,3.45H83.13a3.46,3.46,0,0,0,3.45-3.45V21.52H68.63A3.46,3.46,0,0,1,65.18,18.07Z"] $ do mempty
-    path_ ["className" $= colorName ColorAttrFill c1, "d" $= "M65.18.13V18.07a3.46,3.46,0,0,0,3.45,3.45H86.58Z"] $ do mempty
-    path_ ["className" $= colorName ColorAttrFill c2, "d" $= "M74.68,73.05a3.92,3.92,0,0,0-.56-1.31L43,17.76l-3.31,1.92-8.08,4.7-3.24,1.88,31,53.93a2.74,2.74,0,0,0,.94,1.12l5.08,4.24,3.57-2,3.38-1.88,3.44-1.91Z"] $ do mempty
-    path_ ["className" $= colorName ColorAttrFill c1, "d" $= "M75.87,79.79,72.43,81.7h0L69,83.57h0l-3.57,2,7.32,6.11a3.35,3.35,0,0,0,1.88.75A2.92,2.92,0,0,0,77.5,89Z"] $ do mempty
-    path_ ["className" $= colorName ColorAttrFill c1, "d" $= "M31.65,24.38l8.08-4.7h0L43,17.76l-4.63-8A4,4,0,0,0,35,7.84a3.19,3.19,0,0,0-1.88.56l-8.08,4.7a3.63,3.63,0,0,0-1.88,3.2,3.17,3.17,0,0,0,.56,1.88l4.65,8.08,3.24-1.88Z"] $ do mempty
+      elemText "My Edits"
+    circle_ ["className" $= colorName ColorAttrFill c0, "cx" $= "100", "cy" $= "100", "r" $= "100"] $ do mempty
+    path_ ["className" $= colorName ColorAttrFill c1, "d" $= "M120.47,56.13V31H53.88a4.84,4.84,0,0,0-4.83,4.83V166.17A4.84,4.84,0,0,0,53.88,171H145.6a4.84,4.84,0,0,0,4.83-4.83V61H125.3A4.84,4.84,0,0,1,120.47,56.13Z"] $ do mempty
+    path_ ["className" $= colorName ColorAttrFill c2, "d" $= "M120.47,31V56.13A4.84,4.84,0,0,0,125.3,61h25.13Z"] $ do mempty
+    path_ ["className" $= colorName ColorAttrFill c0, "d" $= "M133.77,133.1a5.48,5.48,0,0,0-.79-1.84L89.47,55.68l-4.63,2.69L73.53,65,69,67.59l43.47,75.51a3.84,3.84,0,0,0,1.32,1.57l7.11,5.93,5-2.77,4.74-2.63,4.82-2.67Z"] $ do mempty
+    path_ ["className" $= colorName ColorAttrFill c2, "d" $= "M135.44,142.53l-4.82,2.67h0l-4.74,2.63h0l-5,2.77,10.25,8.55a4.7,4.7,0,0,0,2.63,1,4.08,4.08,0,0,0,3.95-4.73Z"] $ do mempty
+    path_ ["className" $= colorName ColorAttrFill c2, "d" $= "M73.53,65l11.31-6.58h0l4.63-2.69L83,44.43a5.54,5.54,0,0,0-4.74-2.63,4.47,4.47,0,0,0-2.63.79L64.32,49.17a5.09,5.09,0,0,0-2.63,4.47,4.43,4.43,0,0,0,.79,2.63L69,67.59,73.53,65Z"] $ do mempty
 
 {-# NOINLINE svgFaq #-}
-svgFaq :: Color -> ReactElementM h ()
-svgFaq c0 = do
-  svg_ ["xmlns" $= "http://www.w3.org/2000/svg", "viewBox" $= "0 0 100 100"] $ do
+svgFaq :: Color -> Color -> ReactElementM h ()
+svgFaq c0 c1 = do
+  svg_ ["xmlns" $= "http://www.w3.org/2000/svg", "viewBox" $= "0 0 200 200"] $ do
     defs_ $ do mempty
     title_ $ do
-      elemText "Zeichenfl\228che 1 Kopie 3"
-    path_ ["className" $= colorName ColorAttrFill c0, "d" $= "M74.82,36.18Q77.26,33,82,33q9.55,0,9.55,12.79T82,58.5q-4.79,0-7.2-3.21t-2.41-9.55q0-6.34,2.43-9.56M95.38,31.3q-4.62-5-13.35-5t-13.39,5Q64,36.25,64,45.69t4.66,14.49q4.66,5,13.36,5h.59l6.56,8a1.24,1.24,0,0,0,1,.46H97a1.24,1.24,0,0,0,.93-2.08l-6.18-6.9A1.23,1.23,0,0,1,92,62.86a14.39,14.39,0,0,0,5.62-5.93A23.89,23.89,0,0,0,100,45.74q0-9.43-4.62-14.44M39.42,49a1.25,1.25,0,0,1-1.19-1.62q3.59-11.65,4.39-14.76c.14.62.37,1.47.69,2.54s1.56,5.07,3.78,12.23A1.25,1.25,0,0,1,45.9,49ZM60.31,63.06,47.78,27.55a1.24,1.24,0,0,0-1.17-.83h-8a1.24,1.24,0,0,0-1.17.83L24.91,63.06a1.24,1.24,0,0,0,1.17,1.66h6a1.24,1.24,0,0,0,1.19-.88l2.21-7.24a1.24,1.24,0,0,1,1.19-.88H48.58a1.24,1.24,0,0,1,1.19.88L52,63.83a1.24,1.24,0,0,0,1.19.88h6A1.24,1.24,0,0,0,60.31,63.06ZM9.14,49.76H19.49a1.24,1.24,0,0,0,1.24-1.24V44.45a1.24,1.24,0,0,0-1.24-1.24H9.14A1.24,1.24,0,0,1,7.89,42V34.69a1.24,1.24,0,0,1,1.24-1.24h11.3a1.24,1.24,0,0,0,1.24-1.24V28.12a1.24,1.24,0,0,0-1.24-1.24H1.24A1.24,1.24,0,0,0,0,28.12V63.47a1.24,1.24,0,0,0,1.24,1.24h5.4a1.24,1.24,0,0,0,1.24-1.24V51A1.24,1.24,0,0,1,9.14,49.76Z"] $ do mempty
+      elemText "Frequently asked questions"
+    circle_ ["className" $= colorName ColorAttrFill c0, "cx" $= "100", "cy" $= "100", "r" $= "100"] $ do mempty
+    path_ ["className" $= colorName ColorAttrFill c1, "d" $= "M140,81.4q3.78-5,11.19-5,14.8,0,14.81,19.82T151.09,116q-7.42,0-11.15-5t-3.73-14.8q0-9.83,3.77-14.82m31.88-7.56q-7.16-7.79-20.68-7.79T130.4,73.78q-7.24,7.72-7.24,22.36t7.22,22.46q7.22,7.82,20.7,7.82H152l10.17,12.45a1.93,1.93,0,0,0,1.49.71h10.69a1.93,1.93,0,0,0,1.44-3.22l-9.58-10.7a1.9,1.9,0,0,1,.41-2.91,22.3,22.3,0,0,0,8.71-9.19q3.67-7,3.67-17.34,0-14.61-7.16-22.38M85.1,101.23a1.94,1.94,0,0,1-1.84-2.52q5.57-18.06,6.8-22.88c.22,1,.58,2.27,1.07,3.93s2.42,7.86,5.86,19a1.93,1.93,0,0,1-1.84,2.51Zm32.38,21.82L98.07,68a1.93,1.93,0,0,0-1.82-1.29H83.77A1.93,1.93,0,0,0,82,68l-19.34,55a1.93,1.93,0,0,0,1.82,2.57h9.24a1.93,1.93,0,0,0,1.85-1.37L78.94,113a1.93,1.93,0,0,1,1.85-1.37H99.3a1.93,1.93,0,0,1,1.85,1.37l3.42,11.22a1.93,1.93,0,0,0,1.85,1.37h9.24A1.93,1.93,0,0,0,117.48,123.05ZM38.16,102.44h16a1.93,1.93,0,0,0,1.93-1.93V94.22a1.93,1.93,0,0,0-1.93-1.93h-16a1.93,1.93,0,0,1-1.93-1.93V79.09a1.93,1.93,0,0,1,1.93-1.93H55.68a1.93,1.93,0,0,0,1.93-1.93V68.91A1.93,1.93,0,0,0,55.68,67H25.93A1.93,1.93,0,0,0,24,68.91V123.7a1.93,1.93,0,0,0,1.93,1.93H34.3a1.93,1.93,0,0,0,1.93-1.93V104.37A1.93,1.93,0,0,1,38.16,102.44Z"] $ do mempty
 
 {-# NOINLINE svgFilter #-}
-svgFilter :: Color -> ReactElementM h ()
-svgFilter c0 = do
-  svg_ ["xmlns" $= "http://www.w3.org/2000/svg", "viewBox" $= "0 0 100 100"] $ do
+svgFilter :: Color -> Color -> ReactElementM h ()
+svgFilter c0 c1 = do
+  svg_ ["xmlns" $= "http://www.w3.org/2000/svg", "viewBox" $= "0 0 200 200"] $ do
     defs_ $ do mempty
     title_ $ do
-      elemText "Zeichenfl\228che 1 Kopie 3"
-    path_ ["className" $= colorName ColorAttrFill c0, "d" $= "M90.68,0H9.32a2.51,2.51,0,0,0-2,4L40.81,50V97.48A2.52,2.52,0,0,0,43.33,100l13.34-7c1.47-.89,2.52-1.13,2.52-2.52V50L92.71,4A2.51,2.51,0,0,0,90.68,0Z"] $ do mempty
+      elemText "Filter"
+    circle_ ["className" $= colorName ColorAttrFill c0, "cx" $= "100", "cy" $= "100", "r" $= "100"] $ do mempty
+    path_ ["className" $= colorName ColorAttrFill c1, "d" $= "M154.07,37H46.89A7.32,7.32,0,0,0,41,48.63l45.13,62a3.58,3.58,0,0,1,.69,2.11v69.52a3.8,3.8,0,0,0,0,.44A3.54,3.54,0,0,0,92,185.24l18.42-9.72c2.19-1.33,3.76-1.68,3.76-3.76v-59a3.58,3.58,0,0,1,.69-2.11l45.13-62A7.32,7.32,0,0,0,154.07,37Z"] $ do mempty
 
 {-# NOINLINE svgGroup #-}
-svgGroup :: Color -> ReactElementM h ()
-svgGroup c0 = do
-  svg_ ["xmlns" $= "http://www.w3.org/2000/svg", "viewBox" $= "0 0 100 100"] $ do
+svgGroup :: Color -> Color -> Color -> ReactElementM h ()
+svgGroup c0 c1 c2 = do
+  svg_ ["xmlns" $= "http://www.w3.org/2000/svg", "viewBox" $= "0 0 200 200"] $ do
     defs_ $ do mempty
     title_ $ do
-      elemText "Zeichenfl\228che 1 Kopie 3"
-    path_ ["className" $= colorName ColorAttrFill c0, "d" $= "M91.52,50.66c-2.32,3.13-7.17,5.44-12.22,5.43a17.32,17.32,0,0,1-6.51-1.29,12,12,0,0,0-5.89-4.28c-.77-.17-1.38-.09-1.68.3a15.43,15.43,0,0,1-5,4.15,21.34,21.34,0,0,1-20.41,0,15.48,15.48,0,0,1-5.07-4.19c-.28-.38-.86-.48-1.6-.33a11.9,11.9,0,0,0-6,4.33,17.32,17.32,0,0,1-6.44,1.26c-5,0-9.9-2.3-12.22-5.43C7.31,49.08,0,53.51,0,60.45v6.42c0,1.88,1.1,2.69,3.41,3.41s8.06,1.9,17.29,1.9c1.27,0,2.46,0,3.59-.06.39,1.59,1.73,2.43,4.12,3.17,2.89.9,10,2.37,21.56,2.37s18.68-1.47,21.56-2.37c2.39-.74,3.73-1.58,4.12-3.18,1.15,0,2.36.07,3.64.07,9.23,0,15-1.18,17.29-1.9S100,68.74,100,66.87V60.45C100,53.51,92.69,49.08,91.52,50.66Z"] $ do mempty
-    circle_ ["className" $= colorName ColorAttrFill c0, "cx" $= "79.3", "cy" $= "39.56", "r" $= "11.74"] $ do mempty
-    circle_ ["className" $= colorName ColorAttrFill c0, "cx" $= "20.7", "cy" $= "39.56", "r" $= "11.74"] $ do mempty
-    circle_ ["className" $= colorName ColorAttrFill c0, "cx" $= "49.98", "cy" $= "36.98", "r" $= "14.63"] $ do mempty
+      elemText "Group"
+    circle_ ["className" $= colorName ColorAttrFill c0, "cx" $= "100", "cy" $= "100", "r" $= "100"] $ do mempty
+    path_ ["className" $= colorName ColorAttrFill c1, "d" $= "M169,93.78c-3.84,5.17-11.86,9-20.2,9A28.62,28.62,0,0,1,138,100.61a21.93,21.93,0,0,1,5,13.61v13.22a7.32,7.32,0,0,1-.23,1.78c1.9.07,3.9.11,6,.11,15.26,0,24.75-1.95,28.58-3.14s5.64-2.54,5.64-5.64V110C183,98.5,170.93,91.16,169,93.78Z"] $ do mempty
+    circle_ ["className" $= colorName ColorAttrFill c1, "cx" $= "148.78", "cy" $= "75.43", "r" $= "19.4"] $ do mempty
+    path_ ["className" $= colorName ColorAttrFill c1, "d" $= "M57.66,114.23a21.92,21.92,0,0,1,4.92-13.57,28.62,28.62,0,0,1-10.64,2.09c-8.34,0-16.36-3.8-20.2-9-1.94-2.62-14,4.72-14,16.19v10.6c0,3.1,1.81,4.45,5.64,5.64s13.32,3.14,28.58,3.14c2.09,0,4.06,0,5.94-.11a7.32,7.32,0,0,1-.23-1.79Z"] $ do mempty
+    circle_ ["className" $= colorName ColorAttrFill c1, "cx" $= "51.95", "cy" $= "75.43", "r" $= "19.4"] $ do mempty
+    path_ ["className" $= colorName ColorAttrFill c2, "d" $= "M138,100.61c-3.13-3.94-7.05-6.47-9.74-7.07-1.28-.29-2.29-.15-2.77.5a25.51,25.51,0,0,1-8.27,6.87,35.27,35.27,0,0,1-33.73.06A25.59,25.59,0,0,1,75.14,94c-.47-.63-1.43-.79-2.65-.54-2.7.55-6.72,3.12-9.91,7.15a21.92,21.92,0,0,0-4.92,13.57v13.22a7.32,7.32,0,0,0,.23,1.79c.65,2.63,2.85,4,6.8,5.24,4.77,1.48,16.6,3.91,35.63,3.91S131.19,136,136,134.48c4-1.23,6.16-2.61,6.81-5.25a7.32,7.32,0,0,0,.23-1.78V114.23A21.93,21.93,0,0,0,138,100.61Z"] $ do mempty
+    circle_ ["className" $= colorName ColorAttrFill c2, "cx" $= "100.33", "cy" $= "71.17", "r" $= "24.18"] $ do mempty
 
 {-# NOINLINE svgGroupNew #-}
 svgGroupNew :: Color -> ReactElementM h ()
@@ -496,42 +504,45 @@ svgGroupUpdate c0 = do
     elemText "\n"
 
 {-# NOINLINE svgHelp #-}
-svgHelp :: Color -> ReactElementM h ()
-svgHelp c0 = do
-  svg_ ["xmlns" $= "http://www.w3.org/2000/svg", "viewBox" $= "0 0 100 100"] $ do
+svgHelp :: Color -> Color -> ReactElementM h ()
+svgHelp c0 c1 = do
+  svg_ ["xmlns" $= "http://www.w3.org/2000/svg", "viewBox" $= "0 0 200 200"] $ do
     defs_ $ do mempty
     title_ $ do
-      elemText "Zeichenfl\228che 1 Kopie 3"
-    path_ ["className" $= colorName ColorAttrFill c0, "d" $= "M48,65.29a12.09,12.09,0,0,0-9.21,3.84,14.17,14.17,0,0,0,0,18.77A12.09,12.09,0,0,0,48,91.75a12.09,12.09,0,0,0,9.21-3.84,14.16,14.16,0,0,0,0-18.77A12.06,12.06,0,0,0,48,65.29Z"] $ do mempty
-    path_ ["className" $= colorName ColorAttrFill c0, "d" $= "M71.89,20a17.87,17.87,0,0,0-5.54-6.78,24,24,0,0,0-8.15-3.8,38.86,38.86,0,0,0-9.77-1.2,26.64,26.64,0,0,0-12.81,3.17c-2.55,1.39-6.39,4.87-8.71,7.06a2.57,2.57,0,0,0,0,3.76l8.77,8a2.57,2.57,0,0,0,3.38.09c1.15-1,2.59-2.13,3.32-2.61A8,8,0,0,1,47,26.5a7,7,0,0,1,4.05,1.16c1,.71,1.49,1.91,1.49,3.68a5.49,5.49,0,0,1-1.06,3.12,36.66,36.66,0,0,1-2.91,3.71c-1.16,1.33-2.43,2.73-3.8,4.21a31.09,31.09,0,0,0-3.76,5,23.1,23.1,0,0,0-2.52,6.08,25.38,25.38,0,0,0-.25,5.72,2.58,2.58,0,0,0,2.57,2.49H55.49a2.58,2.58,0,0,0,2.57-2.49,13.83,13.83,0,0,1,.53-3.88,21.15,21.15,0,0,1,2.74-4.58,44.36,44.36,0,0,1,3.84-4.24,45.06,45.06,0,0,0,4.09-4.57,28,28,0,0,0,3.23-5.3,15.73,15.73,0,0,0,1.39-6.72A22.82,22.82,0,0,0,71.89,20Z"] $ do mempty
+      elemText "Question_1"
+    circle_ ["className" $= colorName ColorAttrFill c0, "cx" $= "100", "cy" $= "100", "r" $= "100"] $ do mempty
+    path_ ["className" $= colorName ColorAttrFill c1, "d" $= "M99.24,135.18A21.69,21.69,0,0,0,82.71,142a25.82,25.82,0,0,0,0,34.09A21.69,21.69,0,0,0,99.24,183a21.69,21.69,0,0,0,16.53-6.87,25.8,25.8,0,0,0,0-34.08C111.51,137.49,106,135.18,99.24,135.18Z"] $ do mempty
+    path_ ["className" $= colorName ColorAttrFill c1, "d" $= "M134.86,28.76a45.85,45.85,0,0,0-15.57-7.25,76.06,76.06,0,0,0-19.1-2.35,51.22,51.22,0,0,0-24.63,6.09c-3.68,2-9.75,6.95-17.07,13.9a2.18,2.18,0,0,0-.69,1.62,2.23,2.23,0,0,0,.74,1.64L76.38,58.73a2.24,2.24,0,0,0,1.51.59,2.19,2.19,0,0,0,1.41-.51c3.36-2.79,5.71-4.64,7-5.5a19.16,19.16,0,0,1,11-3,17.07,17.07,0,0,1,10,2.9c2.87,2,4.32,5.36,4.32,9.94a14.1,14.1,0,0,1-2.68,8A77.37,77.37,0,0,1,102.77,79c-2.15,2.46-4.62,5.2-7.76,8.6a60.22,60.22,0,0,0-7.29,9.76A44,44,0,0,0,82.93,109c-.45,1.75-.6,5.68-.41,10.77a2.24,2.24,0,0,0,2.24,2.17h29.78a2.24,2.24,0,0,0,2.23-2.17c.24-6.44,1-8.34,1.31-9a46.11,46.11,0,0,1,6-10,93.41,93.41,0,0,1,8.09-8.92,88.76,88.76,0,0,0,8-9,54,54,0,0,0,6.22-10.21,29.07,29.07,0,0,0,2.54-12.39c0-7.3-1.26-13.63-3.74-18.82A33.33,33.33,0,0,0,134.86,28.76Z"] $ do mempty
 
 {-# NOINLINE svgIdea #-}
-svgIdea :: Color -> ReactElementM h ()
-svgIdea c0 = do
-  svg_ ["xmlns" $= "http://www.w3.org/2000/svg", "viewBox" $= "0 0 100 100"] $ do
+svgIdea :: Color -> Color -> ReactElementM h ()
+svgIdea c0 c1 = do
+  svg_ ["xmlns" $= "http://www.w3.org/2000/svg", "viewBox" $= "0 0 200 200"] $ do
     defs_ $ do mempty
     title_ $ do
-      elemText "Zeichenfl\228che 1 Kopie 3"
-    path_ ["className" $= colorName ColorAttrFill c0, "d" $= "M78.33,28.45a28.45,28.45,0,1,0-56.9,0,27.89,27.89,0,0,0,10.2,21.78,12.11,12.11,0,0,1,4.51,9.42v5.83A1.69,1.69,0,0,0,38,66.95l24.09-3A1.69,1.69,0,0,0,63.6,62l0-2.38a12.11,12.11,0,0,1,4.51-9.42,27.89,27.89,0,0,0,10.2-21.78"] $ do mempty
-    rect_ ["className" $= colorName ColorAttrFill c0, "x" $= "36.15", "y" $= "70.73", "width" $= "27.47", "height" $= "5.1", "rx" $= "1.15", "ry" $= "1.15", "transform" $= "translate(-8.74 6.79) rotate(-7.16)"] $ do mempty
-    rect_ ["className" $= colorName ColorAttrFill c0, "x" $= "36.15", "y" $= "81", "width" $= "27.47", "height" $= "5.1", "rx" $= "1.15", "ry" $= "1.15", "transform" $= "translate(-10.02 6.87) rotate(-7.16)"] $ do mempty
-    path_ ["className" $= colorName ColorAttrFill c0, "d" $= "M41.78,92.23a1.71,1.71,0,0,0-1.71,1.71V94s0,0,0,0A5.78,5.78,0,0,0,46,99.87h7.85a5.78,5.78,0,0,0,5.88-5.8s0,0,0,0V91.68a1.71,1.71,0,0,0-1.91-1.48Z"] $ do mempty
+      elemText "Idea"
+    circle_ ["className" $= colorName ColorAttrFill c0, "cx" $= "100", "cy" $= "100", "r" $= "100"] $ do mempty
+    path_ ["className" $= colorName ColorAttrFill c1, "d" $= "M148.62,64.15a48.14,48.14,0,1,0-96.29,0A47.19,47.19,0,0,0,69.6,101a20.49,20.49,0,0,1,7.64,15.93v9.86a2.87,2.87,0,0,0,3.2,2.49l40.76-5.12a2.87,2.87,0,0,0,2.48-3.2l0-4A20.49,20.49,0,0,1,131.36,101a47.19,47.19,0,0,0,17.26-36.85"] $ do mempty
+    rect_ ["className" $= colorName ColorAttrFill c1, "x" $= "77.24", "y" $= "135.69", "width" $= "46.48", "height" $= "8.64", "rx" $= "1.15", "ry" $= "1.15", "transform" $= "translate(-16.66 13.61) rotate(-7.16)"] $ do mempty
+    rect_ ["className" $= colorName ColorAttrFill c1, "x" $= "77.24", "y" $= "153.07", "width" $= "46.48", "height" $= "8.64", "rx" $= "1.15", "ry" $= "1.15", "transform" $= "translate(-18.83 13.75) rotate(-7.16)"] $ do mempty
+    path_ ["className" $= colorName ColorAttrFill c1, "d" $= "M86.77,172.08A2.89,2.89,0,0,0,83.88,175v.14s0,0,0,.07a9.77,9.77,0,0,0,10,9.82h13.28a9.77,9.77,0,0,0,10-9.82s0,0,0-.07v-4a2.9,2.9,0,0,0-3.23-2.51Z"] $ do mempty
 
 {-# NOINLINE svgIndexDesktop #-}
-svgIndexDesktop :: Color -> ReactElementM h ()
-svgIndexDesktop c0 = do
-  svg_ ["xmlns" $= "http://www.w3.org/2000/svg", "viewBox" $= "0 0 100 100"] $ do
+svgIndexDesktop :: Color -> Color -> Color -> ReactElementM h ()
+svgIndexDesktop c0 c1 c2 = do
+  svg_ ["xmlns" $= "http://www.w3.org/2000/svg", "viewBox" $= "0 0 200 200"] $ do
     defs_ $ do mempty
     title_ $ do
-      elemText "Zeichenfl\228che 1 Kopie 3"
-    rect_ ["className" $= colorName ColorAttrFill c0, "x" $= "26.87", "y" $= "2.17", "width" $= "53.21", "height" $= "9.56", "rx" $= "0.87", "ry" $= "0.87"] $ do mempty
-    rect_ ["className" $= colorName ColorAttrFill c0, "x" $= "26.87", "y" $= "30.85", "width" $= "69.04", "height" $= "9.56", "rx" $= "0.87", "ry" $= "0.87"] $ do mempty
-    circle_ ["className" $= colorName ColorAttrFill c0, "cx" $= "11.12", "cy" $= "6.95", "r" $= "7.03"] $ do mempty
-    circle_ ["className" $= colorName ColorAttrFill c0, "cx" $= "11.12", "cy" $= "35.63", "r" $= "7.03"] $ do mempty
-    circle_ ["className" $= colorName ColorAttrFill c0, "cx" $= "11.12", "cy" $= "64.3", "r" $= "7.03"] $ do mempty
-    rect_ ["className" $= colorName ColorAttrFill c0, "x" $= "26.87", "y" $= "59.52", "width" $= "61.02", "height" $= "9.56", "rx" $= "0.87", "ry" $= "0.87"] $ do mempty
-    rect_ ["className" $= colorName ColorAttrFill c0, "x" $= "26.87", "y" $= "88.2", "width" $= "46.8", "height" $= "9.56", "rx" $= "0.87", "ry" $= "0.87"] $ do mempty
-    circle_ ["className" $= colorName ColorAttrFill c0, "cx" $= "11.12", "cy" $= "92.97", "r" $= "7.03"] $ do mempty
+      elemText "Index"
+    circle_ ["className" $= colorName ColorAttrFill c0, "cx" $= "100", "cy" $= "100", "r" $= "100"] $ do mempty
+    rect_ ["className" $= colorName ColorAttrFill c1, "x" $= "73.64", "y" $= "38.76", "width" $= "68.87", "height" $= "12.37", "rx" $= "2.45", "ry" $= "2.45"] $ do mempty
+    rect_ ["className" $= colorName ColorAttrFill c1, "x" $= "73.64", "y" $= "75.87", "width" $= "89.36", "height" $= "12.37", "rx" $= "2.45", "ry" $= "2.45"] $ do mempty
+    circle_ ["className" $= colorName ColorAttrFill c2, "cx" $= "53.27", "cy" $= "44.94", "r" $= "9.09"] $ do mempty
+    circle_ ["className" $= colorName ColorAttrFill c2, "cx" $= "53.27", "cy" $= "82.06", "r" $= "9.09"] $ do mempty
+    circle_ ["className" $= colorName ColorAttrFill c2, "cx" $= "53.27", "cy" $= "119.17", "r" $= "9.09"] $ do mempty
+    rect_ ["className" $= colorName ColorAttrFill c1, "x" $= "73.64", "y" $= "112.99", "width" $= "78.98", "height" $= "12.37", "rx" $= "2.45", "ry" $= "2.45"] $ do mempty
+    rect_ ["className" $= colorName ColorAttrFill c1, "x" $= "73.64", "y" $= "150.1", "width" $= "60.58", "height" $= "12.37", "rx" $= "2.45", "ry" $= "2.45"] $ do mempty
+    circle_ ["className" $= colorName ColorAttrFill c2, "cx" $= "53.27", "cy" $= "156.29", "r" $= "9.09"] $ do mempty
 
 {-# NOINLINE svgIndexMobile #-}
 svgIndexMobile :: Color -> ReactElementM h ()
@@ -550,92 +561,98 @@ svgIndexMobile c0 = do
 {-# NOINLINE svgInfo #-}
 svgInfo :: Color -> Color -> ReactElementM h ()
 svgInfo c0 c1 = do
-  svg_ ["version" $= "1.1", "id" $= "Ebene_1", "xmlns" $= "http://www.w3.org/2000/svg", "xmlnsXlink" $= "http://www.w3.org/1999/xlink", "x" $= "0px", "y" $= "0px", "viewBox" $= "0 0 100 100", "style" @= styles [("enableBackground","new 0 0 100 100")], "xmlSpace" $= "preserve"] $ do
-    elemText "\n"
-    elemText "\n"
+  svg_ ["xmlns" $= "http://www.w3.org/2000/svg", "viewBox" $= "0 0 200 200"] $ do
+    defs_ $ do mempty
     title_ $ do
-      elemText "Zeichenfl\228che 1 Kopie 3"
-    elemText "\n"
-    circle_ ["className" $= colorName ColorAttrFill c0, "cx" $= "50", "cy" $= "50", "r" $= "50"] $ do mempty
-    elemText "\n"
-    path_ ["className" $= colorName ColorAttrFill c1, "d" $= "M41.2,20.7c0-4.6,3.7-7.9,8.8-7.9s8.8,3.2,8.8,7.9s-3.6,8-8.8,8S41.2,25.3,41.2,20.7z M42.5,36.2h15.2v51.3\n\tH42.5V36.2z"] $ do mempty
-    elemText "\n"
+      elemText "Info"
+    circle_ ["className" $= colorName ColorAttrFill c0, "cx" $= "100", "cy" $= "100", "r" $= "100"] $ do mempty
+    rect_ ["className" $= colorName ColorAttrFill c1, "x" $= "83.35", "y" $= "72.65", "width" $= "33.71", "height" $= "108.35", "rx" $= "1.14", "ry" $= "1.14"] $ do mempty
+    path_ ["className" $= colorName ColorAttrFill c1, "d" $= "M100.2,63.49A19.74,19.74,0,1,0,80.46,43.74,19.77,19.77,0,0,0,100.2,63.49Z"] $ do mempty
 
 {-# NOINLINE svgLock #-}
 svgLock :: Color -> Color -> ReactElementM h ()
 svgLock c0 c1 = do
-  svg_ ["xmlns" $= "http://www.w3.org/2000/svg", "viewBox" $= "0 0 100 100"] $ do
+  svg_ ["xmlns" $= "http://www.w3.org/2000/svg", "viewBox" $= "0 0 200 200"] $ do
     defs_ $ do mempty
     title_ $ do
-      elemText "Zeichenfl\228che 1 Kopie"
-    path_ ["className" $= colorName ColorAttrFill c0, "d" $= "M57.74,61.24H41a2,2,0,0,0-2,2v7.39H59.77V63.27A2,2,0,0,0,57.74,61.24Z"] $ do mempty
-    path_ ["className" $= colorName ColorAttrFill c1, "d" $= "M87.26,33h-2.1V16.07A16.08,16.08,0,0,0,69.09,0H30.91A16.09,16.09,0,0,0,14.85,16.07V33h-2.1A10.35,10.35,0,0,0,2.39,43.32V89.65A10.35,10.35,0,0,0,12.74,100H87.26A10.35,10.35,0,0,0,97.61,89.65V43.32A10.35,10.35,0,0,0,87.26,33ZM55.71,68.38V84.05a5.71,5.71,0,0,1-11.43,0V68.38a13.81,13.81,0,1,1,11.43,0ZM73.73,33H26.27V16.07a4.65,4.65,0,0,1,4.64-4.64H69.09a4.65,4.65,0,0,1,4.64,4.64Z"] $ do mempty
+      elemText "Private"
+    circle_ ["className" $= colorName ColorAttrFill c0, "cx" $= "100", "cy" $= "100", "r" $= "100"] $ do mempty
+    path_ ["className" $= colorName ColorAttrFill c1, "d" $= "M150.67,73.51h-2.84V50.69A21.72,21.72,0,0,0,126.14,29H74.6A21.72,21.72,0,0,0,52.9,50.69V73.51H50.07a14,14,0,0,0-14,14V150a14,14,0,0,0,14,14h100.6a14,14,0,0,0,14-14V87.49A14,14,0,0,0,150.67,73.51Zm-42.59,47.81v21.16a7.71,7.71,0,1,1-15.43,0V121.32a18.64,18.64,0,1,1,15.43,0ZM132.4,73.51H68.33V50.69a6.27,6.27,0,0,1,6.27-6.27h51.54a6.27,6.27,0,0,1,6.26,6.27Z"] $ do mempty
 
 {-# NOINLINE svgLogin #-}
-svgLogin :: Color -> Color -> ReactElementM h ()
-svgLogin c0 c1 = do
-  svg_ ["xmlns" $= "http://www.w3.org/2000/svg", "viewBox" $= "0 0 100 100"] $ do
+svgLogin :: Color -> Color -> Color -> ReactElementM h ()
+svgLogin c0 c1 c2 = do
+  svg_ ["xmlns" $= "http://www.w3.org/2000/svg", "viewBox" $= "0 0 200 200"] $ do
     defs_ $ do mempty
     title_ $ do
-      elemText "Zeichenfl\228che 1 Kopie 3"
-    path_ ["className" $= colorName ColorAttrFill c0, "d" $= "M96.56,0H31A3.45,3.45,0,0,0,27.6,3.45v93.1A3.46,3.46,0,0,0,31,100H96.56A3.45,3.45,0,0,0,100,96.55V3.45A3.46,3.46,0,0,0,96.56,0Z"] $ do mempty
-    path_ ["className" $= colorName ColorAttrFill c1, "d" $= "M78,50c0-.13,0-.25,0-.37a8,8,0,0,0-2.32-5.33L54.44,23.11a5.75,5.75,0,1,0-8.13,8.13l13,13H5.74a5.75,5.75,0,1,0,0,11.5H59.31l-13,13a5.75,5.75,0,1,0,8.13,8.13L75.62,55.7a8,8,0,0,0,2.32-5.35C78,50.24,78,50.12,78,50Z"] $ do mempty
+      elemText "Log in"
+    circle_ ["className" $= colorName ColorAttrFill c0, "cx" $= "100", "cy" $= "100", "r" $= "100"] $ do mempty
+    path_ ["className" $= colorName ColorAttrFill c1, "d" $= "M146,31H54.23a4.83,4.83,0,0,0-4.83,4.83V166.17A4.84,4.84,0,0,0,54.23,171H146a4.83,4.83,0,0,0,4.83-4.83V35.83A4.84,4.84,0,0,0,146,31Z"] $ do mempty
+    path_ ["className" $= colorName ColorAttrFill c2, "d" $= "M125,101.09c0-.18,0-.35-.05-.53a11.26,11.26,0,0,0-3.27-7.49L91.92,63.28A8.09,8.09,0,1,0,80.49,74.72L98.77,93H23.44a8.09,8.09,0,0,0,0,16.17H98.77L80.49,127.46a8.09,8.09,0,1,0,11.44,11.44l29.79-29.79a11.26,11.26,0,0,0,3.27-7.52C125,101.42,125,101.26,125,101.09Z"] $ do mempty
 
 {-# NOINLINE svgNote #-}
-svgNote :: Color -> ReactElementM h ()
-svgNote c0 = do
-  svg_ ["xmlns" $= "http://www.w3.org/2000/svg", "viewBox" $= "0 0 100 100"] $ do
+svgNote :: Color -> Color -> ReactElementM h ()
+svgNote c0 c1 = do
+  svg_ ["xmlns" $= "http://www.w3.org/2000/svg", "viewBox" $= "0 0 200 200"] $ do
     defs_ $ do mempty
     title_ $ do
-      elemText "Zeichenfl\228che 1 Kopie 3"
-    path_ ["className" $= colorName ColorAttrFill c0, "d" $= "M61.62,9.67H42.29A38.5,38.5,0,0,0,3.9,48h0A38.07,38.07,0,0,0,10,68.74L1.15,83.66A3.9,3.9,0,0,0,6.66,89.2l14.27-9.31a38.1,38.1,0,0,0,21.36,6.54H61.62A38.5,38.5,0,0,0,100,48h0A38.5,38.5,0,0,0,61.62,9.67Zm-2.69,6.28-.47,12.5-2,28.76h-9l-2-28.76L45,15.95Zm-7,64.1A8.33,8.33,0,0,1,43.6,71.4c0-5,3.57-8.74,8.37-8.74s8.37,3.76,8.37,8.74A8.33,8.33,0,0,1,52,80.05Z"] $ do mempty
+      elemText "Note"
+    circle_ ["className" $= colorName ColorAttrFill c0, "cx" $= "100", "cy" $= "100", "r" $= "100"] $ do mempty
+    path_ ["className" $= colorName ColorAttrFill c1, "d" $= "M122.35,42.34h-28A55.82,55.82,0,0,0,38.66,98h0a55.2,55.2,0,0,0,8.86,30L34.67,149.63a5.66,5.66,0,0,0,8,8l20.69-13.49a55.24,55.24,0,0,0,31,9.48h28A55.82,55.82,0,0,0,178,98h0A55.82,55.82,0,0,0,122.35,42.34Zm-3.9,9.11-.68,18.13-2.86,41.71H101.81L99,69.57l-.68-18.13Zm-10.09,93c-6.95,0-12.13-5.45-12.13-12.54s5.18-12.67,12.13-12.67,12.13,5.45,12.13,12.67S115.31,144.4,108.36,144.4Z"] $ do mempty
 
 {-# NOINLINE svgNotePrivate #-}
 svgNotePrivate :: Color -> Color -> Color -> ReactElementM h ()
 svgNotePrivate c0 c1 c2 = do
-  svg_ ["xmlns" $= "http://www.w3.org/2000/svg", "viewBox" $= "0 0 100 100"] $ do
+  svg_ ["xmlns" $= "http://www.w3.org/2000/svg", "viewBox" $= "0 0 200 200"] $ do
     defs_ $ do mempty
     title_ $ do
-      elemText "Zeichenfl\228che 1 Kopie 4"
-    path_ ["className" $= colorName ColorAttrFill c0, "d" $= "M61.62,9.67H42.29A38.5,38.5,0,0,0,3.9,48h0A38.07,38.07,0,0,0,10,68.74L1.15,83.66A3.9,3.9,0,0,0,6.66,89.2l14.27-9.31a38.1,38.1,0,0,0,21.36,6.54H61.62A38.5,38.5,0,0,0,100,48h0A38.5,38.5,0,0,0,61.62,9.67Z"] $ do mempty
-    path_ ["className" $= colorName ColorAttrFill c1, "d" $= "M63.55,24.73H41.89a2.64,2.64,0,0,0-2.63,2.63V37H66.19V27.37A2.64,2.64,0,0,0,63.55,24.73Z"] $ do mempty
-    path_ ["className" $= colorName ColorAttrFill c2, "d" $= "M73.86,37H72.67V27.37a9.13,9.13,0,0,0-9.12-9.12H41.89a9.13,9.13,0,0,0-9.12,9.12V37H31.58a5.88,5.88,0,0,0-5.88,5.88V69.12A5.88,5.88,0,0,0,31.58,75H73.86a5.88,5.88,0,0,0,5.88-5.88V42.83A5.88,5.88,0,0,0,73.86,37ZM54.37,57.05v8.9a3.24,3.24,0,1,1-6.48,0v-8.9a7.84,7.84,0,1,1,6.48,0ZM66.19,37H39.25V27.37a2.64,2.64,0,0,1,2.63-2.63H63.55a2.64,2.64,0,0,1,2.63,2.63Z"] $ do mempty
+      elemText "Private Note"
+    circle_ ["className" $= colorName ColorAttrFill c0, "cx" $= "100", "cy" $= "100", "r" $= "100"] $ do mempty
+    path_ ["className" $= colorName ColorAttrFill c1, "d" $= "M122.35,42.34h-28A55.82,55.82,0,0,0,38.66,98h0a55.2,55.2,0,0,0,8.86,30L34.67,149.63a5.66,5.66,0,0,0,8,8l20.69-13.49a55.24,55.24,0,0,0,31,9.48h28A55.82,55.82,0,0,0,178,98h0A55.82,55.82,0,0,0,122.35,42.34Z"] $ do mempty
+    path_ ["className" $= colorName ColorAttrFill c2, "d" $= "M125.15,64.18H93.74A3.82,3.82,0,0,0,89.92,68v13.9H129V68A3.82,3.82,0,0,0,125.15,64.18Z"] $ do mempty
+    path_ ["className" $= colorName ColorAttrFill c0, "d" $= "M140.1,81.91h-1.73V68a13.24,13.24,0,0,0-13.22-13.22H93.74A13.24,13.24,0,0,0,80.52,68v13.9H78.79a8.52,8.52,0,0,0-8.52,8.52v38.12a8.52,8.52,0,0,0,8.52,8.52H140.1a8.52,8.52,0,0,0,8.52-8.52V90.43A8.52,8.52,0,0,0,140.1,81.91ZM111.83,111v12.9a4.7,4.7,0,1,1-9.4,0V111a11.36,11.36,0,1,1,9.4,0ZM129,81.91H89.92V68a3.82,3.82,0,0,1,3.82-3.82h31.41A3.82,3.82,0,0,1,129,68Z"] $ do mempty
 
 {-# NOINLINE svgPhaseNext #-}
-svgPhaseNext :: Color -> ReactElementM h ()
-svgPhaseNext c0 = do
-  svg_ ["xmlns" $= "http://www.w3.org/2000/svg", "viewBox" $= "0 0 100 100"] $ do
+svgPhaseNext :: Color -> Color -> ReactElementM h ()
+svgPhaseNext c0 c1 = do
+  svg_ ["xmlns" $= "http://www.w3.org/2000/svg", "viewBox" $= "0 0 200 200"] $ do
     defs_ $ do mempty
     title_ $ do
-      elemText "Zeichenfl\228che 1 Kopie 3"
-    path_ ["className" $= colorName ColorAttrFill c0, "d" $= "M91.59,44.15,68.2,20.75a5.65,5.65,0,0,0-2.92-1.55l-.31,0c-.18,0-.36-.05-.54-.06v0H11.74a5.72,5.72,0,0,0-2.92.81L8.65,20a5.82,5.82,0,0,0-.46.36c-.14.11-.28.2-.42.32l.05,0h0l0,0-.09.08a5.74,5.74,0,0,0-.78,7.1,6.07,6.07,0,0,0,.78,1L11.79,33,24.12,45.29a8.25,8.25,0,0,1,0,9.41L11.79,67,7.67,71.15a5.91,5.91,0,0,0-.78,1,5.74,5.74,0,0,0,.78,7.1l.09.08,0,0h0l-.05,0c.13.12.28.22.42.32a5.82,5.82,0,0,0,.46.36l.17.09a5.68,5.68,0,0,0,2.92.81H64.43v0l.54-.06.31,0a5.65,5.65,0,0,0,2.92-1.55L91.59,55.86a8.31,8.31,0,0,0,0-11.71"] $ do mempty
+      elemText "Process_1"
+    circle_ ["className" $= colorName ColorAttrFill c0, "cx" $= "100", "cy" $= "100", "r" $= "100"] $ do mempty
+    path_ ["className" $= colorName ColorAttrFill c1, "d" $= "M180.75,91.05l-41.2-41.2a10,10,0,0,0-5.14-2.72c-.18,0-.36,0-.54-.06s-.63-.09-1-.11v0H40.1a10.08,10.08,0,0,0-5.15,1.43l-.29.16a10.26,10.26,0,0,0-.82.63c-.24.19-.5.35-.73.56l.09,0,0,0-.07,0c-.05.05-.11.08-.17.13a10.12,10.12,0,0,0-1.38,12.51,10.69,10.69,0,0,0,1.38,1.75l7.26,7.25L61.9,93.07a14.54,14.54,0,0,1,0,16.58L40.19,131.37l-7.26,7.25a10.42,10.42,0,0,0-1.38,1.75,10.12,10.12,0,0,0,1.38,12.51c.05,0,.11.08.17.13l.07,0,0,0-.09,0c.23.22.49.38.73.57a10.26,10.26,0,0,0,.82.63l.29.16a10,10,0,0,0,5.15,1.42h92.82v0c.32,0,.63-.07,1-.11s.36,0,.54-.06a10,10,0,0,0,5.14-2.72l41.2-41.2a14.63,14.63,0,0,0,0-20.63"] $ do mempty
 
 {-# NOINLINE svgPlay #-}
-svgPlay :: Color -> ReactElementM h ()
-svgPlay c0 = do
-  svg_ ["xmlns" $= "http://www.w3.org/2000/svg", "viewBox" $= "0 0 100 100"] $ do
+svgPlay :: Color -> Color -> ReactElementM h ()
+svgPlay c0 c1 = do
+  svg_ ["xmlns" $= "http://www.w3.org/2000/svg", "viewBox" $= "0 0 200 200"] $ do
     defs_ $ do mempty
     title_ $ do
-      elemText "Zeichenfl\228che 1 Kopie 3"
-    path_ ["className" $= colorName ColorAttrFill c0, "d" $= "M85.77,54,15.1,83.2a3.75,3.75,0,0,1-5.18-3.46V21.26A3.75,3.75,0,0,1,15.1,17.8L85.77,47A3.75,3.75,0,0,1,85.77,54Z"] $ do mempty
+      elemText "Play"
+    circle_ ["className" $= colorName ColorAttrFill c0, "cx" $= "100", "cy" $= "100", "r" $= "100"] $ do mempty
+    path_ ["className" $= colorName ColorAttrFill c1, "d" $= "M166.15,106.25,48.61,154.88A6.23,6.23,0,0,1,40,149.12V51.87a6.23,6.23,0,0,1,8.61-5.76L166.15,94.74A6.23,6.23,0,0,1,166.15,106.25Z"] $ do mempty
 
 {-# NOINLINE svgPlus #-}
-svgPlus :: Color -> ReactElementM h ()
-svgPlus c0 = do
-  svg_ ["xmlns" $= "http://www.w3.org/2000/svg", "viewBox" $= "0 0 100 100"] $ do
+svgPlus :: Color -> Color -> ReactElementM h ()
+svgPlus c0 c1 = do
+  svg_ ["xmlns" $= "http://www.w3.org/2000/svg", "viewBox" $= "0 0 200 200"] $ do
     defs_ $ do mempty
     title_ $ do
-      elemText "Zeichenfl\228che 1 Kopie 3"
-    path_ ["className" $= colorName ColorAttrFill c0, "d" $= "M83.94,37.83H62V15.89a2.06,2.06,0,0,0-2.06-2.06H40.06A2.06,2.06,0,0,0,38,15.89V37.83H16.06A2.06,2.06,0,0,0,14,39.89V59.78a2.06,2.06,0,0,0,2.06,2.06H38V83.78a2.06,2.06,0,0,0,2.06,2.06H59.94A2.06,2.06,0,0,0,62,83.78V61.83H83.94A2.06,2.06,0,0,0,86,59.78V39.89A2.06,2.06,0,0,0,83.94,37.83Z"] $ do mempty
+      elemText "Add"
+    circle_ ["className" $= colorName ColorAttrFill c0, "cx" $= "100", "cy" $= "100", "r" $= "100"] $ do mempty
+    path_ ["className" $= colorName ColorAttrFill c1, "d" $= "M166,77.67H123.33V35a4,4,0,0,0-4-4H80.67a4,4,0,0,0-4,4V77.67H34a4,4,0,0,0-4,4v38.66a4,4,0,0,0,4,4H76.67V167a4,4,0,0,0,4,4h38.66a4,4,0,0,0,4-4V124.33H166a4,4,0,0,0,4-4V81.67A4,4,0,0,0,166,77.67Z"] $ do mempty
 
 {-# NOINLINE svgProcess #-}
-svgProcess :: Color -> ReactElementM h ()
-svgProcess c0 = do
-  svg_ ["xmlns" $= "http://www.w3.org/2000/svg", "viewBox" $= "0 0 100 100"] $ do
+svgProcess :: Color -> Color -> Color -> Color -> ReactElementM h ()
+svgProcess c0 c1 c2 c3 = do
+  svg_ ["xmlns" $= "http://www.w3.org/2000/svg", "viewBox" $= "0 0 200 200"] $ do
     defs_ $ do mempty
     title_ $ do
-      elemText "Zeichenfl\228che 1 Kopie 3"
-    path_ ["className" $= colorName ColorAttrFill c0, "d" $= "M94,50a7.23,7.23,0,0,1-2.12,5.14L71.36,75.65A4.94,4.94,0,0,1,68.81,77l-.27,0a5.16,5.16,0,0,1-.59.07h0a5,5,0,0,1-3.53-1.37l0,0-.08-.07a5.06,5.06,0,0,1,0-7.1L78.7,54.13a7.23,7.23,0,0,0,0-8.26L64.28,31.45a5,5,0,0,1,0-7.1l.08-.07h0a5,5,0,0,1,3.53-1.37h0a5.19,5.19,0,0,1,.58.07l.27,0a5,5,0,0,1,2.56,1.36L91.88,44.86A7.23,7.23,0,0,1,94,50ZM37.19,50a7.23,7.23,0,0,0-2.12-5.14L14.55,24.35A5,5,0,0,0,12,23l-.27,0a5.2,5.2,0,0,0-.58-.07H11a5,5,0,0,0-2.57.71l-.15.08c-.14.09-.27.21-.4.31s-.25.17-.37.28l0,0h0l-.08.07a5.06,5.06,0,0,0,0,7.1L21.89,45.87a7.23,7.23,0,0,1,0,8.26L7.46,68.55a5,5,0,0,0,0,7.1l.08.07,0,0h0l0,0c.11.11.24.19.37.28s.26.22.4.31l.15.08a5,5,0,0,0,2.57.71h.11a5.16,5.16,0,0,0,.59-.07L12,77a5,5,0,0,0,2.56-1.36L35.07,55.14A7.23,7.23,0,0,0,37.19,50Zm28.41,0a7.23,7.23,0,0,0-2.12-5.14L43,24.35A5,5,0,0,0,40.4,23l-.27,0a5.2,5.2,0,0,0-.58-.07h0A5,5,0,0,0,36,24.27h0l-.08.07a5.06,5.06,0,0,0,0,7.1L50.29,45.87a7.23,7.23,0,0,1,0,8.26L35.87,68.55a5,5,0,0,0,0,7.1l.08.07,0,0a5,5,0,0,0,3.53,1.37h0a5.15,5.15,0,0,0,.59-.07l.27,0A4.94,4.94,0,0,0,43,75.65L63.47,55.14A7.23,7.23,0,0,0,65.59,50Z"] $ do mempty
+      elemText "Process"
+    circle_ ["className" $= colorName ColorAttrFill c0, "cx" $= "100", "cy" $= "100", "r" $= "100"] $ do mempty
+    path_ ["className" $= colorName ColorAttrFill c1, "d" $= "M181.17,91.72,144.1,54.65a8.94,8.94,0,0,0-4.62-2.45c-.16,0-.33,0-.49-.06a9.37,9.37,0,0,0-1.06-.12l-.05,0a9,9,0,0,0-6.38,2.47l-.06,0-.15.12a9.14,9.14,0,0,0,0,12.83l26.06,26.06a13.07,13.07,0,0,1,0,14.92l-26.06,26.06a9.11,9.11,0,0,0,0,12.83l.15.12.06,0a9,9,0,0,0,6.38,2.47l.05,0a9.33,9.33,0,0,0,1.06-.12c.16,0,.33,0,.49-.06a8.93,8.93,0,0,0,4.62-2.45l37.07-37.07a13.16,13.16,0,0,0,0-18.56Z"] $ do mempty
+    path_ ["className" $= colorName ColorAttrFill c2, "d" $= "M41.45,147.35l37.07-37.07a13.16,13.16,0,0,0,0-18.56L41.45,54.65a8.94,8.94,0,0,0-4.62-2.45c-.16,0-.32,0-.49-.06A9.38,9.38,0,0,0,35.29,52h-.2a9,9,0,0,0-4.64,1.29l-.27.14c-.26.16-.49.37-.73.56s-.45.32-.66.51l.08,0,0,0-.06,0-.15.12a9.14,9.14,0,0,0,0,12.83L54.71,93.54a13.07,13.07,0,0,1,0,14.92L28.64,134.52a9.11,9.11,0,0,0,0,12.83l.15.12.06,0,0,0-.08,0c.21.19.44.34.66.51s.48.4.73.56l.27.14A9,9,0,0,0,35.09,150h.2a9.34,9.34,0,0,0,1.06-.12c.16,0,.32,0,.48-.06A8.94,8.94,0,0,0,41.45,147.35Z"] $ do mempty
+    path_ ["className" $= colorName ColorAttrFill c3, "d" $= "M92.78,147.35l37.07-37.07a13.16,13.16,0,0,0,0-18.56L92.78,54.65a8.94,8.94,0,0,0-4.62-2.45c-.16,0-.33,0-.49-.06A9.37,9.37,0,0,0,86.61,52l-.05,0a9,9,0,0,0-6.38,2.47l-.06,0-.15.12a9.14,9.14,0,0,0,0,12.83L106,93.54a13.07,13.07,0,0,1,0,14.92L80,134.52a9.11,9.11,0,0,0,0,12.83l.15.12.06,0A9,9,0,0,0,86.56,150l.05,0a9.33,9.33,0,0,0,1.06-.12c.16,0,.33,0,.49-.06A8.93,8.93,0,0,0,92.78,147.35Z"] $ do mempty
 
 {-# NOINLINE svgProcessNew #-}
 svgProcessNew :: Color -> ReactElementM h ()
@@ -662,34 +679,34 @@ svgProcessUpdate c0 = do
     elemText "\n"
 
 {-# NOINLINE svgQuestion #-}
-svgQuestion :: Color -> ReactElementM h ()
-svgQuestion c0 = do
-  svg_ ["xmlns" $= "http://www.w3.org/2000/svg", "viewBox" $= "0 0 100 100"] $ do
+svgQuestion :: Color -> Color -> ReactElementM h ()
+svgQuestion c0 c1 = do
+  svg_ ["xmlns" $= "http://www.w3.org/2000/svg", "viewBox" $= "0 0 200 200"] $ do
     defs_ $ do mempty
     title_ $ do
-      elemText "Zeichenfl\228che 1 Kopie 4"
-    path_ ["className" $= colorName ColorAttrFill c0, "d" $= "M61.62,9.67H42.29A38.5,38.5,0,0,0,3.9,48h0A38.07,38.07,0,0,0,10,68.74L1.15,83.66A3.9,3.9,0,0,0,6.66,89.2l14.27-9.31a38.1,38.1,0,0,0,21.36,6.54H61.62A38.5,38.5,0,0,0,100,48h0A38.5,38.5,0,0,0,61.62,9.67Zm-10.89,71c-4.79,0-8.27-3.76-8.27-8.65s3.48-8.74,8.27-8.74S59.1,67,59.1,72A8.33,8.33,0,0,1,50.73,80.66Zm6.11-22.84H44.71C42.84,44.95,56.56,39.59,56.56,32.54c0-3.85-2.54-5.92-6.3-5.92-3.48,0-6,1.79-8.55,4.32l-7.61-7c4.23-5.08,10.15-8.55,17.11-8.55,10.62,0,18.61,5,18.61,16.07C69.81,43.16,55.71,46.64,56.84,57.82Z"] $ do mempty
+      elemText "Question"
+    circle_ ["className" $= colorName ColorAttrFill c0, "cx" $= "100", "cy" $= "100", "r" $= "100"] $ do mempty
+    path_ ["className" $= colorName ColorAttrFill c1, "d" $= "M122.35,42.34h-28A55.82,55.82,0,0,0,38.66,98h0a55.2,55.2,0,0,0,8.86,30L34.67,149.63a5.66,5.66,0,0,0,8,8l20.69-13.49a55.24,55.24,0,0,0,31,9.48h28A55.82,55.82,0,0,0,178,98h0A55.82,55.82,0,0,0,122.35,42.34ZM106.56,145.28c-6.95,0-12-5.45-12-12.54s5-12.67,12-12.67,12.13,5.45,12.13,12.67S113.51,145.28,106.56,145.28Zm8.86-33.12H97.84C95.11,93.49,115,85.72,115,75.5c0-5.59-3.68-8.59-9.13-8.59-5,0-8.72,2.59-12.4,6.27l-11-10.09c6.13-7.36,14.72-12.4,24.81-12.4,15.4,0,27,7.22,27,23.3C134.23,90.9,113.78,95.94,115.42,112.16Z"] $ do mempty
 
 {-# NOINLINE svgReader #-}
-svgReader :: Color -> ReactElementM h ()
-svgReader c0 = do
-  svg_ ["xmlns" $= "http://www.w3.org/2000/svg", "viewBox" $= "0 0 100 100"] $ do
+svgReader :: Color -> Color -> ReactElementM h ()
+svgReader c0 c1 = do
+  svg_ ["xmlns" $= "http://www.w3.org/2000/svg", "viewBox" $= "0 0 200 200"] $ do
     defs_ $ do mempty
     title_ $ do
-      elemText "Zeichenfl\228che 1 Kopie 3"
-    path_ ["className" $= colorName ColorAttrFill c0, "d" $= "M74.5,100H25.36V94.57q2.86-1.14,6.5-2.36a45,45,0,0,1,7.36-1.79V9.28H22.64L13.5,33.71H7.64q-.57-2.86-1.14-7.29t-1-9.14q-.43-4.72-.72-9.36T4.5,0h91q0,3.43-.29,8t-.71,9.29q-.43,4.71-1,9.07t-1.14,7.36h-6L77.21,9.28H60.64V90.43q3.71.72,7.36,1.71a35.91,35.91,0,0,1,6.5,2.43Z"] $ do mempty
+      elemText "Reader view"
+    circle_ ["className" $= colorName ColorAttrFill c0, "cx" $= "100", "cy" $= "100", "r" $= "100"] $ do mempty
+    path_ ["className" $= colorName ColorAttrFill c1, "d" $= "M133.69,178H66.85v-7.38q3.88-1.55,8.84-3.21a61.17,61.17,0,0,1,10-2.43V54.63H63.16L50.73,87.85h-8Q42,84,41.21,77.94T39.85,65.51q-.58-6.41-1-12.73T38.49,42H162.25q0,4.66-.39,10.88t-1,12.63q-.58,6.41-1.36,12.34t-1.55,10h-8.16L137.38,54.63H114.84V165q5.05,1,10,2.33a48.84,48.84,0,0,1,8.84,3.3Z"] $ do mempty
 
 {-# NOINLINE svgReply #-}
-svgReply :: Color -> ReactElementM h ()
-svgReply c0 = do
-  svg_ ["version" $= "1.1", "id" $= "Ebene_1", "xmlns" $= "http://www.w3.org/2000/svg", "xmlnsXlink" $= "http://www.w3.org/1999/xlink", "x" $= "0px", "y" $= "0px", "viewBox" $= "0 0 100 100", "style" @= styles [("enableBackground","new 0 0 100 100")], "xmlSpace" $= "preserve"] $ do
-    elemText "\n"
-    elemText "\n"
+svgReply :: Color -> Color -> ReactElementM h ()
+svgReply c0 c1 = do
+  svg_ ["xmlns" $= "http://www.w3.org/2000/svg", "viewBox" $= "0 0 200 200"] $ do
+    defs_ $ do mempty
     title_ $ do
-      elemText "Zeichenfl\228che 1 Kopie 2"
-    elemText "\n"
-    circle_ ["className" $= colorName ColorAttrFill c0, "cx" $= "50", "cy" $= "50", "r" $= "50"] $ do mempty
-    elemText "\n"
+      elemText "Reply"
+    circle_ ["className" $= colorName ColorAttrFill c0, "cx" $= "100", "cy" $= "100", "r" $= "100"] $ do mempty
+    path_ ["className" $= colorName ColorAttrFill c1, "d" $= "M184,112.93a14.73,14.73,0,0,0-4.35-10.5L145.43,68.22A11.09,11.09,0,0,0,129.75,83.9l18,18-.17,0H88.44A37.31,37.31,0,0,1,51.18,64.58a11.09,11.09,0,0,0-22.18,0A59.51,59.51,0,0,0,88.44,124h59.11l.17,0-18,18a11.09,11.09,0,0,0,15.68,15.68l34.23-34.23A14.71,14.71,0,0,0,184,112.93Z"] $ do mempty
 
 {-# NOINLINE svgReport #-}
 svgReport :: Color -> ReactElementM h ()
@@ -713,85 +730,84 @@ svgSave c0 = do
     path_ ["className" $= colorName ColorAttrFill c0, "d" $= "M88.21,14.08a8.42,8.42,0,0,0-11.57,2.83L44.55,69.79,22.78,42.13A8.43,8.43,0,0,0,9.54,52.55L38.32,89.13A8.4,8.4,0,0,0,44.41,93h.21a8.4,8.4,0,0,0,1.19,0c.25,0,.49,0,.74-.07l.51-.09a8.13,8.13,0,0,0,6-4.56L91,25.66A8.43,8.43,0,0,0,88.21,14.08Z"] $ do mempty
 
 {-# NOINLINE svgSearch #-}
-svgSearch :: Color -> ReactElementM h ()
-svgSearch c0 = do
-  svg_ ["xmlns" $= "http://www.w3.org/2000/svg", "viewBox" $= "0 0 100 100"] $ do
+svgSearch :: Color -> Color -> ReactElementM h ()
+svgSearch c0 c1 = do
+  svg_ ["xmlns" $= "http://www.w3.org/2000/svg", "viewBox" $= "0 0 200 200"] $ do
     defs_ $ do mempty
     title_ $ do
-      elemText "Zeichenfl\228che 1 Kopie 3"
-    path_ ["className" $= colorName ColorAttrFill c0, "d" $= "M56.67,0A30.07,30.07,0,0,0,33.11,48.67l-3.33,5.56a3.75,3.75,0,0,0-.67,2.23,4.66,4.66,0,0,0,2.22,4L14.22,90a5.8,5.8,0,0,0-.89,3.34A6.55,6.55,0,0,0,20,100a6.83,6.83,0,0,0,5.78-3.55L42.89,67.11a3.6,3.6,0,0,0,2.22.45,4.31,4.31,0,0,0,3.78-2.23l3.33-5.56a28,28,0,0,0,4.45.23,30,30,0,1,0,0-60Zm18.8,30a18.8,18.8,0,1,1-18.8-18.8A18.83,18.83,0,0,1,75.47,30Z"] $ do mempty
+      elemText "Search"
+    circle_ ["className" $= colorName ColorAttrFill c0, "cx" $= "100", "cy" $= "100", "r" $= "100"] $ do mempty
+    path_ ["className" $= colorName ColorAttrFill c1, "d" $= "M110.18,17a46,46,0,0,0-36,74.46L69,100a5.74,5.74,0,0,0-1,3.41,7.14,7.14,0,0,0,3.4,6.11L45.23,154.7a8.88,8.88,0,0,0-1.36,5.1A10,10,0,0,0,54.08,170a10.45,10.45,0,0,0,8.84-5.44L89.1,119.68a5.51,5.51,0,0,0,3.4.69A6.59,6.59,0,0,0,98.28,117l5.1-8.5a42.84,42.84,0,0,0,6.8.34,45.9,45.9,0,1,0,0-91.8Zm28.77,45.9a28.77,28.77,0,1,1-28.77-28.77A28.8,28.8,0,0,1,138.95,62.9Z"] $ do mempty
 
 {-# NOINLINE svgShare #-}
-svgShare :: Color -> Color -> ReactElementM h ()
-svgShare c0 c1 = do
-  svg_ ["xmlns" $= "http://www.w3.org/2000/svg", "viewBox" $= "0 0 100 100"] $ do
+svgShare :: Color -> Color -> Color -> ReactElementM h ()
+svgShare c0 c1 c2 = do
+  svg_ ["xmlns" $= "http://www.w3.org/2000/svg", "viewBox" $= "0 0 200 200"] $ do
     defs_ $ do mempty
     title_ $ do
-      elemText "Zeichenfl\228che 1 Kopie 3"
-    path_ ["className" $= colorName ColorAttrFill c0, "d" $= "M78.57,34.81H21.92a3.6,3.6,0,0,0-3.6,3.6v58a3.61,3.61,0,0,0,3.6,3.6H78.57a3.6,3.6,0,0,0,3.6-3.6v-58A3.61,3.61,0,0,0,78.57,34.81Z"] $ do mempty
-    path_ ["className" $= colorName ColorAttrFill c1, "d" $= "M50.25,0c-.11,0-.22,0-.33,0a7.15,7.15,0,0,0-4.76,2.07L26.25,21a5.13,5.13,0,1,0,7.26,7.26L45.11,16.67V64.49a5.13,5.13,0,1,0,10.27,0V16.67L67,28.27A5.13,5.13,0,1,0,74.25,21L55.34,2.11A7.15,7.15,0,0,0,50.57,0C50.46,0,50.36,0,50.25,0Z"] $ do mempty
+      elemText "Share"
+    circle_ ["className" $= colorName ColorAttrFill c0, "cx" $= "100", "cy" $= "100", "r" $= "100"] $ do mempty
+    path_ ["className" $= colorName ColorAttrFill c1, "d" $= "M143.89,70.26H56.35a5.56,5.56,0,0,0-5.56,5.56v89.62A5.57,5.57,0,0,0,56.35,171h87.54a5.56,5.56,0,0,0,5.56-5.56V75.82A5.57,5.57,0,0,0,143.89,70.26Z"] $ do mempty
+    path_ ["className" $= colorName ColorAttrFill c2, "d" $= "M100.12,16.47c-.18,0-.34,0-.52.05a11,11,0,0,0-7.35,3.2L63,48.94A7.93,7.93,0,1,0,74.25,60.16L92.19,42.22v73.9a7.93,7.93,0,0,0,15.87,0V42.22L126,60.16a7.93,7.93,0,1,0,11.22-11.22L108,19.72a11,11,0,0,0-7.38-3.21C100.45,16.5,100.29,16.47,100.12,16.47Z"] $ do mempty
 
 {-# NOINLINE svgSort #-}
-svgSort :: Color -> ReactElementM h ()
-svgSort c0 = do
-  svg_ ["xmlns" $= "http://www.w3.org/2000/svg", "viewBox" $= "0 0 100 100"] $ do
+svgSort :: Color -> Color -> ReactElementM h ()
+svgSort c0 c1 = do
+  svg_ ["xmlns" $= "http://www.w3.org/2000/svg", "viewBox" $= "0 0 200 200"] $ do
     defs_ $ do mempty
     title_ $ do
-      elemText "Zeichenfl\228che 1 Kopie 3"
-    path_ ["className" $= colorName ColorAttrFill c0, "d" $= "M36.23,6.53a6.21,6.21,0,0,1,4.15,1.8L56.8,24.75a4.46,4.46,0,0,1-6.3,6.3L40.41,21V62.51a4.46,4.46,0,1,1-8.92,0V21L21.42,31.06a4.46,4.46,0,1,1-6.3-6.3L31.53,8.33a6.21,6.21,0,0,1,4.13-1.8l.29,0ZM64,93.5l.29,0a6.21,6.21,0,0,0,4.13-1.8L84.89,75.25a4.46,4.46,0,1,0-6.3-6.3L68.5,79V37.49a4.46,4.46,0,0,0-8.92,0V79L49.5,68.94a4.46,4.46,0,1,0-6.3,6.3L59.62,91.67a6.21,6.21,0,0,0,4.15,1.8Z"] $ do mempty
+      elemText "Sort"
+    circle_ ["className" $= colorName ColorAttrFill c0, "cx" $= "100", "cy" $= "100", "r" $= "100"] $ do mempty
+    path_ ["className" $= colorName ColorAttrFill c1, "d" $= "M75.07,20.05a11.41,11.41,0,0,1,7.62,3.31l30.17,30.17a8.19,8.19,0,1,1-11.58,11.58L82.76,46.6v76.3a8.19,8.19,0,1,1-16.38,0V46.6L47.85,65.12A8.19,8.19,0,1,1,36.27,53.53L66.44,23.36A11.41,11.41,0,0,1,74,20.05c.18,0,.35-.05.53-.05S74.9,20,75.07,20.05Zm51.09,159.78c.18,0,.35,0,.53-.05a11.41,11.41,0,0,0,7.59-3.31l30.17-30.17a8.19,8.19,0,1,0-11.58-11.58l-18.52,18.52V76.93a8.19,8.19,0,1,0-16.38,0v76.3L99.46,134.71A8.19,8.19,0,1,0,87.87,146.3L118,176.47a11.41,11.41,0,0,0,7.62,3.31C125.83,179.79,126,179.83,126.17,179.83Z"] $ do mempty
 
 {-# NOINLINE svgUser #-}
-svgUser :: Color -> ReactElementM h ()
-svgUser c0 = do
-  svg_ ["version" $= "1.1", "id" $= "Ebene_1", "xmlns" $= "http://www.w3.org/2000/svg", "xmlnsXlink" $= "http://www.w3.org/1999/xlink", "x" $= "0px", "y" $= "0px", "viewBox" $= "0 0 100 100", "style" @= styles [("enableBackground","new 0 0 100 100")], "xmlSpace" $= "preserve"] $ do
-    elemText "\n"
-    elemText "\n"
+svgUser :: Color -> Color -> ReactElementM h ()
+svgUser c0 c1 = do
+  svg_ ["xmlns" $= "http://www.w3.org/2000/svg", "viewBox" $= "0 0 200 200"] $ do
+    defs_ $ do mempty
     title_ $ do
-      elemText "Zeichenfl\228che 1 Kopie 3"
-    elemText "\n"
-    path_ ["className" $= colorName ColorAttrFill c0, "d" $= "M77.6,51.5C72.3,58.5,61.4,63.7,50,63.7s-22.3-5.2-27.6-12.2c-2.6-3.6-19.1,6.4-19.1,22.1V88\n\tc0,4.2,2.5,6.1,7.7,7.7s18.2,4.3,39,4.3s33.8-2.7,39-4.3s7.7-3.5,7.7-7.7V73.6C96.7,57.9,80.2,47.9,77.6,51.5z"] $ do mempty
-    elemText "\n"
-    circle_ ["className" $= colorName ColorAttrFill c0, "cx" $= "50", "cy" $= "26.5", "r" $= "26.5"] $ do mempty
-    elemText "\n"
+      elemText "User"
+    circle_ ["className" $= colorName ColorAttrFill c0, "cx" $= "100", "cy" $= "100", "r" $= "100"] $ do mempty
+    path_ ["className" $= colorName ColorAttrFill c1, "d" $= "M141.15,92.2c-7.75,10.44-23.94,18.15-40.79,18.12s-33-7.68-40.79-18.12c-3.92-5.28-28.3,9.53-28.3,32.68v21.41c0,6.26,3.66,9,11.38,11.38S69.55,164,100.37,164s50-3.93,57.7-6.33,11.38-5.12,11.38-11.38V124.87C169.45,101.72,145.07,86.91,141.15,92.2Z"] $ do mempty
+    circle_ ["className" $= colorName ColorAttrFill c1, "cx" $= "100.37", "cy" $= "55.16", "r" $= "39.16"] $ do mempty
 
 {-# NOINLINE svgUserProfile #-}
-svgUserProfile :: Color -> ReactElementM h ()
-svgUserProfile c0 = do
-  svg_ ["version" $= "1.1", "id" $= "Ebene_1", "xmlns" $= "http://www.w3.org/2000/svg", "xmlnsXlink" $= "http://www.w3.org/1999/xlink", "x" $= "0px", "y" $= "0px", "viewBox" $= "0 0 100 100", "style" @= styles [("enableBackground","new 0 0 100 100")], "xmlSpace" $= "preserve"] $ do
-    elemText "\n"
-    elemText "\n"
+svgUserProfile :: Color -> Color -> Color -> ReactElementM h ()
+svgUserProfile c0 c1 c2 = do
+  svg_ ["xmlns" $= "http://www.w3.org/2000/svg", "viewBox" $= "0 0 200 200"] $ do
+    defs_ $ do mempty
     title_ $ do
-      elemText "Zeichenfl\228che 1 Kopie 2"
-    elemText "\n"
-    circle_ ["className" $= colorName ColorAttrFill c0, "cx" $= "50", "cy" $= "50", "r" $= "50"] $ do mempty
-    elemText "\n"
+      elemText "Me"
+    circle_ ["className" $= colorName ColorAttrFill c0, "cx" $= "100", "cy" $= "100", "r" $= "100"] $ do mempty
+    path_ ["className" $= colorName ColorAttrFill c1, "d" $= "M141.15,92.2c-7.75,10.44-23.94,18.15-40.79,18.12s-33-7.68-40.79-18.12c-3.92-5.28-28.3,9.53-28.3,32.68v21.41c0,6.26,3.66,9,11.38,11.38S69.55,164,100.37,164s50-3.93,57.7-6.33,11.38-5.12,11.38-11.38V124.87C169.45,101.72,145.07,86.91,141.15,92.2Z"] $ do mempty
+    circle_ ["className" $= colorName ColorAttrFill c2, "cx" $= "100.37", "cy" $= "55.16", "r" $= "39.16"] $ do mempty
 
 {-# NOINLINE svgVoteNegative #-}
 svgVoteNegative :: Color -> Color -> ReactElementM h ()
 svgVoteNegative c0 c1 = do
-  svg_ ["xmlns" $= "http://www.w3.org/2000/svg", "viewBox" $= "0 0 100 100"] $ do
+  svg_ ["xmlns" $= "http://www.w3.org/2000/svg", "viewBox" $= "0 0 200 200"] $ do
     defs_ $ do mempty
     title_ $ do
-      elemText "Zeichenfl\228che 1 Kopie 6"
-    circle_ ["className" $= colorName ColorAttrFill c0, "cx" $= "50", "cy" $= "49.9", "r" $= "50"] $ do mempty
-    path_ ["className" $= colorName ColorAttrFill c1, "d" $= "M80.79,34.29a7,7,0,0,1,4.94,11.92L57.15,74.78a10.11,10.11,0,0,1-14.3,0L14.28,46.21a7,7,0,0,1,9.87-9.88L50,62.18,75.85,36.33A7,7,0,0,1,80.79,34.29ZM52.73,64.91h0Z"] $ do mempty
+      elemText "Bottom_1"
+    circle_ ["className" $= colorName ColorAttrFill c0, "cx" $= "100", "cy" $= "100", "r" $= "100"] $ do mempty
+    path_ ["className" $= colorName ColorAttrFill c1, "d" $= "M107.16,155.41l66.21-67A8.43,8.43,0,0,0,167.49,74H35.05c-7.4,0-11.12,9.07-5.88,14.38l66.23,67a8.24,8.24,0,0,0,11.77,0"] $ do mempty
 
 {-# NOINLINE svgVoteNeutral #-}
 svgVoteNeutral :: Color -> Color -> ReactElementM h ()
 svgVoteNeutral c0 c1 = do
-  svg_ ["xmlns" $= "http://www.w3.org/2000/svg", "viewBox" $= "0 0 100 100"] $ do
+  svg_ ["xmlns" $= "http://www.w3.org/2000/svg", "viewBox" $= "0 0 200 200"] $ do
     defs_ $ do mempty
     title_ $ do
-      elemText "Zeichenfl\228che 1"
-    circle_ ["className" $= colorName ColorAttrFill c0, "cx" $= "50", "cy" $= "49.9", "r" $= "50"] $ do mempty
-    path_ ["className" $= colorName ColorAttrFill c1, "d" $= "M83.39,57H16.61a7.1,7.1,0,1,1,0-14.19H83.39a7.1,7.1,0,1,1,0,14.19Z"] $ do mempty
+      elemText "Neutral"
+    circle_ ["className" $= colorName ColorAttrFill c0, "cx" $= "100", "cy" $= "100", "r" $= "100"] $ do mempty
+    path_ ["className" $= colorName ColorAttrFill c1, "d" $= "M170.09,116.23H29.79a14.91,14.91,0,1,1,0-29.82H170.09a14.91,14.91,0,1,1,0,29.82Z"] $ do mempty
 
 {-# NOINLINE svgVotePositive #-}
 svgVotePositive :: Color -> Color -> ReactElementM h ()
 svgVotePositive c0 c1 = do
-  svg_ ["xmlns" $= "http://www.w3.org/2000/svg", "viewBox" $= "0 0 100 100"] $ do
+  svg_ ["xmlns" $= "http://www.w3.org/2000/svg", "viewBox" $= "0 0 200 200"] $ do
     defs_ $ do mempty
     title_ $ do
-      elemText "Zeichenfl\228che 1 Kopie 3"
-    circle_ ["className" $= colorName ColorAttrFill c0, "cx" $= "50.25", "cy" $= "49.9", "r" $= "50"] $ do mempty
-    path_ ["className" $= colorName ColorAttrFill c1, "d" $= "M19.46,66.73a7,7,0,0,1-4.94-11.92L43.1,26.23a10.11,10.11,0,0,1,14.3,0L86,54.81a7,7,0,0,1-9.87,9.88L50.25,38.84,24.4,64.68A7,7,0,0,1,19.46,66.73ZM47.52,36.11h0Z"] $ do mempty
+      elemText "Up_1"
+    circle_ ["className" $= colorName ColorAttrFill c0, "cx" $= "100", "cy" $= "100", "r" $= "100"] $ do mempty
+    path_ ["className" $= colorName ColorAttrFill c1, "d" $= "M92.84,44.59l-66.21,67A8.43,8.43,0,0,0,32.51,126H164.95c7.4,0,11.12-9.07,5.88-14.38l-66.23-67a8.24,8.24,0,0,0-11.77,0"] $ do mempty

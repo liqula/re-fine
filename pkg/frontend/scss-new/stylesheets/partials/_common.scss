@@ -19,6 +19,21 @@ body {
   height: 100px;
 }
 
+.topmenubar {
+  display: flex; 
+  justify-content: space-between;
+  min-width: $menupage-container-width;
+}
+
+.platform-title {
+  background-image: url("../images/liqula_logo.svg");
+  height: $dunit * 10;
+  top: $dunit;
+  position: relative;
+  width: $dunit * 18;
+}
+
+
 .text-big {
 	@include text-big;
 }

@@ -22,7 +22,7 @@ diffToolbar_ props = do
     [HeaderAction ToggleIndexToolbarExtension]
     & ibSize .~ XXLarge
 
-  div_ ["className" $= "main-content__header"] $ do
+  div_ ["className" $= "main-content__header c-toolbar-sticky"] $ do
     div_ ["className" $= "main-content__header-inner fisx-css-toolbar-flex c-vdoc-toolbar"] $ do
       let EditIndex alledits thisedit = props ^. diffToolbarIndex
       span_ . cs $ "Edit " <> show (thisedit + 1) <> " of " <> show alledits

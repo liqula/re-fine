@@ -3,3 +3,38 @@
 .fisx-css-toolbar-flex {
   display: flex
 }
+
+
+/*
+ * sticky machinery
+ */
+
+.c-toolbar-sticky {
+    position: sticky;
+    top: 0px;
+    z-index: 3;
+}
+
+.c-menubar-sticky {
+    position: sticky;
+    top: 0px;
+    z-index: 3;
+    background-color: $c_blue_dark;
+}
+
+/*
+ * this is the handle by which the `window.onscroll` callback finds
+ * the button in the toolbar to turn on when it melts into the menu bar.
+ * TODO: make this a class so it can be used for both burger button
+ * (left) and login button (right).
+ */
+#c-toolbar-menu-label {
+}
+
+.c-toolbar-menu-label-visible {
+    visibility: visible;
+}
+
+.c-toolbar-menu-label-hidden {
+    visibility: hidden;
+}

@@ -1,25 +1,4 @@
 
-.ibutton-absolute-topleft {
-  left: $dunit * 2;
-  position: absolute;
-  top: $dunit * 2;
-}
-
-.ibutton-absolute-topright {
-  position: absolute;
-  right: $dunit * 2;
-  top: $dunit * 2;
-}
-
-.platform-title {
-  @include centered;
-  background-image: url("../images/liqula_logo.svg");
-  height: $dunit * 10;
-  top: $dunit;
-  position: relative;
-  width: $dunit * 18;
-}
-
 .ibutton-with-number {
   position: relative;
   height: $icon-size-xxxlarge;

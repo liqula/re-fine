@@ -72,6 +72,7 @@ data AppState = AppState
   deriving (Eq, Show)
 
 -- | The state of the application depends on the user state.
+-- FIXME: move to common and merge with 'CurrentUser' from package frontend.
 data AppUserState
   = UserLoggedIn (ID Types.User) UserSession  -- ^ (re. 'UserSession', see #432.)
   | UserLoggedOut
