@@ -311,7 +311,8 @@ runWholeScreen :: Maybe FilePath -> Maybe FilePath -> Maybe (GlobalState -> Glob
 runWholeScreen asfp gsfp fixgs = do
   as <- maybe (pure emptyAccessState) (importTestData @AccessState) asfp
   gs <- maybe (pure emptyGlobalState) (importTestData @GlobalState) gsfp
-  mapM_ executeAction . dispatch @EditorStoreAction . UpdateEditorStore . createWithRawContent $ gs ^. gsRawContent
+  mapM_ executeAction . dispatch @EditorStoreAction . UpdateEditorStore . createWithRawContent $
+    (gs ^. gsRawContent) & rawContentBlocks %~ initBlockKeys
   pure $ wholeScreen_ as (fromMaybe id fixgs $ gs)
 
 
