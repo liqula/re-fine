@@ -96,6 +96,7 @@ editor :: HasCallStack => View '[EditorProps]
 editor = mkControllerView @'[StoreArg EditorStore] "editor" $
   \(EditorStore estate) props -> draftEditor_
       [ "editorState" &= estate
+      , "editorKey" $= "dt2h6"  -- (this makes the styleguide generation deterministic.)
       , onChange (editorOnChange estate)
       , onFocus editorOnFocus
       , onBlur editorOnBlur

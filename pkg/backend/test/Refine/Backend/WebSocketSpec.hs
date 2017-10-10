@@ -116,11 +116,11 @@ stresser port rounds = async . (`catch` (\(SomeException e) -> pure . Left $ sho
   HandshakeToClientAcceptNew cid <- runWS port $ \conn -> askQuestion conn HandshakeToServerSyn
   forM_ [0.. (rounds - 1)] . const . runWS port $ \conn -> do
     when verbose_ $ hPutStr stderr "."
-    HandshakeToClientAccept cid' [] <- askQuestion conn $ HandshakeToServerSynWith cid
+    HandshakeToClientAccept cid' _ <- askQuestion conn $ HandshakeToServerSynWith cid
     cid' `shouldBe` cid
     throttle
-    TCCreateUserResp uresp <- askQuestion conn $ TSCreateUser sampleCreateUser
-    show uresp `shouldNotBe` mempty  -- (uresp will be 'Left' in all but the first call by the first agent.)
+    uresp :: ToClient <- askQuestion conn $ TSCreateUser sampleCreateUser
+    show uresp `shouldNotBe` mempty  -- (uresp will be 'TCError' in all but the first call by the first agent.)
   pure $ Right cid
 
 stressers :: Int -> Int -> Int -> IO ()
@@ -163,6 +163,8 @@ specStories = describe "stories" . around wsBackend $ do
   it "works with many concurrent, high-volume sessions" $ do
     \(WSBackend _ port _) -> do
       stressers port 100 3
+      -- FIXME: this hangs.  implement the same test with some js toolkit and run it on a different
+      -- machine against a production backend?
 
   it "generating session ids is not too expensive" $ \_ -> do
     -- generating 10k session ids takes <2secs in ghci.  shrinking the getEntropy parameter or not
