@@ -305,49 +305,55 @@ importTestData fp = do
     Right v -> pure v
     Left msg -> throwIO . ErrorCall $ show ("importTestDataIO: " <> fp, msg)
 
+-- | FIXME: access state and global state should also be loaded into the stores.  at least access
+-- state will be pulled by every access guard.
+runWholeScreen :: Maybe FilePath -> Maybe FilePath -> Maybe (GlobalState -> GlobalState) -> IO (ReactElementM h ())
+runWholeScreen asfp gsfp fixgs = do
+  as <- maybe (pure emptyAccessState) (importTestData @AccessState) asfp
+  gs <- maybe (pure emptyGlobalState) (importTestData @GlobalState) gsfp
+  mapM_ executeAction . dispatch @EditorStoreAction . UpdateEditorStore . createWithRawContent $ gs ^. gsRawContent
+  pure $ wholeScreen_ as (fromMaybe id fixgs $ gs)
+
 
 viewsSources :: [(String, IO (ReactElementM 'EventHandlerCode ()), [String])]
 viewsSources =
     [ ("toy_", pure toy_, ["testclass"])
 
-    , ("wholeScreen_/empty-empty", pure $ wholeScreen_ emptyAccessState emptyGlobalState, [])
+    , ("wholeScreen_/empty-empty", runWholeScreen Nothing Nothing Nothing, [])
 
-    , let gs = importTestData @GlobalState "wholeScreen_/empty-login.GlobalState.json"
-      in ("wholeScreen_/empty-login", wholeScreen_ emptyAccessState <$> gs, [])
+    , ("wholeScreen_/empty-login", runWholeScreen Nothing (Just "wholeScreen_/empty-login.GlobalState.json") Nothing, [])
+    , let act = runWholeScreen (Just "wholeScreen_/empty-iamadmin.AccessState.json")
+                                (Just "wholeScreen_/empty-iamadmin.GlobalState.json")
+                                Nothing
+      in ("wholeScreen_/empty-iamadmin", act, [])
 
-    , let as = importTestData @AccessState "wholeScreen_/empty-iamadmin.AccessState.json"
-          gs = importTestData @GlobalState "wholeScreen_/empty-iamadmin.GlobalState.json"
-      in ("wholeScreen_/empty-iamadmin", wholeScreen_ <$> as <*> gs, [])
-
-    , let as = importTestData @AccessState "wholeScreen_/creategroup.AccessState.json"
-          gs = importTestData @GlobalState "wholeScreen_/creategroup.GlobalState.json"
-          fixgs = gsPageState .~ PageStateMainMenu (MainMenuState
-                                                (MainMenuProfile (1, newLocalStateRef ((Nothing, Nothing) :: ProfileLocalState) gs))
+    , let act = runWholeScreen (Just "wholeScreen_/creategroup.AccessState.json")
+                                (Just "wholeScreen_/creategroup.GlobalState.json")
+                                (Just $ gsPageState .~ PageStateMainMenu (MainMenuState
+                                                (MainMenuProfile (1, newLocalStateRef ((Nothing, Nothing) :: ProfileLocalState) act))
                                                 (MainMenuErrors Nothing Nothing))
-                                               Nothing
-      in ("wholeScreen_/profile-iamadmin", wholeScreen_ <$> as <*> (fixgs <$> gs), [])
+                                               Nothing)
+      in ("wholeScreen_/profile-iamadmin", act, [])
 
-    , let as = importTestData @AccessState "wholeScreen_/creategroup.AccessState.json"
-          gs = importTestData @GlobalState "wholeScreen_/creategroup.GlobalState.json"
-          fixgs = gsPageState .~ PageStateMainMenu (MainMenuState
-                                                (MainMenuCreateOrUpdateGroup Nothing (newLocalStateRef sampleCreateGroup gs))
+    , let act = runWholeScreen (Just "wholeScreen_/creategroup.AccessState.json")
+                                (Just "wholeScreen_/creategroup.GlobalState.json")
+                                (Just $ gsPageState .~ PageStateMainMenu (MainMenuState
+                                                (MainMenuCreateOrUpdateGroup Nothing (newLocalStateRef sampleCreateGroup act))
                                                 (MainMenuErrors Nothing Nothing))
-                                               Nothing
-      in ("wholeScreen_/creategroup", wholeScreen_ <$> as <*> (fixgs <$> gs), [])
+                                               Nothing)
+      in ("wholeScreen_/creategroup", act, [])
 
-    , let as = importTestData @AccessState "wholeScreen_/createprocess.AccessState.json"
-          gs = importTestData @GlobalState "wholeScreen_/createprocess.GlobalState.json"
-          fixgs = gsPageState .~ PageStateMainMenu (MainMenuState
-                                                (MainMenuCreateProcess (newLocalStateRef sampleCreateVDoc gs))
+    , let act = runWholeScreen (Just "wholeScreen_/createprocess.AccessState.json")
+                                (Just "wholeScreen_/createprocess.GlobalState.json")
+                                (Just $ gsPageState .~ PageStateMainMenu (MainMenuState
+                                                (MainMenuCreateProcess (newLocalStateRef sampleCreateVDoc act))
                                                 (MainMenuErrors Nothing Nothing))
-                                               Nothing
-      in ("wholeScreen_/createprocess", wholeScreen_ <$> as <*> (fixgs <$> gs), [])
+                                               Nothing)
+      in ("wholeScreen_/createprocess", act, [])
 
-    , let act = do
-            as <- importTestData @AccessState "wholeScreen_/view-vdoc.AccessState.json"
-            gs <- importTestData @GlobalState "wholeScreen_/view-vdoc.GlobalState.json"
-            mapM_ executeAction . dispatch @EditorStoreAction . UpdateEditorStore . createWithRawContent $ gs ^. gsRawContent
-            pure $ wholeScreen_ as gs
+    , let act = runWholeScreen (Just "wholeScreen_/view-vdoc.AccessState.json")
+                                (Just "wholeScreen_/view-vdoc.GlobalState.json")
+                                Nothing
       in ("wholeScreen_/view-vdoc", act, [])
 
     , ("menu/login_", pure $ login_ Nothing, [])
