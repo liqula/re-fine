@@ -313,7 +313,7 @@ runWholeScreen asfp gsfp fixgs = do
   gs <- maybe (pure emptyGlobalState) (importTestData @GlobalState) gsfp
   mapM_ executeAction . dispatch @EditorStoreAction . UpdateEditorStore . createWithRawContent $
     (gs ^. gsRawContent) & rawContentBlocks %~ initBlockKeys
-  pure $ wholeScreen_ as (fromMaybe id fixgs $ gs)
+  pure $ wholeScreen_ as (fromMaybe id fixgs gs)
 
 
 viewsSources :: [(String, IO (ReactElementM 'EventHandlerCode ()), [String])]
