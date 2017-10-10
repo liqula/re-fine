@@ -1,4 +1,4 @@
-<div class="topmenubar" style="display: flex; justify-content: space-between;">
+<div class="topmenubar">
 	
 	<div class="left-column m-t-1 m-l-1 m-r-1 m-b-1">
 		<div class="inner-column-1">

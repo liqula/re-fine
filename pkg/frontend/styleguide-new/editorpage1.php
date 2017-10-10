@@ -16,6 +16,7 @@ include "new/daniel_user.php";
 <body>
 <div class="body-container">
 
+	<?php include "new/menupage-top-2.php" ?>
 	<?php include "new/editorpage-header.php" ?>
 	
 
