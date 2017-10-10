@@ -7,6 +7,7 @@ module Refine.Frontend.Login.Types where
 -- | FormError can be Nothing or Just an error string.
 type FormError = Maybe ST
 
+-- | FIXME: move to common and merge with 'AppUserState' from package backend.
 data CurrentUser user{- User | ID User | Lookup User -}
   = UserLoggedIn {_loggedInUser :: user}
   | UserLoggedOut
