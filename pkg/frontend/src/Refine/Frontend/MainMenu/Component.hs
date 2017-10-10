@@ -87,7 +87,7 @@ topMenuBar = mkView "TopMenuBarInMainMenu" $ \(TopMenuBarProps mCurrentTab curre
       -- button boxes.  some of them may be empty.
       emptyButtonBox_ = buttonBox_ . div_ ["className" $= "ibutton_xxlarge"] $ pure ()
 
-  in div_ ["className" $= "topmenubar"] $ do
+  in div_ ["className" $= "topmenubar c-menubar-sticky"] $ do
        div_ ["className" $= "left-column m-t-1 m-l-1 m-r-1 m-b-1"] $ do
          buttonBox_ burgerOrCloseButton
          buttonBox_ profilePageButton
