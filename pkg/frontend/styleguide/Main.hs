@@ -50,7 +50,7 @@ import           Refine.Frontend.Access
 import           Refine.Frontend.Contribution.Bubble
 import           Refine.Frontend.Contribution.Dialog
 import           Refine.Frontend.Contribution.Types
-import           Refine.Frontend.Document.FFI (createEmpty)
+import           Refine.Frontend.Document.FFI
 import           Refine.Frontend.Document.Types
 import           Refine.Frontend.Header.DiffToolbar
 import           Refine.Frontend.Header.DiscussionToolbar
@@ -343,9 +343,12 @@ viewsSources =
                                                Nothing
       in ("wholeScreen_/createprocess", wholeScreen_ <$> as <*> (fixgs <$> gs), [])
 
-    , let as = importTestData @AccessState "wholeScreen_/view-vdoc.AccessState.json"
-          gs = importTestData @GlobalState "wholeScreen_/view-vdoc.GlobalState.json"
-      in ("wholeScreen_/view-vdoc", wholeScreen_ <$> as <*> gs, [])
+    , let act = do
+            as <- importTestData @AccessState "wholeScreen_/view-vdoc.AccessState.json"
+            gs <- importTestData @GlobalState "wholeScreen_/view-vdoc.GlobalState.json"
+            mapM_ executeAction . dispatch @EditorStoreAction . UpdateEditorStore . createWithRawContent $ gs ^. gsRawContent
+            pure $ wholeScreen_ as gs
+      in ("wholeScreen_/view-vdoc", act, [])
 
     , ("menu/login_", pure $ login_ Nothing, [])
     , ("menu/mainMenuGroups_", pure $ view_ mainMenuGroups "mainMenuGroups"
