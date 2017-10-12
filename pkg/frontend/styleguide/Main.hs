@@ -311,8 +311,9 @@ runWholeScreen :: Maybe FilePath -> Maybe FilePath -> Maybe (GlobalState -> Glob
 runWholeScreen asfp gsfp fixgs = do
   as <- maybe (pure emptyAccessState) (importTestData @AccessState) asfp
   gs <- maybe (pure emptyGlobalState) (importTestData @GlobalState) gsfp
-  mapM_ executeAction . dispatch @EditorStoreAction . UpdateEditorStore . createWithRawContent $
-    (gs ^. gsRawContent) & rawContentBlocks %~ initBlockKeys
+  rc <- pure . createWithRawContent $ (gs ^. gsRawContent) & rawContentBlocks %~ initBlockKeys
+  -- () <- traceShow (as, gs, rc) $ pure ()
+  mapM_ executeAction . dispatch @EditorStoreAction $ UpdateEditorStore rc
   pure $ wholeScreen_ as (fromMaybe id fixgs gs)
 
 
@@ -351,6 +352,13 @@ viewsSources =
                                                 (MainMenuErrors Nothing Nothing))
                                                Nothing)
       in ("wholeScreen_/createprocess", act, [])
+
+      -- TODO: if i run this test case after the next one (view-vdoc), i get a runtime crash
+      -- (something about inconsistent dom?).
+    , let act = runWholeScreen (Just "wholeScreen_/view-discussion.AccessState.json")
+                                (Just "wholeScreen_/view-discussion.GlobalState.json")
+                                Nothing
+      in ("wholeScreen_/view-discussion", act, [])
 
     , let act = runWholeScreen (Just "wholeScreen_/view-vdoc.AccessState.json")
                                 (Just "wholeScreen_/view-vdoc.GlobalState.json")
