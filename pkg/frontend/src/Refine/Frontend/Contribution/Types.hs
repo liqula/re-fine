@@ -78,7 +78,13 @@ data ContributionState = ContributionState
   , _csBubbleFilter             :: Maybe (Set ContributionID)  -- ^ 'Nothing' means show everything.
   } deriving (Show, Eq, Generic)
 
-data BubblePositioning = BubblePositioningAbsolute | BubblePositioningEvenlySpaced
+data BubblePositioning
+  = BubblePositioningAbsolute
+    -- ^ bubbles are aligned with the text posititons in the middle column they refer to; the bubble
+    -- column has no scroll bar and is as long as the text column.
+  | BubblePositioningEvenlySpaced
+    -- ^ bubbles are rendered into the bubble columns with even space between them; the bubble
+    -- column has a scrollbar and is as long as the window.
   deriving (Show, Eq, Generic)
 
 emptyContributionState :: HasCallStack => ContributionState
