@@ -11,7 +11,6 @@ module Refine.Common.Test.Arbitrary where
 import           Control.Arrow (first, second)
 import           Control.DeepSeq
 import           Data.Function (on)
-import           Data.Functor.Infix ((<$$>))
 import           Data.List (groupBy)
 import           Generics.SOP
 import           Test.Hspec

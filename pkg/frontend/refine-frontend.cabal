@@ -62,7 +62,6 @@ library
     , containers
     , data-default
     , deepseq
-    , functor-infix
     , hspec
     , http-api-data
     , i18n
