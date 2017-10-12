@@ -10,13 +10,23 @@
 #
 # to compile with ghcjs, call `nix-build build.nix`.
 
-resolver: lts-8.11
+resolver: nightly-2017-10-11
+# this resolver has ghc-8.2 and does not run into internal errors in
+# the type checker as often.
 
 packages:
 - '.'
 - location: '../common'
   extra-dep: true
 - location: '../prelude'
+  extra-dep: true
+- location:
+    git: https://github.com/liqula/basic-sop
+    commit: bf798861017b82943fb30ffef72a9f432768d971
+  extra-dep: true
+- location:
+    git: https://github.com/liqula/json-sop
+    commit: 6a2dcaa018a2258953a725f0e8fa4e9c40639bbd
   extra-dep: true
 - location:
     git: https://github.com/liqula/react-hs
@@ -26,11 +36,11 @@ packages:
   - react-hs
 
 extra-deps:
-- basic-sop-0.2.0.1
+- basic-sop-0.2.0.2
 - fingertree-tf-0.1.0.0
 - generics-sop-0.3.1.0
 - i18n-0.4.0.0
-- json-sop-0.2.0.2
+- json-sop-0.2.0.3
 - language-css-0.0.3
-- lens-sop-0.2.0.1
+- lens-sop-0.2.0.2
 - react-hs-0.1.0
