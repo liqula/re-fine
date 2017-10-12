@@ -28,7 +28,7 @@ relaxedRoundtripSpecs :: forall proxy a.
                       => proxy a -> Spec
 relaxedRoundtripSpecs _ =
   it (msg :: String) . QC.property $ \(v :: a) ->
-                        Right (encode v) `shouldBe` (fmap encode . (eitherDecode @a) . encode) v
+                        Right (encode v) `shouldBe` (fmap encode . eitherDecode @a . encode) v
   where
     msg :: String = "instance FromJSON, ToJSON for " <> show (typeOf (undefined :: a)) <> " (ignoring NoJSONRep wholes)"
 
