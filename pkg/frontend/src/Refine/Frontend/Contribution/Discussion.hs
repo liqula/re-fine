@@ -47,6 +47,7 @@ aboutText :: HasCallStack => View '[(RawContent, ContributionID)]
 aboutText = mkView "AboutText" $ \(rc, did) -> div_ ["className" $= "discussion-thread-container__text"] $ do
   draftEditor_
     [ "editorState" &= createWithRawContent rc
+    , "editorKey" $= "dt2h6"  -- (this makes the styleguide generation deterministic.)
     , "customStyleMap" &= mkDocumentStyleMap [MarkContribution did 0] (Just rc)
     , "readOnly" &= True
     ] mempty
