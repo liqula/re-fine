@@ -27,10 +27,10 @@ packages:
 
 extra-deps:
 - basic-sop-0.2.0.1
+- fingertree-tf-0.1.0.0
+- generics-sop-0.3.1.0
 - i18n-0.4.0.0
 - json-sop-0.2.0.2
-- lens-sop-0.2.0.1
-
-- react-hs-0.1.0
 - language-css-0.0.3
-- fingertree-tf-0.1.0.0
+- lens-sop-0.2.0.1
+- react-hs-0.1.0

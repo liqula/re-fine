@@ -62,6 +62,7 @@ library
     , containers
     , data-default
     , deepseq
+    , generics-sop
     , hspec
     , http-api-data
     , i18n
@@ -126,6 +127,7 @@ library
       Refine.Frontend.Screen.WindowSize
       Refine.Frontend.Store
       Refine.Frontend.Store.Types
+      Refine.Frontend.Test.Arbitrary
       Refine.Frontend.Test.Console
       Refine.Frontend.Test.Debug
       Refine.Frontend.Test.Enzyme
@@ -195,6 +197,7 @@ test-suite spec
     , deepseq
     , hspec
     , hspec-core
+    , hspec-golden-aeson
     , http-api-data
     , i18n
     , json-sop
