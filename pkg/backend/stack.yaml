@@ -1,6 +1,4 @@
-resolver: nightly-2017-10-11
-# this resolver has ghc-8.2 and does not run into internal errors in
-# the type checker as often.
+resolver: lts-9.6
 
 packages:
 - '.'
