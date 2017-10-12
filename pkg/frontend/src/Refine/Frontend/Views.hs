@@ -86,20 +86,27 @@ wholeScreen = React.defineLifecycleView "WholeScreen" () React.lifecycleConfig
     didMountOrUpdate _getPropsAndState = flushCacheMisses
 
 mainScreen :: HasCallStack => View' '[(GlobalState, ProcessState DocumentState, AccessState)]
-mainScreen = mkView' "MainScreen" $ \(gst, procst, as) -> do
+mainScreen = mkView' "MainScreen" $ \(gst, procst, as) ->
   let cachest  = gst ^. gsServerCache
       screenst = gst ^. gsScreenState
       gstwiped = wipeDocumentState as gst
       contrst  = procst ^. psContributionState
       docst    = procst ^. psDocumentState
 
-  case (procst ^. psVDocID, cachest) ^. getCompositeVDoc of
-   Nothing -> hourglass
-   Just vdoc ->
-    div_ ["key" $= "maindiv" {-FIXME: seems not to work as expected, we still have a warning-}] $ do
-          React.view trackWindowSize (screenst ^. SC.ssWindowSize) mempty
-          div_ ["className" $= "c_bg_blue_dark"] $ mainHeader_ (mkMainHeaderProps as gstwiped)
+      asideProps :: [contrib] -> AsideProps contrib
+      asideProps = mkAsideProps gst procst bubblepos
+        where
+          bubblepos = case procst ^. psDocumentState of
+                        DocumentStateDiff{} -> BubblePositioningEvenlySpaced
+                        _ -> contrst ^. csBubblePositioning
 
+  in div_ ["key" $= "maindiv" {-FIXME: seems not to work as expected, we still have a warning-}] $ do
+    React.view trackWindowSize (screenst ^. SC.ssWindowSize) mempty
+    div_ ["className" $= "c_bg_blue_dark"] $ mainHeader_ (mkMainHeaderProps as gstwiped)
+
+    case (procst ^. psVDocID, cachest) ^. getCompositeVDoc of
+      Nothing -> hourglass
+      Just vdoc -> do
           -- components that are visible only sometimes:
           case contrst ^. csActiveDialog of
               Just (ActiveDialogComment lst) -> do
@@ -119,40 +126,13 @@ mainScreen = mkView' "MainScreen" $ \(gst, procst, as) -> do
               mainHeaderToolbar_ (mkMainHeaderToolbarProps gstwiped)
               div_ ["className" $= "grid-wrapper"] $ do
                   div_ ["className" $= "row row-align-center row-align-top"] $ do
-                      let asideProps = AsideProps
-                                     (contrst ^. csAllVerticalSpanBounds)
-                                     (OffsetFromDocumentTop $ screenst ^. ssHeaderHeight + fixedHeaderHeight + 15)
-                                     (contrst ^. csCurrentSelectionWithPx)
-                                     (contrst ^. csHighlightedMarkAndBubble)
-                                     screenst
-                                     (fltr (\i -> ContribIDDiscussion <$> [True, False] <*> pure i)
-                                           (fmap snd $ vdoc ^. compositeVDocApplicableDiscussions))
-                                     (fltr ((:[]) . ContribIDEdit)
-                                           (fltrThisEdit $ vdoc ^. compositeVDocApplicableEdits))
-                                     (case procst ^. psDocumentState of
-                                        DocumentStateDiff{} -> BubblePositioningEvenlySpaced
-                                        _ -> contrst ^. csBubblePositioning)
-                                     (contrst ^. csQuickCreateShowState)
-
-                          fltrThisEdit = case procst ^. psDocumentState of
-                            DocumentStateDiff _ _ eid _ _ -> Map.filter $ (/= eid) . (^. editID)
-                            DocumentStateEdit{} -> const mempty
-                            _ -> id
-
-                          fltr :: (ID c -> [ContributionID]) -> Map (ID c) b -> [b]
-                          fltr mkCId = if procst ^. psHeaderState . hsReadOnly
-                              then const mempty
-                              else maybe Map.elems go (contrst ^. csBubbleFilter)
-                            where
-                              go allowed = fmap snd . filter (any (`Set.member` allowed) . mkCId . fst) . Map.toList
-
-                      leftAside_ asideProps
+                      view_ leftAside "leftAside_" (asideProps $ filterDiscussions procst (contrst ^. csBubbleFilter) vdoc)
                       document_ $ DocumentProps ((if procst ^. psHeaderState . hsReadOnly
                                                   then mapDocumentState id deleteMarksFromRawContent id id
                                                   else id)
                                                  $ getDocumentStateProps as gst)
                                                 contrst
-                      rightAside_ asideProps
+                      view_ rightAside "rightAside_" (asideProps $ filterEdits procst (contrst ^. csBubbleFilter) vdoc)
 
           -- append an empty page to the botton.  (helps with legitimate attempts to scroll beyond
           -- the end of the document, e.g. when moving dialogs into the center of the screen before
@@ -160,12 +140,12 @@ mainScreen = mkView' "MainScreen" $ \(gst, procst, as) -> do
           div_ ["style" @@= [decl "marginBottom" (Px 800)]] $ pure ()
 
 
-leftAside :: HasCallStack => View '[AsideProps]
+leftAside :: HasCallStack => View '[AsideProps Discussion]
 leftAside = mkView "LeftAside" $ \props ->
   aside_ ["className" $= "sidebar sidebar-annotations gr-2 gr-5@desktop hide@mobile"] $ do  -- RENAME: annotation => comment
     let protos = maybeStackProtoBubbles (props ^. asideBubblePositioning)
-               $ (noteToProtoBubble props <$> filter (^. discussionIsNote) (props ^. asideDiscussions))
-              <> (discussionToProtoBubble props <$> filter (not . (^. discussionIsNote)) (props ^. asideDiscussions))
+               $ (noteToProtoBubble props <$> filter (^. discussionIsNote) (props ^. asideContributions))
+              <> (discussionToProtoBubble props <$> filter (not . (^. discussionIsNote)) (props ^. asideContributions))
     stackBubble BubbleLeft props `mapM_` protos
 
     view_ quickCreate "quickCreate" $ QuickCreateProps QuickCreateComment
@@ -173,15 +153,12 @@ leftAside = mkView "LeftAside" $ \props ->
         (props ^. asideCurrentRange)
         (props ^. asideScreenState)
 
-leftAside_ :: HasCallStack => AsideProps -> ReactElementM eventHandler ()
-leftAside_ = view_ leftAside "leftAside_"
 
-
-rightAside :: HasCallStack => View '[AsideProps]
+rightAside :: HasCallStack => View '[AsideProps Edit]
 rightAside = mkView "RightAside" $ \props ->
   aside_ ["className" $= "sidebar sidebar-modifications gr-2 gr-5@desktop hide@mobile"] $ do  -- RENAME: modifications => edit
     let protos = maybeStackProtoBubbles (props ^. asideBubblePositioning)
-                  (editToProtoBubbles props =<< (props ^. asideEdits))
+                  (editToProtoBubbles props =<< (props ^. asideContributions))
     stackBubble BubbleRight props `mapM_` protos
 
     view_ quickCreate "quickCreate" $ QuickCreateProps QuickCreateEdit
@@ -189,18 +166,51 @@ rightAside = mkView "RightAside" $ \props ->
       (props ^. asideCurrentRange)
       (props ^. asideScreenState)
 
-rightAside_ :: HasCallStack => AsideProps -> ReactElementM eventHandler ()
-rightAside_ = view_ rightAside "rightAside_"
-
 
 -- * helpers
 
+mkAsideProps :: GlobalState -> ProcessState DocumentState -> BubblePositioning -> [contrib] -> AsideProps contrib
+mkAsideProps (view gsScreenState -> screenst) (view psContributionState -> contrst) bubblepos contribs =
+  AsideProps
+    (contrst ^. csAllVerticalSpanBounds)
+    (OffsetFromDocumentTop $ screenst ^. ssHeaderHeight + fixedHeaderHeight + 15)
+    (contrst ^. csCurrentSelectionWithPx)
+    (contrst ^. csHighlightedMarkAndBubble)
+    screenst
+    contribs
+    bubblepos
+    (contrst ^. csQuickCreateShowState)
+
+
+filterEdits :: ProcessState DocumentState -> Maybe (Set ContributionID) -> CompositeVDoc -> [Edit]
+filterEdits procst bfilter vdoc =
+  filterContributions procst bfilter ((:[]) . ContribIDEdit) (fltrThisEdit $ vdoc ^. compositeVDocApplicableEdits)
+  where
+    fltrThisEdit = case procst ^. psDocumentState of
+                     DocumentStateDiff _ _ eid _ _ -> Map.filter $ (/= eid) . (^. editID)
+                     DocumentStateEdit{} -> const mempty
+                     _ -> id
+
+filterContributions :: ProcessState DocumentState -> Maybe (Set ContributionID) -> (ID c -> [ContributionID]) -> Map (ID c) b -> [b]
+filterContributions procst bfilter mkCId = if procst ^. psHeaderState . hsReadOnly
+                              then const mempty
+                              else maybe Map.elems go bfilter
+                            where
+                              go allowed = fmap snd . filter (any (`Set.member` allowed) . mkCId . fst) . Map.toList
+
+filterDiscussions :: ProcessState DocumentState -> Maybe (Set ContributionID) -> CompositeVDoc -> [Discussion]
+filterDiscussions procst bfilter vdoc =
+  filterContributions procst bfilter
+    (\i -> ContribIDDiscussion <$> [True, False] <*> pure i)
+    (fmap snd $ vdoc ^. compositeVDocApplicableDiscussions)
+
+
 -- | All contributions need to be positioned.  The default is '0' (beginning of the article).
-lookupPosition :: HasCallStack => AsideProps -> MarkID -> VerticalSpanBounds
+lookupPosition :: HasCallStack => AsideProps a -> MarkID -> VerticalSpanBounds
 lookupPosition props cid = fromMaybe (VerticalSpanBounds (props ^. asideMinimumSpanYPos) constantBubbleHeight)
                          $ props ^? asideAllVerticalSpanBounds . allVerticalSpanBounds . at cid . _Just
 
-lookupPositions :: HasCallStack => AsideProps -> ContributionID -> [(VerticalSpanBounds, Int)]
+lookupPositions :: HasCallStack => AsideProps a -> ContributionID -> [(VerticalSpanBounds, Int)]
 lookupPositions props cid = case
   [ (p, i)
   | (MarkContribution cid' i, p) <- Map.toList $ props ^. asideAllVerticalSpanBounds . allVerticalSpanBounds
@@ -218,24 +228,25 @@ lookupPositions props cid = case
       where
         tops = (^. verticalSpanBoundsTop) . fst <$> xs
 
-editToProtoBubbles :: HasCallStack => AsideProps -> Edit -> [ProtoBubble]
+editToProtoBubbles :: HasCallStack => AsideProps Edit -> Edit -> [ProtoBubble]
 editToProtoBubbles aprops e
   = [ ProtoBubble (cid, i) pos $ elemText (e ^. editDesc)
     | (pos, i) <- lookupPositions aprops cid
     ]
   where cid = ContribIDEdit $ e ^. editID
 
-noteToProtoBubble :: HasCallStack => AsideProps -> Discussion -> ProtoBubble
+noteToProtoBubble :: HasCallStack => AsideProps Discussion -> Discussion -> ProtoBubble
 noteToProtoBubble aprops n = ProtoBubble cid (lookupPosition aprops $ uncurry MarkContribution cid) (elemText (n ^. noteText))
   where cid = (ContribIDDiscussion True $ n ^. discussionID, 0)
 
-discussionToProtoBubble :: HasCallStack => AsideProps -> Discussion -> ProtoBubble
+-- TODO: merge with 'noteToProtoBubble'
+discussionToProtoBubble :: HasCallStack => AsideProps Discussion -> Discussion -> ProtoBubble
 discussionToProtoBubble aprops d = ProtoBubble cid (lookupPosition aprops $ uncurry MarkContribution cid) child
   where
     cid = (ContribIDDiscussion False $ d ^. discussionID, 0)
     child = elemText (Tree.rootLabel (d ^. discussionTree) ^. statementText)
 
-stackBubble :: HasCallStack => BubbleSide -> AsideProps -> StackOrNot ProtoBubble -> ReactElementM 'EventHandlerCode ()
+stackBubble :: HasCallStack => BubbleSide -> AsideProps a -> StackOrNot ProtoBubble -> ReactElementM 'EventHandlerCode ()
 stackBubble bubbleSide aprops bstack = bubble_ props children
   where
     bstack' :: StackOrNot (ContributionID, Int)

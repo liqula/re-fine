@@ -10,14 +10,13 @@ import           Refine.Frontend.Screen.Types (ScreenState)
 import           Refine.Frontend.Types
 
 
-data AsideProps = AsideProps
+data AsideProps contrib = AsideProps
   { _asideAllVerticalSpanBounds :: AllVerticalSpanBounds
   , _asideMinimumSpanYPos       :: OffsetFromDocumentTop
   , _asideCurrentRange          :: Maybe SelectionStateWithPx
   , _asideHighlighteds          :: [MarkID]
   , _asideScreenState           :: ScreenState
-  , _asideDiscussions           :: [Discussion]
-  , _asideEdits                 :: [Edit]
+  , _asideContributions         :: [contrib]
   , _asideBubblePositioning     :: BubblePositioning
   , _asideQuickCreateShow       :: QuickCreateShowState
   }
