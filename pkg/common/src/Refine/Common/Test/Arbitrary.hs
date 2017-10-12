@@ -24,6 +24,36 @@ import Refine.Common.OT (Splitable(..), Segments(..))
 import Refine.Common.Types
 
 
+-- * generics
+
+-- | copied from https://github.com/liqd/aula, file src/Arbitrary.hs
+garbitrary' :: forall a. (Int -> Int) -> (SOP.Generic a, All2 Arbitrary (Code a)) => Gen a
+garbitrary' scaling = SOP.to <$> (hsequence =<< elements subs)
+  where
+    subs :: [SOP Gen (Code a)]
+    subs = apInjs_POP (hcpure (Proxy @Arbitrary) (scale scaling arbitrary))
+
+-- | copied from https://github.com/liqd/aula, file src/Arbitrary.hs
+garbitrary :: forall a. (SOP.Generic a, All2 Arbitrary (Code a)) => Gen a
+garbitrary = garbitrary' (max 0 . subtract 10)
+
+-- | copied from https://github.com/liqd/aula, file src/Arbitrary.hs
+gshrink :: forall a . (SOP.Generic a, All2 Arbitrary (Code a)) => a -> [a]
+gshrink = List.map SOP.to . shrinkSOP . from
+  where
+    shrinkSOP :: All2 Arbitrary xss => SOP I xss -> [SOP I xss]
+    shrinkSOP (SOP nsp) = SOP <$> shrinkNS nsp
+
+    shrinkNS :: All2 Arbitrary xss => NS (NP I) xss -> [NS (NP I) xss]
+    shrinkNS (Z Nil) = []
+    shrinkNS (Z np)  = Z <$> (hsequence . hap (hcpure (Proxy @Arbitrary) (mkFn shrink))) np
+    shrinkNS (S ns)  = S <$> shrinkNS ns
+
+    mkFn f = Fn (f . unI)
+
+
+-- * instances
+
 instance Arbitrary L10 where
   arbitrary = L10 <$> scale (`div` 3) arbitrary <*> arbitrary
 
@@ -64,32 +94,6 @@ instance Arbitrary GlobalRole where
 
 
 -- * draft.js
-
--- | copied from https://github.com/liqd/aula, file src/Arbitrary.hs
-garbitrary' :: forall a. (Int -> Int) -> (SOP.Generic a, All2 Arbitrary (Code a)) => Gen a
-garbitrary' scaling = SOP.to <$> (hsequence =<< elements subs)
-  where
-    subs :: [SOP Gen (Code a)]
-    subs = apInjs_POP (hcpure (Proxy @Arbitrary) (scale scaling arbitrary))
-
--- | copied from https://github.com/liqd/aula, file src/Arbitrary.hs
-garbitrary :: forall a. (SOP.Generic a, All2 Arbitrary (Code a)) => Gen a
-garbitrary = garbitrary' (max 0 . subtract 10)
-
--- | copied from https://github.com/liqd/aula, file src/Arbitrary.hs
-gshrink :: forall a . (SOP.Generic a, All2 Arbitrary (Code a)) => a -> [a]
-gshrink = List.map SOP.to . shrinkSOP . from
-  where
-    shrinkSOP :: All2 Arbitrary xss => SOP I xss -> [SOP I xss]
-    shrinkSOP (SOP nsp) = SOP <$> shrinkNS nsp
-
-    shrinkNS :: All2 Arbitrary xss => NS (NP I) xss -> [NS (NP I) xss]
-    shrinkNS (Z Nil) = []
-    shrinkNS (Z np)  = Z <$> (hsequence . hap (hcpure (Proxy @Arbitrary) (mkFn shrink))) np
-    shrinkNS (S ns)  = S <$> shrinkNS ns
-
-    mkFn f = Fn (f . unI)
-
 
 -- (the upper bound of 36 for depth is arbitrarily introduced here.  don't know about draft.)
 instance Arbitrary BlockDepth where
