@@ -105,6 +105,8 @@ logDuration logchan (ExceptT action) = ExceptT $ do
 
 -- * the 'ToServer' interpreter
 
+-- | TUNING: 'verifyAppState' should not be called every request, it's expensive.  perhaps it's best
+-- to not use 'users' after all, and do something closer to what we did in aula.
 runToServer :: ToServer -> MonadApp m => m ()
 runToServer msg = do
   verifyAppState >>= (`unless` throwError AppSessionInvalid)
