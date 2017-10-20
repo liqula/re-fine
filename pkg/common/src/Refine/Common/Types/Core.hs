@@ -307,7 +307,7 @@ pattern DocBlock t d k ls = (((Atom t, Atom d), NonEditable k), Segments ls)
 -- | An integer between 0 and 36
 -- (ok, the upper bound of 36 for depth is arbitrarily introduced here.  don't know about draft.)
 newtype BlockDepth = BlockDepth {unBlockDepth :: Int}
-  deriving (Eq, Ord, Show, Read, ToJSON, FromJSON, Generic, NFData)
+  deriving (Eq, Ord, Show, FromJSON, ToJSON, Generic)
 
 type LineElems = Segments EntityStyles NonEmptyST
 type LineElem = (EntityStyles, NonEmptyST)
@@ -737,7 +737,7 @@ type Comment = Discussion
 -- * Derived instances
 
 deriveClasses
-  [ ([''RawContent, ''Block, ''Entity, ''Style, ''BlockType]
+  [ ([''RawContent, ''Block, ''Entity, ''Style, ''BlockType, ''BlockDepth]
     , [''NFData, ''SOP.Generic, ''Lens'])
   , ([ ''EntityKey, ''CompositeVDoc, ''ContributionID, ''MarkID
      , ''VDoc, ''CreateVDoc, ''UpdateVDoc, ''EditSource, ''Edit

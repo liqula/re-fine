@@ -11,7 +11,6 @@ module Refine.Common.Test.Arbitrary where
 import           Control.Arrow (first, second)
 import           Control.DeepSeq
 import           Data.Function (on)
-import           Data.Functor.Infix ((<$$>))
 import           Data.List (groupBy)
 import           Generics.SOP
 import           Test.Hspec
@@ -20,9 +19,82 @@ import           Test.QuickCheck.Checkers
 import "quickcheck-instances"
                  Test.QuickCheck.Instances ()
 
-import Refine.Common.OT (Splitable(..), Segments(..))
+import Refine.Common.Error
+import Refine.Common.OT as OT
 import Refine.Common.Types
+import Refine.Common.Types.Core (OTDoc)
+import Refine.Common.Route
 
+
+-- * generics
+
+garbitrary' :: forall a. (Int -> Int) -> (SOP.Generic a, All2 Arbitrary (Code a)) => Gen a
+garbitrary' scaling = SOP.to <$> (hsequence =<< elements subs)
+  where
+    subs :: [SOP Gen (Code a)]
+    subs = apInjs_POP (hcpure (Proxy @Arbitrary) (scale scaling arbitrary))
+
+garbitrary :: forall a. (SOP.Generic a, All2 Arbitrary (Code a)) => Gen a
+garbitrary = garbitrary' id
+
+gshrink :: forall a . (SOP.Generic a, All2 Arbitrary (Code a)) => a -> [a]
+gshrink = List.map SOP.to . shrinkSOP . from
+  where
+    shrinkSOP :: All2 Arbitrary xss => SOP I xss -> [SOP I xss]
+    shrinkSOP (SOP nsp) = SOP <$> shrinkNS nsp
+
+    shrinkNS :: All2 Arbitrary xss => NS (NP I) xss -> [NS (NP I) xss]
+    shrinkNS (Z Nil) = []
+    shrinkNS (Z np)  = Z <$> (hsequence . hap (hcpure (Proxy @Arbitrary) (mkFn shrink))) np
+    shrinkNS (S ns)  = S <$> shrinkNS ns
+
+    mkFn f = SOP.Fn (f . unI)
+
+
+-- * generic instances
+
+instance Arbitrary a => Arbitrary (CreateGroup_ a) where arbitrary = garbitrary
+instance Arbitrary a => Arbitrary (EditSource a) where arbitrary = garbitrary
+instance Arbitrary a => Arbitrary (MetaID a) where arbitrary = garbitrary
+instance Arbitrary a => Arbitrary (NoJSONRep a) where arbitrary = garbitrary
+instance Arbitrary a => Arbitrary (OT.Atom a) where arbitrary = garbitrary
+instance Arbitrary a => Arbitrary (OT.NonEditable a) where arbitrary = garbitrary
+instance Arbitrary Abstract where arbitrary = garbitrary
+instance Arbitrary ApiErrorCreateUser where arbitrary = garbitrary
+instance Arbitrary ApiErrorDB where arbitrary = garbitrary
+instance Arbitrary ApiError where arbitrary = garbitrary
+instance Arbitrary BlockIndex where arbitrary = garbitrary
+instance Arbitrary CacheKey where arbitrary = garbitrary
+instance Arbitrary CreateStatement where arbitrary = garbitrary
+instance Arbitrary CreateUser where arbitrary = garbitrary
+instance Arbitrary CreateVDoc where arbitrary = garbitrary
+instance Arbitrary Discussion where arbitrary = garbitrary
+instance Arbitrary EditKind where arbitrary = garbitrary
+instance Arbitrary EditStats where arbitrary = garbitrary
+instance Arbitrary Group where arbitrary = garbitrary
+instance Arbitrary ImageInline where arbitrary = garbitrary
+instance Arbitrary MetaInfo where arbitrary = garbitrary
+instance Arbitrary Refine.Common.Types.Edit where arbitrary = garbitrary
+instance Arbitrary RouteParseError where arbitrary = garbitrary
+instance Arbitrary Statement where arbitrary = garbitrary
+instance Arbitrary Timespan where arbitrary = garbitrary
+instance Arbitrary Timestamp where arbitrary = garbitrary
+instance Arbitrary Title where arbitrary = garbitrary
+instance Arbitrary UpdateVDoc where arbitrary = garbitrary
+instance Arbitrary UserInfo where arbitrary = garbitrary
+instance Arbitrary User where arbitrary = garbitrary
+instance Arbitrary VDoc where arbitrary = garbitrary
+instance Arbitrary Vote where arbitrary = garbitrary
+
+instance (Editable a, Arbitrary a) => Arbitrary (OT.EEdit a) where
+  arbitrary = do
+    old <- arbitrary
+    new <- arbitrary
+    let Right eedit = diff old new
+    elements eedit
+
+
+-- * more specific instances
 
 instance Arbitrary L10 where
   arbitrary = L10 <$> scale (`div` 3) arbitrary <*> arbitrary
@@ -64,32 +136,6 @@ instance Arbitrary GlobalRole where
 
 
 -- * draft.js
-
--- | copied from https://github.com/liqd/aula, file src/Arbitrary.hs
-garbitrary' :: forall a. (Int -> Int) -> (SOP.Generic a, All2 Arbitrary (Code a)) => Gen a
-garbitrary' scaling = SOP.to <$> (hsequence =<< elements subs)
-  where
-    subs :: [SOP Gen (Code a)]
-    subs = apInjs_POP (hcpure (Proxy @Arbitrary) (scale scaling arbitrary))
-
--- | copied from https://github.com/liqd/aula, file src/Arbitrary.hs
-garbitrary :: forall a. (SOP.Generic a, All2 Arbitrary (Code a)) => Gen a
-garbitrary = garbitrary' (max 0 . subtract 10)
-
--- | copied from https://github.com/liqd/aula, file src/Arbitrary.hs
-gshrink :: forall a . (SOP.Generic a, All2 Arbitrary (Code a)) => a -> [a]
-gshrink = List.map SOP.to . shrinkSOP . from
-  where
-    shrinkSOP :: All2 Arbitrary xss => SOP I xss -> [SOP I xss]
-    shrinkSOP (SOP nsp) = SOP <$> shrinkNS nsp
-
-    shrinkNS :: All2 Arbitrary xss => NS (NP I) xss -> [NS (NP I) xss]
-    shrinkNS (Z Nil) = []
-    shrinkNS (Z np)  = Z <$> (hsequence . hap (hcpure (Proxy @Arbitrary) (mkFn shrink))) np
-    shrinkNS (S ns)  = S <$> shrinkNS ns
-
-    mkFn f = Fn (f . unI)
-
 
 -- (the upper bound of 36 for depth is arbitrarily introduced here.  don't know about draft.)
 instance Arbitrary BlockDepth where
@@ -204,10 +250,10 @@ sanitizeRawContent = deleteDanglingEntityRefs
             goGroup [x] = [x]
             goGroup (x@(view range -> EntityRange o l) : x'@(view range -> EntityRange o' l') : xs)
               = if o + l >= o'
-                  then goGroup ((x & range .~ merge (o, l) (o', l')) : xs)
+                  then goGroup ((x & range .~ merge_ (o, l) (o', l')) : xs)
                   else x : goGroup (x' : xs)
 
-            merge (o, l) (o', l') = EntityRange o'' l''
+            merge_ (o, l) (o', l') = EntityRange o'' l''
               where
                 o'' = min o o'
                 l'' = max (o + l) (o' + l') - o''
@@ -293,6 +339,7 @@ arbitrarySoundRange rc = Range <$> arbitrarySoundPosition rc <*> arbitrarySoundP
 arbitrarySoundSelectionState :: RawContent -> Gen (Selection Position)
 arbitrarySoundSelectionState rc = Selection <$> arbitrary <*> arbitrarySoundRange rc
 
+instance SOP.Generic NonEmptyST
 instance Arbitrary NonEmptyST where
   -- HACK: legalChar is needed for the Arbitrary instance of OTDoc
   arbitrary = NonEmptyST . ST.pack <$> scale (`div` 2) (listOf1 $ arbitrary `suchThat` legalChar)
@@ -326,25 +373,44 @@ testBatch (batchName, tests) = describe ("laws for: " <> batchName) $ mapM_ (unc
 
 
 instance Arbitrary ServerCache where
-  arbitrary = ServerCache
-    <$> (Map.fromList . fmap (, undefined) <$> arbitrary)
-    <*> (Map.fromList . fmap (, undefined) <$> arbitrary)
-    <*> (Map.fromList . fmap (, undefined) <$> arbitrary)
-    <*> (Map.fromList . fmap (, undefined) <$> arbitrary)
-    <*> (Map.fromList . fmap (, undefined) <$> arbitrary)
-    <*> arbitrary
-    <*> arbitrary
+  arbitrary = genServerCache True
   shrink (ServerCache a b c d e f g) = ServerCache
-    <$> shrinkMap a
-    <*> shrinkMap b
-    <*> shrinkMap c
-    <*> shrinkMap d
-    <*> shrinkMap e
+    <$> shrinkDataMap a
+    <*> shrinkDataMap b
+    <*> shrinkDataMap c
+    <*> shrinkDataMap d
+    <*> shrinkDataMap e
     <*> shrink f
     <*> shrink g
 
-shrinkMap :: forall a b. (Ord a, Arbitrary a) => Map a b -> [Map a b]
-shrinkMap m = chop <$> shrink (Map.keys m)
+genServerCache :: Bool{- shallow -} -> Gen ServerCache
+genServerCache True = ServerCache
+  <$> (Map.fromList . fmap (, undefined) <$> arbitrary)
+  <*> (Map.fromList . fmap (, undefined) <$> arbitrary)
+  <*> (Map.fromList . fmap (, undefined) <$> arbitrary)
+  <*> (Map.fromList . fmap (, undefined) <$> arbitrary)
+  <*> (Map.fromList . fmap (, undefined) <$> arbitrary)
+  <*> arbitrary
+  <*> arbitrary
+
+genServerCache False = ServerCache
+  <$> genDataMap arbitrary arbitrary
+  <*> genDataMap arbitrary arbitrary
+  <*> genDataMap arbitrary arbitrary
+  <*> genDataMap arbitrary arbitrary
+  <*> genDataMap arbitrary arbitrary
+  <*> arbitrary
+  <*> arbitrary
+
+genDataMap :: (Ord a) => Gen a -> Gen b -> Gen (Map a b)
+genDataMap k v = do
+  len <- choose (0, 5)
+  ks <- vectorOf len k
+  vs <- vectorOf len v
+  pure . Map.fromList $ zip ks vs
+
+shrinkDataMap :: forall a b. (Ord a, Arbitrary a) => Map a b -> [Map a b]
+shrinkDataMap m = chop <$> shrink (Map.keys m)
   where
     chop :: [a] -> Map a b
     chop = Map.fromList . fmap (\k -> (k, (\(Just v) -> v) $ Map.lookup k m))

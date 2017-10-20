@@ -52,8 +52,9 @@ mainHeader_ props = React.viewWithSKey mainHeader "mainHeader" props mempty
 
 
 -- | FIXME: make this a component, not just an element.
-mainHeaderToolbar_ :: HasCallStack => MainHeaderToolbarProps -> ReactElementM eventHandler ()
-mainHeaderToolbar_ props = do
+mainHeaderToolbar_ :: HasCallStack => Maybe MainHeaderToolbarProps -> ReactElementM eventHandler ()
+mainHeaderToolbar_ Nothing = hourglass
+mainHeaderToolbar_ (Just props) = do
   case props ^. mainHeaderToolbarPropsDocumentState of
             WipedDocumentStateView -> toolbar_ $ props ^. mainHeaderToolbarPropsVDoc
 
@@ -84,19 +85,19 @@ headerDepth = \case
 mkMainHeaderProps :: AccessState -> GlobalState_ WipedDocumentState -> MainHeaderProps
 mkMainHeaderProps as wiped = (title, abstract, props)
   where
-    cvdoc = fromMaybe (error "mkMainHeaderProps: no vdoc!") $ wiped ^? gsCompositeVDoc . _Just . _Just
+    cvdoc = wiped ^? gsCompositeVDoc . _Just . _Just
     props = TopMenuBarProps Nothing (cacheLookup' wiped <$> (as ^. accLoginState . lsCurrentUser))
 
-    title = cvdoc ^. compositeVDoc . vdocTitle
-    abstract = cvdoc ^. compositeVDoc . vdocAbstract
+    title = fromMaybe (Title hourglass) $ cvdoc ^? _Just . compositeVDoc . vdocTitle
+    abstract = fromMaybe (Abstract hourglass) $ cvdoc ^? _Just . compositeVDoc . vdocAbstract
 
-mkMainHeaderToolbarProps :: GlobalState_ WipedDocumentState -> MainHeaderToolbarProps
-mkMainHeaderToolbarProps wiped = MainHeaderToolbarProps ds vdoc indexprops extprops
+mkMainHeaderToolbarProps :: GlobalState_ WipedDocumentState -> Maybe MainHeaderToolbarProps
+mkMainHeaderToolbarProps wiped = MainHeaderToolbarProps <$> mds <*> mvdoc <*> pure indexprops <*> mextprops
   where
-    Just ds = wiped ^. gsDocumentState
-    Just vdoc = wiped ^? gsCompositeVDoc . _Just . _Just . compositeVDoc
+    mds = wiped ^. gsDocumentState
+    mvdoc = wiped ^? gsCompositeVDoc . _Just . _Just . compositeVDoc
     indexprops = mkIndexToolbarProps wiped
-    Just extprops = wiped ^? gsHeaderState . _Just . hsToolbarExtensionStatus
+    mextprops = wiped ^? gsHeaderState . _Just . hsToolbarExtensionStatus
 
 mkIndexToolbarProps :: GlobalState_ WipedDocumentState -> IndexToolbarProps
 mkIndexToolbarProps rs

@@ -75,9 +75,11 @@ initWebSocket = openConnection Nothing
        (WSSHandshake,    StringData (decode . cs -> Just msg)) -> wsRunHandshake msg
        (WSSSession _sid, StringData (decode . cs -> Just msg)) -> wsRunToClient msg
 
-       (_, StringData bad)    -> throwIO $ ErrorCall ("websockets error: bad package for this state: " <> show (st, bad))
-       (_, BlobData _)        -> throwIO $ ErrorCall "websockets error: BlobData not supported."
-       (_, ArrayBufferData _) -> throwIO $ ErrorCall "websockets error: ArrayBufferData not supported."
+       (_, StringData bad@(eitherDecode . cs -> Left err :: Either String ToClient))
+                              -> throwIO . ErrorCall $ "websockets error: could not parse packagse: " <> show (bad, err)
+       (_, StringData bad)    -> throwIO . ErrorCall $ "websockets error: bad package for this state: " <> show (st, bad)
+       (_, BlobData _)        -> throwIO . ErrorCall $ "websockets error: BlobData not supported."
+       (_, ArrayBufferData _) -> throwIO . ErrorCall $ "websockets error: ArrayBufferData not supported."
 
    wsRunHandshake :: HandshakeToClient -> IO ()
    wsRunHandshake = \case

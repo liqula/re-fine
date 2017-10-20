@@ -11,7 +11,7 @@ import Test.QuickCheck
 
 import Refine.Common.OT
 import Refine.Common.Test.Arbitrary ()
-import Refine.Common.Test.Samples ()  -- (just importing it so we know it compiles.)
+import Refine.Common.Test.Samples
 import Refine.Common.Types
 import Refine.Common.VDoc.Draft
 import Refine.Common.VDoc.OT
@@ -233,4 +233,330 @@ spec = do
 -- * data for regression tests
 
 compositeVDocRegression1 :: CompositeVDoc
-Just [compositeVDocRegression1] = decode "[{\"_compositeVDoc\":{\"_vdocHeadEdit\":2,\"_vdocGroup\":2,\"_vdocImage\":null,\"_vdocMetaID\":{\"_miID\":1,\"_miMeta\":{\"_metaCreatedAt\":\"2017-09-28T16:51:36.968455142Z\",\"_metaChangedAt\":\"2017-09-28T16:51:41.503050894Z\",\"_metaChangedBy\":\"Anonymous\",\"_metaCreatedBy\":\"Anonymous\"}},\"_vdocTitle\":\"[no title]\",\"_vdocStats\":{\"_editStatsComments\":0,\"_editStatsEdits\":1,\"_editStatsUsers\":1},\"_vdocAbstract\":\"[no abstract]\"},\"_compositeVDocThisEdit\":{\"_editDiscussions'\":[],\"_editVDocVersion\":{\"entityMap\":{},\"blocks\":[{\"key\":\"b0\",\"depth\":0,\"type\":\"unstyled\",\"entityRanges\":[],\"inlineStyleRanges\":[],\"text\":\"wef\"}]},\"_editVDoc\":1,\"_editChildren\":[3],\"_editKind\":\"Initial\",\"_editMetaID\":{\"_miID\":2,\"_miMeta\":{\"_metaCreatedAt\":\"2017-09-28T16:51:41.486756961Z\",\"_metaChangedAt\":\"2017-09-28T16:51:41.486756961Z\",\"_metaChangedBy\":\"Anonymous\",\"_metaCreatedBy\":\"Anonymous\"}},\"_editSource\":[[[{\"unERawContent\":[{\"unENonEmpty\":{\"tag\":\"EditItem\",\"contents\":[0,[{\"tag\":\"EditSecond\",\"contents\":{\"tag\":\"SegmentListEdit\",\"contents\":{\"tag\":\"InsertItem\",\"contents\":[0,[[null,[]],\"wef\"]]}}}]]}}]}],1]],\"_editDesc\":\"initial content\",\"_editVotes\":[]},\"_compositeVDocApplicableEdits\":[[3,{\"_editDiscussions'\":[],\"_editVDocVersion\":{\"entityMap\":{},\"blocks\":[{\"key\":\"b0\",\"depth\":0,\"type\":\"unstyled\",\"entityRanges\":[],\"inlineStyleRanges\":[],\"text\":\"wef\"},{\"key\":\"3u6kf\",\"depth\":0,\"type\":\"unstyled\",\"entityRanges\":[],\"inlineStyleRanges\":[],\"text\":\"\"},{\"key\":\"n3ur\",\"depth\":0,\"type\":\"unstyled\",\"entityRanges\":[],\"inlineStyleRanges\":[],\"text\":\"wef\"},{\"key\":\"amdte\",\"depth\":0,\"type\":\"unstyled\",\"entityRanges\":[],\"inlineStyleRanges\":[],\"text\":\"wef\"},{\"key\":\"1q4l1\",\"depth\":0,\"type\":\"unstyled\",\"entityRanges\":[],\"inlineStyleRanges\":[],\"text\":\"wef\"},{\"key\":\"1trhn\",\"depth\":0,\"type\":\"unstyled\",\"entityRanges\":[],\"inlineStyleRanges\":[],\"text\":\"wef\"},{\"key\":\"4prv8\",\"depth\":0,\"type\":\"unstyled\",\"entityRanges\":[],\"inlineStyleRanges\":[],\"text\":\"we\"},{\"key\":\"ad01o\",\"depth\":0,\"type\":\"unstyled\",\"entityRanges\":[],\"inlineStyleRanges\":[],\"text\":\"fw\"},{\"key\":\"cbg14\",\"depth\":0,\"type\":\"unstyled\",\"entityRanges\":[],\"inlineStyleRanges\":[],\"text\":\"ef\"},{\"key\":\"di0ni\",\"depth\":0,\"type\":\"unstyled\",\"entityRanges\":[],\"inlineStyleRanges\":[],\"text\":\"wef\"},{\"key\":\"4lqfo\",\"depth\":0,\"type\":\"unstyled\",\"entityRanges\":[],\"inlineStyleRanges\":[],\"text\":\"wefw\"},{\"key\":\"7sh3p\",\"depth\":0,\"type\":\"unstyled\",\"entityRanges\":[],\"inlineStyleRanges\":[],\"text\":\"ef\"},{\"key\":\"alcoj\",\"depth\":0,\"type\":\"unstyled\",\"entityRanges\":[],\"inlineStyleRanges\":[],\"text\":\"we\"},{\"key\":\"8hut6\",\"depth\":0,\"type\":\"unstyled\",\"entityRanges\":[],\"inlineStyleRanges\":[],\"text\":\"fw\"},{\"key\":\"4o3n9\",\"depth\":0,\"type\":\"unstyled\",\"entityRanges\":[],\"inlineStyleRanges\":[],\"text\":\"ef\"},{\"key\":\"a0of2\",\"depth\":0,\"type\":\"unstyled\",\"entityRanges\":[],\"inlineStyleRanges\":[],\"text\":\"we\"},{\"key\":\"sbgd\",\"depth\":0,\"type\":\"unstyled\",\"entityRanges\":[],\"inlineStyleRanges\":[],\"text\":\"g23g2\"},{\"key\":\"cbnu6\",\"depth\":0,\"type\":\"unstyled\",\"entityRanges\":[],\"inlineStyleRanges\":[],\"text\":\"3g\"},{\"key\":\"1pob1\",\"depth\":0,\"type\":\"unstyled\",\"entityRanges\":[],\"inlineStyleRanges\":[],\"text\":\"23\"},{\"key\":\"4eic4\",\"depth\":0,\"type\":\"unstyled\",\"entityRanges\":[],\"inlineStyleRanges\":[],\"text\":\"g23\"},{\"key\":\"6tl7v\",\"depth\":0,\"type\":\"unstyled\",\"entityRanges\":[],\"inlineStyleRanges\":[],\"text\":\"g2\"},{\"key\":\"ajm66\",\"depth\":0,\"type\":\"unstyled\",\"entityRanges\":[],\"inlineStyleRanges\":[],\"text\":\"3g\"},{\"key\":\"7ah81\",\"depth\":0,\"type\":\"unstyled\",\"entityRanges\":[],\"inlineStyleRanges\":[],\"text\":\"2g3\"},{\"key\":\"7hr6h\",\"depth\":0,\"type\":\"ordered-list-item\",\"entityRanges\":[],\"inlineStyleRanges\":[],\"text\":\"\"}]},\"_editVDoc\":1,\"_editChildren\":[],\"_editKind\":\"Phrasing\",\"_editMetaID\":{\"_miID\":3,\"_miMeta\":{\"_metaCreatedAt\":\"2017-09-28T17:58:37.400026723Z\",\"_metaChangedAt\":\"2017-09-28T17:58:37.400026723Z\",\"_metaChangedBy\":{\"UserID\":1},\"_metaCreatedBy\":{\"UserID\":1}}},\"_editSource\":[[[{\"unERawContent\":[{\"unENonEmpty\":{\"tag\":\"InsertItem\",\"contents\":[1,[[[\"unstyled\",0],\"3u6kf\"],[]]]}},{\"unENonEmpty\":{\"tag\":\"InsertItem\",\"contents\":[2,[[[\"unstyled\",0],\"n3ur\"],[[[null,[]],\"wef\"]]]]}},{\"unENonEmpty\":{\"tag\":\"InsertItem\",\"contents\":[3,[[[\"unstyled\",0],\"amdte\"],[[[null,[]],\"wef\"]]]]}},{\"unENonEmpty\":{\"tag\":\"InsertItem\",\"contents\":[4,[[[\"unstyled\",0],\"1q4l1\"],[[[null,[]],\"wef\"]]]]}},{\"unENonEmpty\":{\"tag\":\"InsertItem\",\"contents\":[5,[[[\"unstyled\",0],\"1trhn\"],[[[null,[]],\"wef\"]]]]}},{\"unENonEmpty\":{\"tag\":\"InsertItem\",\"contents\":[6,[[[\"unstyled\",0],\"4prv8\"],[[[null,[]],\"we\"]]]]}},{\"unENonEmpty\":{\"tag\":\"InsertItem\",\"contents\":[7,[[[\"unstyled\",0],\"ad01o\"],[[[null,[]],\"fw\"]]]]}},{\"unENonEmpty\":{\"tag\":\"InsertItem\",\"contents\":[8,[[[\"unstyled\",0],\"cbg14\"],[[[null,[]],\"ef\"]]]]}},{\"unENonEmpty\":{\"tag\":\"InsertItem\",\"contents\":[9,[[[\"unstyled\",0],\"di0ni\"],[[[null,[]],\"wef\"]]]]}},{\"unENonEmpty\":{\"tag\":\"InsertItem\",\"contents\":[10,[[[\"unstyled\",0],\"4lqfo\"],[[[null,[]],\"wefw\"]]]]}},{\"unENonEmpty\":{\"tag\":\"InsertItem\",\"contents\":[11,[[[\"unstyled\",0],\"7sh3p\"],[[[null,[]],\"ef\"]]]]}},{\"unENonEmpty\":{\"tag\":\"InsertItem\",\"contents\":[12,[[[\"unstyled\",0],\"alcoj\"],[[[null,[]],\"we\"]]]]}},{\"unENonEmpty\":{\"tag\":\"InsertItem\",\"contents\":[13,[[[\"unstyled\",0],\"8hut6\"],[[[null,[]],\"fw\"]]]]}},{\"unENonEmpty\":{\"tag\":\"InsertItem\",\"contents\":[14,[[[\"unstyled\",0],\"4o3n9\"],[[[null,[]],\"ef\"]]]]}},{\"unENonEmpty\":{\"tag\":\"InsertItem\",\"contents\":[15,[[[\"unstyled\",0],\"a0of2\"],[[[null,[]],\"we\"]]]]}},{\"unENonEmpty\":{\"tag\":\"InsertItem\",\"contents\":[16,[[[\"unstyled\",0],\"sbgd\"],[[[null,[]],\"g23g2\"]]]]}},{\"unENonEmpty\":{\"tag\":\"InsertItem\",\"contents\":[17,[[[\"unstyled\",0],\"cbnu6\"],[[[null,[]],\"3g\"]]]]}},{\"unENonEmpty\":{\"tag\":\"InsertItem\",\"contents\":[18,[[[\"unstyled\",0],\"1pob1\"],[[[null,[]],\"23\"]]]]}},{\"unENonEmpty\":{\"tag\":\"InsertItem\",\"contents\":[19,[[[\"unstyled\",0],\"4eic4\"],[[[null,[]],\"g23\"]]]]}},{\"unENonEmpty\":{\"tag\":\"InsertItem\",\"contents\":[20,[[[\"unstyled\",0],\"6tl7v\"],[[[null,[]],\"g2\"]]]]}},{\"unENonEmpty\":{\"tag\":\"InsertItem\",\"contents\":[21,[[[\"unstyled\",0],\"ajm66\"],[[[null,[]],\"3g\"]]]]}},{\"unENonEmpty\":{\"tag\":\"InsertItem\",\"contents\":[22,[[[\"unstyled\",0],\"7ah81\"],[[[null,[]],\"2g3\"]]]]}},{\"unENonEmpty\":{\"tag\":\"InsertItem\",\"contents\":[23,[[[\"ordered-list-item\",0],\"7hr6h\"],[]]]}}]}],2]],\"_editDesc\":\"initial contentwef\",\"_editVotes\":[]}]],\"_compositeVDocApplicableDiscussions\":[]}]"
+compositeVDocRegression1 = CompositeVDoc {_compositeVDoc = VDoc {_vdocMetaID = MetaID {_miID = ID 1
+  , _miMeta = MetaInfo {_metaCreatedBy = Anonymous
+  , _metaCreatedAt = sampleTime
+  , _metaChangedBy = Anonymous
+  , _metaChangedAt = sampleTime}}
+  , _vdocTitle = Title {_unTitle = "[no title]"}
+  , _vdocAbstract = Abstract {_unAbstract = "[no abstract]"}
+  , _vdocHeadEdit = ID 2
+  , _vdocGroup = ID 2
+  , _vdocStats = EditStats {_editStatsUsers = 1
+  , _editStatsEdits = 1
+  , _editStatsComments = 0}
+  , _vdocImage = Nothing}
+  , _compositeVDocThisEdit = Edit {_editMetaID = MetaID {_miID = ID 2
+  , _miMeta = MetaInfo {_metaCreatedBy = Anonymous
+  , _metaCreatedAt = sampleTime
+  , _metaChangedBy = Anonymous
+  , _metaChangedAt = sampleTime}}
+  , _editDesc = "initial content"
+  , _editKind = Initial
+  , _editSource = EditSource {_unEditSource = [([ERawContent {unERawContent = [ENonEmpty {unENonEmpty = EditItem 0 [EditSecond (SegmentListEdit (InsertItem 0 ((Atom {unAtom = Nothing}
+  ,Set.fromList [])
+  ,NonEmptyST {unNonEmptyST = "wef"})))]}]}]
+  ,ID 1)]}
+  , _editVDoc = ID 1
+  , _editVDocVersion = RawContent {_rawContentBlocks = Block' {_blockText' = "wef"
+  , _blockEntityRanges' = Set.fromList []
+  , _blockStyles' = Set.fromList []
+  , _blockType' = NormalText
+  , _blockDepth' = 0
+  , _blockKey' = BlockKey {_unBlockKey = "b0"}} :| []
+  , _rawContentEntityMap = mempty}
+  , _editVotes = Map.fromList []
+  , _editChildren = Set.fromList [ID 3]
+  , _editDiscussions' = Map.fromList []}
+  , _compositeVDocApplicableEdits = Map.fromList [(ID 3
+  ,Edit {_editMetaID = MetaID {_miID = ID 3
+  , _miMeta = MetaInfo {_metaCreatedBy = UserID (ID 1)
+  , _metaCreatedAt = sampleTime
+  , _metaChangedBy = UserID (ID 1)
+  , _metaChangedAt = sampleTime}}
+  , _editDesc = "initial contentwef"
+  , _editKind = Phrasing
+  , _editSource = EditSource {_unEditSource = [([ERawContent {unERawContent = [ENonEmpty {unENonEmpty = InsertItem 1 (((Atom {unAtom = NormalText}
+  ,Atom {unAtom = BlockDepth {unBlockDepth = 0}})
+  ,NonEditable {unNonEditable = BlockKey {_unBlockKey = "3u6kf"}})
+  ,Segments [])}
+  ,ENonEmpty {unENonEmpty = InsertItem 2 (((Atom {unAtom = NormalText}
+  ,Atom {unAtom = BlockDepth {unBlockDepth = 0}})
+  ,NonEditable {unNonEditable = BlockKey {_unBlockKey = "n3ur"}})
+  ,Segments [((Atom {unAtom = Nothing}
+  ,mempty)
+  ,NonEmptyST {unNonEmptyST = "wef"})])}
+  ,ENonEmpty {unENonEmpty = InsertItem 3 (((Atom {unAtom = NormalText}
+  ,Atom {unAtom = BlockDepth {unBlockDepth = 0}})
+  ,NonEditable {unNonEditable = BlockKey {_unBlockKey = "amdte"}})
+  ,Segments [((Atom {unAtom = Nothing}
+  ,mempty)
+  ,NonEmptyST {unNonEmptyST = "wef"})])}
+  ,ENonEmpty {unENonEmpty = InsertItem 4 (((Atom {unAtom = NormalText}
+  ,Atom {unAtom = BlockDepth {unBlockDepth = 0}})
+  ,NonEditable {unNonEditable = BlockKey {_unBlockKey = "1q4l1"}})
+  ,Segments [((Atom {unAtom = Nothing}
+  ,mempty)
+  ,NonEmptyST {unNonEmptyST = "wef"})])}
+  ,ENonEmpty {unENonEmpty = InsertItem 5 (((Atom {unAtom = NormalText}
+  ,Atom {unAtom = BlockDepth {unBlockDepth = 0}})
+  ,NonEditable {unNonEditable = BlockKey {_unBlockKey = "1trhn"}})
+  ,Segments [((Atom {unAtom = Nothing}
+  ,mempty)
+  ,NonEmptyST {unNonEmptyST = "wef"})])}
+  ,ENonEmpty {unENonEmpty = InsertItem 6 (((Atom {unAtom = NormalText}
+  ,Atom {unAtom = BlockDepth {unBlockDepth = 0}})
+  ,NonEditable {unNonEditable = BlockKey {_unBlockKey = "4prv8"}})
+  ,Segments [((Atom {unAtom = Nothing}
+  ,mempty)
+  ,NonEmptyST {unNonEmptyST = "we"})])}
+  ,ENonEmpty {unENonEmpty = InsertItem 7 (((Atom {unAtom = NormalText}
+  ,Atom {unAtom = BlockDepth {unBlockDepth = 0}})
+  ,NonEditable {unNonEditable = BlockKey {_unBlockKey = "ad01o"}})
+  ,Segments [((Atom {unAtom = Nothing}
+  ,mempty)
+  ,NonEmptyST {unNonEmptyST = "fw"})])}
+  ,ENonEmpty {unENonEmpty = InsertItem 8 (((Atom {unAtom = NormalText}
+  ,Atom {unAtom = BlockDepth {unBlockDepth = 0}})
+  ,NonEditable {unNonEditable = BlockKey {_unBlockKey = "cbg14"}})
+  ,Segments [((Atom {unAtom = Nothing}
+  ,mempty)
+  ,NonEmptyST {unNonEmptyST = "ef"})])}
+  ,ENonEmpty {unENonEmpty = InsertItem 9 (((Atom {unAtom = NormalText}
+  ,Atom {unAtom = BlockDepth {unBlockDepth = 0}})
+  ,NonEditable {unNonEditable = BlockKey {_unBlockKey = "di0ni"}})
+  ,Segments [((Atom {unAtom = Nothing}
+  ,mempty)
+  ,NonEmptyST {unNonEmptyST = "wef"})])}
+  ,ENonEmpty {unENonEmpty = InsertItem 10 (((Atom {unAtom = NormalText}
+  ,Atom {unAtom = BlockDepth {unBlockDepth = 0}})
+  ,NonEditable {unNonEditable = BlockKey {_unBlockKey = "4lqfo"}})
+  ,Segments [((Atom {unAtom = Nothing}
+  ,mempty)
+  ,NonEmptyST {unNonEmptyST = "wefw"})])}
+  ,ENonEmpty {unENonEmpty = InsertItem 11 (((Atom {unAtom = NormalText}
+  ,Atom {unAtom = BlockDepth {unBlockDepth = 0}})
+  ,NonEditable {unNonEditable = BlockKey {_unBlockKey = "7sh3p"}})
+  ,Segments [((Atom {unAtom = Nothing}
+  ,mempty)
+  ,NonEmptyST {unNonEmptyST = "ef"})])}
+  ,ENonEmpty {unENonEmpty = InsertItem 12 (((Atom {unAtom = NormalText}
+  ,Atom {unAtom = BlockDepth {unBlockDepth = 0}})
+  ,NonEditable {unNonEditable = BlockKey {_unBlockKey = "alcoj"}})
+  ,Segments [((Atom {unAtom = Nothing}
+  ,mempty)
+  ,NonEmptyST {unNonEmptyST = "we"})])}
+  ,ENonEmpty {unENonEmpty = InsertItem 13 (((Atom {unAtom = NormalText}
+  ,Atom {unAtom = BlockDepth {unBlockDepth = 0}})
+  ,NonEditable {unNonEditable = BlockKey {_unBlockKey = "8hut6"}})
+  ,Segments [((Atom {unAtom = Nothing}
+  ,mempty)
+  ,NonEmptyST {unNonEmptyST = "fw"})])}
+  ,ENonEmpty {unENonEmpty = InsertItem 14 (((Atom {unAtom = NormalText}
+  ,Atom {unAtom = BlockDepth {unBlockDepth = 0}})
+  ,NonEditable {unNonEditable = BlockKey {_unBlockKey = "4o3n9"}})
+  ,Segments [((Atom {unAtom = Nothing}
+  ,mempty)
+  ,NonEmptyST {unNonEmptyST = "ef"})])}
+  ,ENonEmpty {unENonEmpty = InsertItem 15 (((Atom {unAtom = NormalText}
+  ,Atom {unAtom = BlockDepth {unBlockDepth = 0}})
+  ,NonEditable {unNonEditable = BlockKey {_unBlockKey = "a0of2"}})
+  ,Segments [((Atom {unAtom = Nothing}
+  ,mempty)
+  ,NonEmptyST {unNonEmptyST = "we"})])}
+  ,ENonEmpty {unENonEmpty = InsertItem 16 (((Atom {unAtom = NormalText}
+  ,Atom {unAtom = BlockDepth {unBlockDepth = 0}})
+  ,NonEditable {unNonEditable = BlockKey {_unBlockKey = "sbgd"}})
+  ,Segments [((Atom {unAtom = Nothing}
+  ,mempty)
+  ,NonEmptyST {unNonEmptyST = "g23g2"})])}
+  ,ENonEmpty {unENonEmpty = InsertItem 17 (((Atom {unAtom = NormalText}
+  ,Atom {unAtom = BlockDepth {unBlockDepth = 0}})
+  ,NonEditable {unNonEditable = BlockKey {_unBlockKey = "cbnu6"}})
+  ,Segments [((Atom {unAtom = Nothing}
+  ,mempty)
+  ,NonEmptyST {unNonEmptyST = "3g"})])}
+  ,ENonEmpty {unENonEmpty = InsertItem 18 (((Atom {unAtom = NormalText}
+  ,Atom {unAtom = BlockDepth {unBlockDepth = 0}})
+  ,NonEditable {unNonEditable = BlockKey {_unBlockKey = "1pob1"}})
+  ,Segments [((Atom {unAtom = Nothing}
+  ,mempty)
+  ,NonEmptyST {unNonEmptyST = "23"})])}
+  ,ENonEmpty {unENonEmpty = InsertItem 19 (((Atom {unAtom = NormalText}
+  ,Atom {unAtom = BlockDepth {unBlockDepth = 0}})
+  ,NonEditable {unNonEditable = BlockKey {_unBlockKey = "4eic4"}})
+  ,Segments [((Atom {unAtom = Nothing}
+  ,mempty)
+  ,NonEmptyST {unNonEmptyST = "g23"})])}
+  ,ENonEmpty {unENonEmpty = InsertItem 20 (((Atom {unAtom = NormalText}
+  ,Atom {unAtom = BlockDepth {unBlockDepth = 0}})
+  ,NonEditable {unNonEditable = BlockKey {_unBlockKey = "6tl7v"}})
+  ,Segments [((Atom {unAtom = Nothing}
+  ,mempty)
+  ,NonEmptyST {unNonEmptyST = "g2"})])}
+  ,ENonEmpty {unENonEmpty = InsertItem 21 (((Atom {unAtom = NormalText}
+  ,Atom {unAtom = BlockDepth {unBlockDepth = 0}})
+  ,NonEditable {unNonEditable = BlockKey {_unBlockKey = "ajm66"}})
+  ,Segments [((Atom {unAtom = Nothing}
+  ,mempty)
+  ,NonEmptyST {unNonEmptyST = "3g"})])}
+  ,ENonEmpty {unENonEmpty = InsertItem 22 (((Atom {unAtom = NormalText}
+  ,Atom {unAtom = BlockDepth {unBlockDepth = 0}})
+  ,NonEditable {unNonEditable = BlockKey {_unBlockKey = "7ah81"}})
+  ,Segments [((Atom {unAtom = Nothing}
+  ,mempty)
+  ,NonEmptyST {unNonEmptyST = "2g3"})])}
+  ,ENonEmpty {unENonEmpty = InsertItem 23 (((Atom {unAtom = EnumPoint}
+  ,Atom {unAtom = BlockDepth {unBlockDepth = 0}})
+  ,NonEditable {unNonEditable = BlockKey {_unBlockKey = "7hr6h"}})
+  ,Segments [])}]}]
+  ,ID 2)]}
+  , _editVDoc = ID 1
+  , _editVDocVersion = RawContent {_rawContentBlocks = Block' {_blockText' = "wef"
+  , _blockEntityRanges' = mempty
+  , _blockStyles' = mempty
+  , _blockType' = NormalText
+  , _blockDepth' = 0
+  , _blockKey' = BlockKey {_unBlockKey = "b0"}} :| [Block' {_blockText' = ""
+  , _blockEntityRanges' = mempty
+  , _blockStyles' = mempty
+  , _blockType' = NormalText
+  , _blockDepth' = 0
+  , _blockKey' = BlockKey {_unBlockKey = "3u6kf"}}
+  ,Block' {_blockText' = "wef"
+  , _blockEntityRanges' = mempty
+  , _blockStyles' = mempty
+  , _blockType' = NormalText
+  , _blockDepth' = 0
+  , _blockKey' = BlockKey {_unBlockKey = "n3ur"}}
+  ,Block' {_blockText' = "wef"
+  , _blockEntityRanges' = mempty
+  , _blockStyles' = mempty
+  , _blockType' = NormalText
+  , _blockDepth' = 0
+  , _blockKey' = BlockKey {_unBlockKey = "amdte"}}
+  ,Block' {_blockText' = "wef"
+  , _blockEntityRanges' = mempty
+  , _blockStyles' = mempty
+  , _blockType' = NormalText
+  , _blockDepth' = 0
+  , _blockKey' = BlockKey {_unBlockKey = "1q4l1"}}
+  ,Block' {_blockText' = "wef"
+  , _blockEntityRanges' = mempty
+  , _blockStyles' = mempty
+  , _blockType' = NormalText
+  , _blockDepth' = 0
+  , _blockKey' = BlockKey {_unBlockKey = "1trhn"}}
+  ,Block' {_blockText' = "we"
+  , _blockEntityRanges' = mempty
+  , _blockStyles' = mempty
+  , _blockType' = NormalText
+  , _blockDepth' = 0
+  , _blockKey' = BlockKey {_unBlockKey = "4prv8"}}
+  ,Block' {_blockText' = "fw"
+  , _blockEntityRanges' = mempty
+  , _blockStyles' = mempty
+  , _blockType' = NormalText
+  , _blockDepth' = 0
+  , _blockKey' = BlockKey {_unBlockKey = "ad01o"}}
+  ,Block' {_blockText' = "ef"
+  , _blockEntityRanges' = mempty
+  , _blockStyles' = mempty
+  , _blockType' = NormalText
+  , _blockDepth' = 0
+  , _blockKey' = BlockKey {_unBlockKey = "cbg14"}}
+  ,Block' {_blockText' = "wef"
+  , _blockEntityRanges' = mempty
+  , _blockStyles' = mempty
+  , _blockType' = NormalText
+  , _blockDepth' = 0
+  , _blockKey' = BlockKey {_unBlockKey = "di0ni"}}
+  ,Block' {_blockText' = "wefw"
+  , _blockEntityRanges' = mempty
+  , _blockStyles' = mempty
+  , _blockType' = NormalText
+  , _blockDepth' = 0
+  , _blockKey' = BlockKey {_unBlockKey = "4lqfo"}}
+  ,Block' {_blockText' = "ef"
+  , _blockEntityRanges' = mempty
+  , _blockStyles' = mempty
+  , _blockType' = NormalText
+  , _blockDepth' = 0
+  , _blockKey' = BlockKey {_unBlockKey = "7sh3p"}}
+  ,Block' {_blockText' = "we"
+  , _blockEntityRanges' = mempty
+  , _blockStyles' = mempty
+  , _blockType' = NormalText
+  , _blockDepth' = 0
+  , _blockKey' = BlockKey {_unBlockKey = "alcoj"}}
+  ,Block' {_blockText' = "fw"
+  , _blockEntityRanges' = mempty
+  , _blockStyles' = mempty
+  , _blockType' = NormalText
+  , _blockDepth' = 0
+  , _blockKey' = BlockKey {_unBlockKey = "8hut6"}}
+  ,Block' {_blockText' = "ef"
+  , _blockEntityRanges' = mempty
+  , _blockStyles' = mempty
+  , _blockType' = NormalText
+  , _blockDepth' = 0
+  , _blockKey' = BlockKey {_unBlockKey = "4o3n9"}}
+  ,Block' {_blockText' = "we"
+  , _blockEntityRanges' = mempty
+  , _blockStyles' = mempty
+  , _blockType' = NormalText
+  , _blockDepth' = 0
+  , _blockKey' = BlockKey {_unBlockKey = "a0of2"}}
+  ,Block' {_blockText' = "g23g2"
+  , _blockEntityRanges' = mempty
+  , _blockStyles' = mempty
+  , _blockType' = NormalText
+  , _blockDepth' = 0
+  , _blockKey' = BlockKey {_unBlockKey = "sbgd"}}
+  ,Block' {_blockText' = "3g"
+  , _blockEntityRanges' = mempty
+  , _blockStyles' = mempty
+  , _blockType' = NormalText
+  , _blockDepth' = 0
+  , _blockKey' = BlockKey {_unBlockKey = "cbnu6"}}
+  ,Block' {_blockText' = "23"
+  , _blockEntityRanges' = mempty
+  , _blockStyles' = mempty
+  , _blockType' = NormalText
+  , _blockDepth' = 0
+  , _blockKey' = BlockKey {_unBlockKey = "1pob1"}}
+  ,Block' {_blockText' = "g23"
+  , _blockEntityRanges' = mempty
+  , _blockStyles' = mempty
+  , _blockType' = NormalText
+  , _blockDepth' = 0
+  , _blockKey' = BlockKey {_unBlockKey = "4eic4"}}
+  ,Block' {_blockText' = "g2"
+  , _blockEntityRanges' = mempty
+  , _blockStyles' = mempty
+  , _blockType' = NormalText
+  , _blockDepth' = 0
+  , _blockKey' = BlockKey {_unBlockKey = "6tl7v"}}
+  ,Block' {_blockText' = "3g"
+  , _blockEntityRanges' = mempty
+  , _blockStyles' = mempty
+  , _blockType' = NormalText
+  , _blockDepth' = 0
+  , _blockKey' = BlockKey {_unBlockKey = "ajm66"}}
+  ,Block' {_blockText' = "2g3"
+  , _blockEntityRanges' = mempty
+  , _blockStyles' = mempty
+  , _blockType' = NormalText
+  , _blockDepth' = 0
+  , _blockKey' = BlockKey {_unBlockKey = "7ah81"}}
+  ,Block' {_blockText' = ""
+  , _blockEntityRanges' = mempty
+  , _blockStyles' = mempty
+  , _blockType' = EnumPoint
+  , _blockDepth' = 0
+  , _blockKey' = BlockKey {_unBlockKey = "7hr6h"}}]
+  , _rawContentEntityMap = mempty}
+  , _editVotes = mempty
+  , _editChildren = mempty
+  , _editDiscussions' = mempty})]
+  , _compositeVDocApplicableDiscussions = mempty}

@@ -22,7 +22,6 @@ dependencies:
   - containers
   - deepseq
   - fingertree-tf
-  - functor-infix
   - generics-sop
   - hspec
   - hspec-core

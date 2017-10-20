@@ -38,7 +38,6 @@ dependencies:
   - filepath
   - fingertree-tf
   - free
-  - functor-infix
   - generics-sop
   - graphviz
   - hspec

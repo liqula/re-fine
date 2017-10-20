@@ -11,9 +11,6 @@ import           Data.List
 import           Data.List.NonEmpty (NonEmpty)
 import qualified Data.Algorithm.Patience as Diff
 import           Control.DeepSeq
-import           Test.QuickCheck (Arbitrary)
-import "quickcheck-instances"
-                 Test.QuickCheck.Instances ()
 
 ----------------------------------------------------------------------------------------------
 
@@ -208,9 +205,13 @@ instance (NFData (EEdit a), NFData (EEdit b), NFData a, NFData b) => NFData (EEd
 ---------------------------------------- atomic data (cannot be replaced or edited)
 
 newtype NonEditable a = NonEditable { unNonEditable :: a }
-  deriving (Eq, Ord, Bounded, Enum, NFData, ToJSON, FromJSON, Arbitrary)
+  deriving (Eq, Show, Ord, Bounded, Enum, Generic)
 
-instance Show a => Show (NonEditable a) where show = show . unNonEditable
+instance (FromJSON a) => FromJSON (NonEditable a)
+instance (ToJSON a) => ToJSON (NonEditable a)
+instance SOP.Generic (NonEditable a)
+instance SOP.HasDatatypeInfo (NonEditable a)
+instance (NFData a) => NFData (NonEditable a) where rnf = grnf
 
 instance (Eq a) => Editable (NonEditable a) where
     data EEdit (NonEditable a)
@@ -234,7 +235,13 @@ instance NFData (EEdit (NonEditable a)) where rnf _ = error "impossible"
 ---------------------------------------- atomic data (can be replaced but cannot be edited)
 
 newtype Atom a = Atom { unAtom :: a }
-  deriving (Eq, Show, Ord, Bounded, Enum, NFData, ToJSON, FromJSON, Arbitrary)
+  deriving (Eq, Show, Ord, Bounded, Enum, Generic)
+
+instance (FromJSON a) => FromJSON (Atom a)
+instance (ToJSON a) => ToJSON (Atom a)
+instance SOP.Generic (Atom a)
+instance SOP.HasDatatypeInfo (Atom a)
+instance (NFData a) => NFData (Atom a) where rnf = grnf
 
 instance (Eq a) => Editable (Atom a) where
     newtype EEdit (Atom a) = EAtom a
@@ -713,7 +720,13 @@ instance Splitable (Segments a b) where
 ----------
 
 newtype Segments attribute elem = Segments [(attribute, elem)]  -- TUNING: use Seq instead of []
-    deriving (Eq, Show, Generic, ToJSON, FromJSON, NFData)
+    deriving (Eq, Show, Generic)
+
+instance (FromJSON a, FromJSON e) => FromJSON (Segments a e)
+instance (ToJSON a, ToJSON e) => ToJSON (Segments a e)
+instance SOP.Generic (Segments a e)
+instance SOP.HasDatatypeInfo (Segments a e)
+instance (NFData a, NFData e) => NFData (Segments a e) where rnf = grnf
 
 instance (Editable a, Editable b, Splitable b, Eq a) => Editable (Segments a b) where
 

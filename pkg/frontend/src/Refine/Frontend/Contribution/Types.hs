@@ -9,6 +9,7 @@ module Refine.Frontend.Contribution.Types where
 import Control.DeepSeq
 import Data.List (nubBy)
 import Language.Css.Syntax hiding (Value)
+import qualified Generics.SOP as SOP
 
 import React.Flux.Missing
 import Refine.Common.Types
@@ -31,21 +32,6 @@ data VerticalSpanBounds = VerticalSpanBounds
   , _verticalSpanBoundsBottom :: OffsetFromDocumentTop
   }
   deriving (Eq, Show, Generic)
-
--- | FIXME: we have orphan instances for maps in Refine.Common.Orphans.  we should:
--- (1) move this function there;
--- (2) implement the orphan instances in terms of this function, not via lists;
--- (3) same for @mapFromValue@.
--- (4) rename to @map{From,To}JSON@.
-mapToValue :: HasCallStack => (Show k, ToJSON v) => Map.Map k v -> Value
-mapToValue = object . fmap (\(k, v) -> (cs . show) k .:= v) . Map.toList
-
-mapFromValue :: HasCallStack => (Ord k, Read k, FromJSON v) => Value -> Parser (Map.Map k v)
-mapFromValue = withObject "AllVerticalSpanBounds"
-  $ fmap Map.fromList
-  . mapM (\(k, v) -> (,) <$> maybe (fail "could not parse key.") pure (readMaybe (cs k))
-                         <*> parseJSON v)
-  . HashMap.toList
 
 
 -- * Contribution
@@ -78,7 +64,13 @@ data ContributionState = ContributionState
   , _csBubbleFilter             :: Maybe (Set ContributionID)  -- ^ 'Nothing' means show everything.
   } deriving (Show, Eq, Generic)
 
-data BubblePositioning = BubblePositioningAbsolute | BubblePositioningEvenlySpaced
+data BubblePositioning
+  = BubblePositioningAbsolute
+    -- ^ bubbles are aligned with the text posititons in the middle column they refer to; the bubble
+    -- column has no scroll bar and is as long as the text column.
+  | BubblePositioningEvenlySpaced
+    -- ^ bubbles are rendered into the bubble columns with even space between them; the bubble
+    -- column has a scrollbar and is as long as the window.
   deriving (Show, Eq, Generic)
 
 emptyContributionState :: HasCallStack => ContributionState
@@ -176,11 +168,12 @@ data BubbleProps = BubbleProps
   , _bubblePropsHighlight         :: Bool
   , _bubblePropsScreenState       :: ScreenState
   }
-  deriving (Eq)
+  deriving (Eq, Show, Generic)
 
 data BubbleSide = BubbleLeft | BubbleRight
-  deriving (Eq)
+  deriving (Eq, Generic)
 
+-- FIXME: don't abuse 'Show' here, use a monomorphic function.
 instance Show BubbleSide where
   show BubbleLeft = "left"
   show BubbleRight = "right"
@@ -194,7 +187,7 @@ data QuickCreateProps = QuickCreateProps
   , _quickCreateRange       :: Maybe SelectionStateWithPx
   , _quickCreateScreenState :: ScreenState
   }
-  deriving (Show, Eq)
+  deriving (Show, Eq, Generic)
 
 data QuickCreateSide = QuickCreateComment | QuickCreateEdit
   deriving (Show, Eq, Generic)
@@ -212,13 +205,13 @@ data CommentDisplayProps = CommentDisplayProps
   { _cdpCommentText  :: CommentText
   , _cdpUserName     :: JSString
   , _cdpCreationDate :: JSString
-  , _cdpContentStyle :: [Decl]
+  , _cdpContentStyle :: Value  -- encoded [Decl]
   , _cdpTopOffset    :: OffsetFromDocumentTop
   , _cdpWindowWidth  :: Int
   , _cdpNoteId       :: ID Discussion
   , _cdpVotes        :: VoteCount
   }
-  deriving (Eq)
+  deriving (Eq, Show, Generic)
 
 data ShowNoteProps =
     ShowNoteProps
@@ -227,14 +220,14 @@ data ShowNoteProps =
       , _snpWindowWidth :: Int
       , _snpUsernames   :: Map (ID User) Username -- FIXME: store user names in discussions
       }
-  deriving (Eq)
+  deriving (Eq, Show, Generic)
 
 data AddContributionProps st = AddContributionProps
   { _acpRange         :: Maybe SelectionStateWithPx
   , _acpLocalState    :: st
   , _acpWindowWidth   :: Int
   }
-  deriving (Eq)
+  deriving (Eq, Show, Generic)
 
 
 data DiscussionProps = DiscussionProps
@@ -289,26 +282,40 @@ blockIndices (RawContent blocks _) = zipWith BlockIndex [0..] . fmap (view block
 
 -- * instances
 
+instance FromJSON JSString where
+  parseJSON = fmap cs <$> parseJSON @ST
+
+instance ToJSON JSString where
+  toJSON = toJSON @ST . cs
+
+instance FromJSONKey MarkID where
+instance ToJSONKey MarkID where
+
 deriveClasses
-  [ ([ ''VerticalSpanBounds, ''ContributionAction, ''ContributionState, ''BubblePositioning, ''CommentInputState
-     , ''EditInputState, ''CommentKind, ''ActiveDialog, ''QuickCreateSide, ''QuickCreateShowState
-     , ''StatementPropDetails, ''StatementEditorProps], allClass)
-  , ([ ''AllVerticalSpanBounds, ''CommentInfo, ''EditInfo, ''ProtoBubble, ''BubbleProps, ''QuickCreateProps
-     , ''CommentDisplayProps, ''AddContributionProps], [''Lens'])
+  [ ([ ''ActiveDialog
+     , ''AddContributionProps
+     , ''AllVerticalSpanBounds
+     , ''BubblePositioning
+     , ''BubbleProps
+     , ''BubbleSide
+     , ''CommentDisplayProps
+     , ''CommentInfo
+     , ''CommentInputState
+     , ''CommentKind
+     , ''ContributionAction
+     , ''ContributionState
+     , ''EditInfo
+     , ''EditInputState
+     , ''QuickCreateProps
+     , ''QuickCreateShowState
+     , ''QuickCreateSide
+     , ''StackOrNot
+     , ''StatementEditorProps
+     , ''StatementPropDetails
+     , ''VerticalSpanBounds
+     ], allClass)
+  , ([ ''ProtoBubble], [''Lens'])
   ]
-
-makeRefineType' [t| CommentInfo CommentKind |]
-makeRefineType' [t| CommentInfo (Maybe CommentKind) |]
-makeRefineType' [t| EditInfo EditKind |]
-makeRefineType' [t| EditInfo (Maybe EditKind) |]
-
-deriving instance NFData AllVerticalSpanBounds
-
-instance ToJSON AllVerticalSpanBounds where
-  toJSON = mapToValue . _allVerticalSpanBounds
-
-instance FromJSON AllVerticalSpanBounds where
-  parseJSON = fmap AllVerticalSpanBounds . mapFromValue
 
 instance IbuttonOnClick CommentKind ('StatefulEventHandlerCode CommentInputState) where
   runIbuttonOnClick _evt _mevt ckind st = (mempty, Just $ st & commentInputStateData . commentInfoKind .~ Just ckind)

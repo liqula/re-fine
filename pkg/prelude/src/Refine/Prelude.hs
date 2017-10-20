@@ -48,6 +48,7 @@ module Refine.Prelude
   , focusList
   , ordNub
   , joinE
+  , (<$$>)
   , (<..>)
   , (<...>)
   , (<@>)
@@ -95,7 +96,6 @@ import Data.Data as P (Data)
 import Data.Default as P (Default(def))
 import Data.Either as P (either)
 import Data.Function as P (on)
-import Data.Functor.Infix as P ((<$$>))
 import Data.IntMap.Strict as P (IntMap)
 import Data.List as P ((\\), foldl', sort, nub, sortBy, insertBy, replicate)
 import Data.List.NonEmpty as P (NonEmpty(..))
@@ -318,3 +318,10 @@ listDirectoryRec fp = do
       doesDirectoryExist fp' >>= \case
         False -> pure [fp']
         True -> ((fp' <> "/") <>) <$$> listDirectoryRec fp'
+
+
+-- | (from package functor-infix)
+(<$$>) :: (Functor f, Functor g) => (a -> b) -> f (g a) -> f (g b)
+(<$$>) = fmap . fmap
+
+infix 1 <$$>
