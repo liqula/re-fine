@@ -5,10 +5,11 @@
 #
 # to get going, try this:
 #
-# stack --stack-yaml=stack-no-js.yaml test --fast
-# stack --stack-yaml=stack-no-js.yaml exec -- ghci -isrc -itest -i../common/src -i../prelude/src test/Main.hs
+# stack --stack-yaml=stack.yaml test --fast
+# stack --stack-yaml=stack.yaml exec -- ghci -isrc -itest -i../common/src -i../prelude/src test/Main.hs
 #
-# to compile with ghcjs, call `nix-build build.nix`.
+# to compile with ghcjs, call `nix-build build.nix`, or use
+# stack-js.yaml (which may be faster, but uses an old, buggy ghcjs.)
 
 resolver: lts-8.11
 
@@ -28,7 +29,6 @@ packages:
 extra-deps:
 - basic-sop-0.2.0.1
 - fingertree-tf-0.1.0.0
-- generics-sop-0.3.1.0
 - i18n-0.4.0.0
 - json-sop-0.2.0.2
 - language-css-0.0.3
