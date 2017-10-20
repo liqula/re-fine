@@ -96,8 +96,9 @@ mainScreen = mkView' "MainScreen" $ \(gst, procst, as) ->
       asideProps :: [contrib] -> AsideProps contrib
       asideProps = mkAsideProps gst procst bubblepos
         where
-          bubblepos = case procst ^. psDocumentState of
+          bubblepos = case procst ^. psDocumentState of  -- FIXME: this case switch should happen in the state update somewhere.
                         DocumentStateDiff{} -> BubblePositioningEvenlySpaced
+                        DocumentStateDiscussion{} -> BubblePositioningEvenlySpaced
                         _ -> contrst ^. csBubblePositioning
 
   in div_ ["key" $= "maindiv" {-FIXME: seems not to work as expected, we still have a warning-}] $ do
@@ -124,15 +125,31 @@ mainScreen = mkView' "MainScreen" $ \(gst, procst, as) ->
       Just vdoc -> do
           main_ ["role" $= "main", "key" $= "main"] $ do
               mainHeaderToolbar_ (mkMainHeaderToolbarProps gstwiped)
-              div_ ["className" $= "grid-wrapper"] $ do
-                  div_ ["className" $= "row row-align-center row-align-top"] $ do
-                      view_ leftAside "leftAside_" (asideProps $ filterDiscussions procst (contrst ^. csBubbleFilter) vdoc)
-                      document_ $ DocumentProps ((if procst ^. psHeaderState . hsReadOnly
-                                                  then mapDocumentState id deleteMarksFromRawContent id id
-                                                  else id)
-                                                 $ getDocumentStateProps as gst)
-                                                contrst
-                      view_ rightAside "rightAside_" (asideProps $ filterEdits procst (contrst ^. csBubbleFilter) vdoc)
+              case procst ^. psDocumentState of
+                DocumentStateDiscussion {} -> do
+                  -- 2-column, scrollbar on columns, floating bubbles.
+                  div_ ["className" $= "grid-wrapper"] $ do
+                      div_ ["className" $= "row row-align-center row-align-top"] $ do
+                          view_ leftAside "leftAside_" (asideProps $ filterDiscussions procst (contrst ^. csBubbleFilter) vdoc)
+
+                          -- TODO: make this a separate component.  it has nothing in common with 'document_'.
+                          document_ $ DocumentProps ((if procst ^. psHeaderState . hsReadOnly
+                                                      then mapDocumentState id deleteMarksFromRawContent id id
+                                                      else id)
+                                                     $ getDocumentStateProps as gst)
+                                                    contrst
+
+                _ -> do
+                  -- 3-column, scrollbar on page, bubbles aligned with text.
+                  div_ ["className" $= "grid-wrapper"] $ do
+                      div_ ["className" $= "row row-align-center row-align-top"] $ do
+                          view_ leftAside "leftAside_" (asideProps $ filterDiscussions procst (contrst ^. csBubbleFilter) vdoc)
+                          document_ $ DocumentProps ((if procst ^. psHeaderState . hsReadOnly
+                                                      then mapDocumentState id deleteMarksFromRawContent id id
+                                                      else id)
+                                                     $ getDocumentStateProps as gst)
+                                                    contrst
+                          view_ rightAside "rightAside_" (asideProps $ filterEdits procst (contrst ^. csBubbleFilter) vdoc)
 
           -- append an empty page to the botton.  (helps with legitimate attempts to scroll beyond
           -- the end of the document, e.g. when moving dialogs into the center of the screen before
