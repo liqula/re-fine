@@ -104,24 +104,24 @@ mainScreen = mkView' "MainScreen" $ \(gst, procst, as) ->
     React.view trackWindowSize (screenst ^. SC.ssWindowSize) mempty
     div_ ["className" $= "c_bg_blue_dark"] $ mainHeader_ (mkMainHeaderProps as gstwiped)
 
+    -- dialog overlays
+    case contrst ^. csActiveDialog of
+        Just (ActiveDialogComment lst) -> do
+          addComment_ $ AddContributionProps
+                          (contrst ^. csCurrentSelectionWithPx)
+                          lst
+                          (screenst ^. SC.ssWindowWidth)
+        Just (ActiveDialogEdit estate) -> do
+          let Just (localst :: EditInfo (Maybe EditKind)) = docst ^? documentStateEditInfo
+          addEdit_ $ AddContributionProps
+                          (contrst ^. csCurrentSelectionWithPx)
+                          (localst, estate)
+                          (screenst ^. SC.ssWindowWidth)
+        Nothing -> mempty
+
     case (procst ^. psVDocID, cachest) ^. getCompositeVDoc of
       Nothing -> hourglass
       Just vdoc -> do
-          -- components that are visible only sometimes:
-          case contrst ^. csActiveDialog of
-              Just (ActiveDialogComment lst) -> do
-                addComment_ $ AddContributionProps
-                                (contrst ^. csCurrentSelectionWithPx)
-                                lst
-                                (screenst ^. SC.ssWindowWidth)
-              Just (ActiveDialogEdit estate) -> do
-                let Just (localst :: EditInfo (Maybe EditKind)) = docst ^? documentStateEditInfo
-                addEdit_ $ AddContributionProps
-                                (contrst ^. csCurrentSelectionWithPx)
-                                (localst, estate)
-                                (screenst ^. SC.ssWindowWidth)
-              Nothing -> mempty
-
           main_ ["role" $= "main", "key" $= "main"] $ do
               mainHeaderToolbar_ (mkMainHeaderToolbarProps gstwiped)
               div_ ["className" $= "grid-wrapper"] $ do
@@ -137,6 +137,8 @@ mainScreen = mkView' "MainScreen" $ \(gst, procst, as) ->
           -- append an empty page to the botton.  (helps with legitimate attempts to scroll beyond
           -- the end of the document, e.g. when moving dialogs into the center of the screen before
           -- they have been rendered.)
+          --
+          -- FIXME: i think we've thought of something better in the meantime.  what was that?
           div_ ["style" @@= [decl "marginBottom" (Px 800)]] $ pure ()
 
 
@@ -191,18 +193,18 @@ filterEdits procst bfilter vdoc =
                      DocumentStateEdit{} -> const mempty
                      _ -> id
 
+filterDiscussions :: ProcessState DocumentState -> Maybe (Set ContributionID) -> CompositeVDoc -> [Discussion]
+filterDiscussions procst bfilter vdoc =
+  filterContributions procst bfilter
+    (\i -> ContribIDDiscussion <$> [True, False] <*> pure i)
+    (fmap snd $ vdoc ^. compositeVDocApplicableDiscussions)
+
 filterContributions :: ProcessState DocumentState -> Maybe (Set ContributionID) -> (ID c -> [ContributionID]) -> Map (ID c) b -> [b]
 filterContributions procst bfilter mkCId = if procst ^. psHeaderState . hsReadOnly
                               then const mempty
                               else maybe Map.elems go bfilter
                             where
                               go allowed = fmap snd . filter (any (`Set.member` allowed) . mkCId . fst) . Map.toList
-
-filterDiscussions :: ProcessState DocumentState -> Maybe (Set ContributionID) -> CompositeVDoc -> [Discussion]
-filterDiscussions procst bfilter vdoc =
-  filterContributions procst bfilter
-    (\i -> ContribIDDiscussion <$> [True, False] <*> pure i)
-    (fmap snd $ vdoc ^. compositeVDocApplicableDiscussions)
 
 
 -- | All contributions need to be positioned.  The default is '0' (beginning of the article).
